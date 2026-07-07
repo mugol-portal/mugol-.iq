@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0e1a">
+    <meta name="description" content="MuGöl IQ - Zihin açan bulmaca ve oyun koleksiyonu">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MuGöl IQ">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <title>MuGöl IQ</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1880946354382681" crossorigin="anonymous"></script>
+
+    <style>
+        :root {
+            --bg-main: #0a0e1a;
+            --bg-deep: #060811;
+            --surface: #131a2b;
+            --surface-soft: #1a2338;
+            --line: rgba(255, 255, 255, 0.07);
+            --line-strong: rgba(255, 255, 255, 0.14);
+            --accent: #7c5cff;
+            --accent-soft: rgba(124, 92, 255, 0.16);
+            --spark: #ffd23f;
+            --cyan: #00e5c7;
+            --coral: #ff6b8b;
+            --text-bright: #f3f5ff;
+            --text-dark: #f3f5ff;
+            --text-soft: #8b93ab;
+            --text-faint: #5a6280;
+            --card-shadow: 0 20px 50px rgba(0,0,0,0.35);
+            --glow: 0 0 0 1px var(--line), 0 20px 50px rgba(0,0,0,0.4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Nunito', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        h1, h2, .brand-name, .hero-title, .card-title, .side-menu-title, .mode-chip, .menu-item-title {
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-bright);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Nöral arka plan --- */
+        .animated-bg {
+            position: fixed; inset: 0; z-index: -1;
+            background:
+                radial-gradient(circle at 15% 20%, rgba(124, 92, 255, 0.18) 0%, transparent 45%),
+                radial-gradient(circle at 85% 15%, rgba(0, 229, 199, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 90%, rgba(255, 107, 139, 0.10) 0%, transparent 45%),
+                var(--bg-deep);
+            overflow: hidden;
+        }
+        .synapse-grid {
+            position: absolute; inset: 0;
+            background-image:
+                linear-gradient(var(--line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--line) 1px, transparent 1px);
+            background-size: 46px 46px;
+            mask-image: radial-gradient(circle at 50% 30%, black 0%, transparent 75%);
+            opacity: 0.6;
+        }
+        .blob {
+            position: absolute; border-radius: 50%; filter: blur(90px);
+            animation: drift 28s infinite alternate ease-in-out;
+            opacity: 0.5;
+        }
+        .b1 { width: 480px; height: 480px; background: #7c5cff; top: -12%; left: -8%; }
+        .b2 { width: 380px; height: 380px; background: #00e5c7; bottom: 5%; right: -6%; animation-delay: -6s; }
+        .b3 { width: 420px; height: 420px; background: #ff6b8b; top: 45%; left: 35%; animation-delay: -12s; opacity: 0.25; }
+
+        @keyframes drift {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(90px, 60px) rotate(90deg); }
+        }
+
+        .app-wrapper {
+            flex: 1; display: flex; flex-direction: column;
+            position: relative; z-index: 1; overflow: hidden;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            padding: 18px 25px;
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(10, 14, 26, 0.65);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--line);
+            position: sticky; top: 0; z-index: 1000;
+        }
+        .brand { display: flex; align-items: center; gap: 13px; }
+
+        .brand-mark {
+            width: 42px; height: 42px; position: relative; flex-shrink: 0;
+        }
+        .brand-mark svg { width: 100%; height: 100%; }
+        .brand-mark .node { animation: pulse-node 3.2s ease-in-out infinite; transform-origin: center; }
+        .brand-mark .node:nth-child(2) { animation-delay: 0.4s; }
+        .brand-mark .node:nth-child(3) { animation-delay: 0.8s; }
+        .brand-mark .node:nth-child(4) { animation-delay: 1.2s; }
+        @keyframes pulse-node {
+            0%, 100% { opacity: 0.55; r: 3; }
+            50% { opacity: 1; r: 4.2; }
+        }
+
+        .brand-name {
+            font-size: 1.35rem; font-weight: 700; color: var(--text-bright);
+            letter-spacing: -0.3px; display: flex; align-items: baseline; gap: 6px;
+        }
+        .brand-name .iq-tag {
+            font-size: 0.65rem; font-weight: 700; color: var(--bg-deep);
+            background: linear-gradient(135deg, var(--spark), #ffb800);
+            padding: 2px 8px; border-radius: 7px; letter-spacing: 0.5px;
+        }
+
+        .header-actions { display: flex; gap: 12px; }
+        .circle-btn {
+            width: 42px; height: 42px; border-radius: 14px; border: 1px solid var(--line);
+            background: var(--surface); color: var(--text-bright); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: var(--card-shadow); transition: 0.3s;
+        }
+        .circle-btn:hover { transform: translateY(-2px); background: var(--accent); border-color: var(--accent); }
+
+        /* --- HAMBURGER MENÜ --- */
+        .menu-overlay {
+            position: fixed; inset: 0; z-index: 1998;
+            background: rgba(4, 6, 12, 0.55);
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+            opacity: 0; visibility: hidden; transition: 0.35s;
+        }
+        .menu-overlay.open { opacity: 1; visibility: visible; }
+
+        .side-menu {
+            position: fixed; top: 0; right: 0; height: 100%; width: 300px; max-width: 82vw;
+            background: var(--surface); border-left: 1px solid var(--line);
+            box-shadow: -20px 0 50px rgba(0,0,0,0.5);
+            z-index: 1999; transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            display: flex; flex-direction: column; padding: 25px;
+        }
+        .side-menu.open { transform: translateX(0); }
+
+        .side-menu-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .side-menu-title { font-size: 1.15rem; font-weight: 700; color: var(--text-bright); }
+
+        .menu-list { display: flex; flex-direction: column; gap: 10px; }
+        .menu-item {
+            display: flex; align-items: center; gap: 16px;
+            padding: 16px 18px; border-radius: 18px; background: var(--surface-soft);
+            box-shadow: var(--card-shadow); cursor: pointer; transition: 0.3s;
+            text-decoration: none; color: var(--text-bright); border: 1px solid var(--line);
+        }
+        .menu-item:hover { transform: translateX(-4px); border-color: var(--accent); }
+        .menu-item-icon {
+            width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; color: white;
+        }
+        .menu-item-text { flex: 1; }
+        .menu-item-title { font-weight: 600; font-size: 0.95rem; }
+        .menu-item-sub { font-size: 0.75rem; color: var(--text-soft); font-weight: 700; margin-top: 1px; font-family: 'Nunito', sans-serif; }
+
+        .icon-fav { background: linear-gradient(135deg, var(--coral), #d63384); }
+        .icon-settings { background: linear-gradient(135deg, var(--accent), #5433c9); }
+        .icon-portal { background: linear-gradient(135deg, var(--cyan), #00a896); }
+
+        .menu-divider { height: 1px; background: var(--line); margin: 18px 0; }
+
+        .menu-footer { margin-top: auto; text-align: center; padding-top: 20px; }
+        .menu-footer-text { font-size: 0.75rem; color: var(--text-faint); font-weight: 700; }
+
+        @media (max-width: 768px) {
+            .side-menu { width: 280px; padding: 20px; }
+        }
+
+        /* --- CONTENT --- */
+        .main-content { flex: 1; overflow-y: auto; padding: 25px; scroll-behavior: smooth; }
+
+        /* Öne Çıkan Kart */
+        .hero-banner {
+            position: relative; border-radius: 28px; padding: 40px; margin-bottom: 30px;
+            background: linear-gradient(135deg, rgba(124, 92, 255, 0.16) 0%, rgba(0, 229, 199, 0.08) 100%);
+            border: 1px solid var(--line-strong); overflow: hidden;
+            box-shadow: var(--glow); transition: 0.4s;
+        }
+        .hero-banner::before {
+            content: ''; position: absolute; inset: -2px; border-radius: 28px; z-index: -1;
+            background: conic-gradient(from var(--angle, 0deg), transparent 0%, rgba(124,92,255,0.5) 15%, transparent 30%);
+            animation: rotate-glow 6s linear infinite;
+            opacity: 0.5;
+        }
+        @property --angle {
+            syntax: '<angle>'; initial-value: 0deg; inherits: false;
+        }
+        @keyframes rotate-glow { to { --angle: 360deg; } }
+        .hero-banner:hover { transform: translateY(-5px); }
+        .hero-tag {
+            background: var(--spark); color: #1a1400; padding: 6px 14px; border-radius: 12px;
+            font-size: 0.72rem; font-weight: 800; display: inline-block; margin-bottom: 15px;
+            letter-spacing: 0.4px; font-family: 'Nunito', sans-serif;
+        }
+        .hero-title { font-size: 2.1rem; font-weight: 700; margin-bottom: 10px; color: var(--text-bright); }
+        .hero-desc { color: var(--text-soft); font-size: 1rem; margin-bottom: 25px; max-width: 450px; }
+        .hero-play {
+            background: var(--accent); color: white; padding: 14px 30px; border-radius: 16px;
+            text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 10px;
+            transition: 0.3s; font-family: 'Nunito', sans-serif; box-shadow: 0 10px 25px rgba(124, 92, 255, 0.35);
+        }
+        .hero-play:hover { background: #6a49ff; transform: scale(1.05); }
+
+        .hero-badge {
+            position: absolute; right: 24px; bottom: 24px; width: 100px; height: 100px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(circle, rgba(255, 210, 63, 0.18) 0%, transparent 70%);
+            font-size: 3.4rem; opacity: 0.9;
+        }
+
+        /* İstatistik / Seri rozeti */
+        .stat-row { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+        .stat-pill {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.04); border: 1px solid var(--line-strong);
+            padding: 8px 14px; border-radius: 14px; font-size: 0.82rem; font-weight: 800;
+            color: var(--text-bright);
+        }
+        .stat-pill i { font-size: 0.9rem; }
+        .stat-pill.streak i { color: var(--spark); }
+        .stat-pill.solved i { color: var(--cyan); }
+
+        /* Arama kutusu */
+        .search-bar {
+            display: flex; align-items: center; gap: 12px;
+            background: var(--surface); border: 1px solid var(--line);
+            border-radius: 16px; padding: 12px 18px;
+            box-shadow: var(--card-shadow); transition: 0.3s;
+        }
+        .search-bar:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+        .search-bar i { color: var(--text-faint); font-size: 0.95rem; }
+        .search-bar input {
+            flex: 1; background: transparent; border: none; outline: none;
+            color: var(--text-bright); font-size: 0.95rem; font-weight: 700;
+        }
+        .search-bar input::placeholder { color: var(--text-faint); font-weight: 700; }
+        .search-clear {
+            display: none; background: var(--surface-soft); border: none; color: var(--text-soft);
+            width: 24px; height: 24px; border-radius: 50%; cursor: pointer; align-items: center; justify-content: center;
+            font-size: 0.75rem;
+        }
+        .search-clear.show { display: flex; }
+
+        /* Rastgele Oyun butonu */
+        .surprise-btn {
+            display: flex; align-items: center; gap: 8px;
+            background: linear-gradient(135deg, var(--cyan), #00a896); color: #00261f;
+            border: none; padding: 12px 18px; border-radius: 16px; font-weight: 800;
+            font-size: 0.88rem; cursor: pointer; transition: 0.3s; white-space: nowrap;
+            box-shadow: var(--card-shadow);
+        }
+        .surprise-btn:hover { transform: translateY(-2px); }
+        .toolbar-row { display: flex; gap: 10px; margin-bottom: 20px; }
+        .toolbar-row .search-bar { margin-bottom: 0; flex: 1; }
+
+        /* Yeni rozeti */
+        .card-new-tag {
+            position: absolute; top: 14px; left: 14px; z-index: 2;
+            background: linear-gradient(135deg, var(--coral), #ff3d68); color: white;
+            font-size: 0.65rem; font-weight: 800; padding: 4px 10px; border-radius: 8px;
+            letter-spacing: 0.4px;
+        }
+
+        /* Mod Seçici */
+        .mode-selector { display: flex; gap: 10px; margin-bottom: 25px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
+        .mode-selector::-webkit-scrollbar { display: none; }
+        .mode-chip {
+            padding: 10px 22px; border-radius: 14px; background: var(--surface);
+            font-weight: 700; font-size: 0.88rem; color: var(--text-soft);
+            cursor: pointer; transition: 0.3s; border: 1px solid var(--line);
+            box-shadow: var(--card-shadow); white-space: nowrap;
+        }
+        .mode-chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+        /* Oyun Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+        .card {
+            background: var(--surface); border: 1px solid var(--line);
+            border-radius: 24px; overflow: hidden; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: var(--card-shadow); cursor: pointer; position: relative;
+        }
+        .card:hover { transform: translateY(-8px); border-color: var(--line-strong); box-shadow: 0 25px 60px rgba(124, 92, 255, 0.15); }
+        .card:hover .card-preview { transform: scale(1.08); }
+
+        .card-preview {
+            height: 150px; display: flex; align-items: center; justify-content: center;
+            font-size: 4.2rem; background: var(--surface-soft); position: relative;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .card-preview::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.25) 100%);
+        }
+        .card-body { padding: 20px; text-align: center; }
+        .card-cat { font-size: 0.68rem; font-weight: 800; color: var(--cyan); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.6px; font-family: 'Nunito', sans-serif; }
+        .card-title { font-weight: 600; font-size: 1.08rem; color: var(--text-bright); }
+
+        .fav-heart {
+            position: absolute; top: 14px; right: 14px; width: 34px; height: 34px;
+            background: rgba(10, 14, 26, 0.6); border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: var(--text-faint); transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 2;
+            backdrop-filter: blur(6px);
+        }
+        .fav-heart.active { color: var(--coral); }
+
+        /* Boş durum */
+        .empty-state {
+            grid-column: 1 / -1; text-align: center; padding: 60px 20px;
+            color: var(--text-soft);
+        }
+        .empty-state i { font-size: 2.2rem; color: var(--text-faint); margin-bottom: 14px; display: block; }
+
+        /* Footer */
+        .footer {
+            margin-top: 50px; padding: 30px 0; text-align: center;
+            border-top: 1px solid var(--line);
+        }
+        .footer-text { font-size: 0.85rem; color: var(--text-faint); font-weight: 700; }
+        .privacy-link { color: var(--accent); text-decoration: none; font-weight: 800; font-size: 0.8rem; margin-top: 10px; display: inline-block; }
+
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr 1fr; gap: 15px; }
+            .hero-title { font-size: 1.55rem; }
+            .hero-banner { padding: 25px; }
+            .card-preview { height: 125px; font-size: 3rem; }
+            .hero-badge { width: 76px; height: 76px; font-size: 2.4rem; right: 16px; bottom: 16px; }
+            .toolbar-row { flex-direction: column; }
+            .surprise-btn { justify-content: center; }
+        }
+
+        /* --- AYARLAR MODALI --- */
+        .settings-overlay {
+            position: fixed; inset: 0; z-index: 2100;
+            background: rgba(4, 6, 12, 0.6); backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: 0.3s; padding: 20px;
+        }
+        .settings-overlay.open { opacity: 1; visibility: visible; }
+        .settings-panel {
+            width: 100%; max-width: 380px; background: var(--surface);
+            border: 1px solid var(--line-strong); border-radius: 24px; padding: 26px;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.5);
+            transform: translateY(20px) scale(0.97); transition: 0.35s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .settings-overlay.open .settings-panel { transform: translateY(0) scale(1); }
+        .settings-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+        .settings-title { font-size: 1.15rem; font-weight: 800; }
+        .settings-group { margin-bottom: 22px; }
+        .settings-label {
+            font-size: 0.78rem; font-weight: 800; color: var(--text-soft);
+            text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 10px; display: block;
+        }
+        .font-size-row { display: flex; gap: 8px; }
+        .font-size-btn {
+            flex: 1; padding: 12px 0; border-radius: 12px; border: 1px solid var(--line);
+            background: var(--surface-soft); color: var(--text-bright); font-weight: 800;
+            cursor: pointer; transition: 0.2s;
+        }
+        .font-size-btn.active { background: var(--accent); border-color: var(--accent); }
+        .settings-action {
+            width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 14px; border-radius: 14px; border: 1px solid var(--line);
+            background: var(--surface-soft); color: var(--text-bright); font-weight: 800;
+            cursor: pointer; transition: 0.2s; font-size: 0.9rem;
+        }
+        .settings-action:hover { border-color: var(--accent); }
+        .settings-action.danger { color: var(--coral); }
+        .settings-action.danger:hover { border-color: var(--coral); }
+        .settings-version { text-align: center; margin-top: 6px; font-size: 0.72rem; color: var(--text-faint); font-weight: 700; }
+
+        /* Yazı boyutu ölçekleri (kullanıcı tercihine göre body'ye class eklenir) */
+        body.font-small { font-size: 0.92rem; }
+        body.font-large { font-size: 1.1rem; }
+
+        /* Yukarı Çık Butonu */
+        .scroll-top-btn {
+            position: fixed; bottom: 24px; right: 24px; z-index: 500;
+            width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--line-strong);
+            background: var(--surface); color: var(--text-bright); cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+            box-shadow: var(--card-shadow); opacity: 0; visibility: hidden; transform: translateY(10px);
+            transition: 0.3s;
+        }
+        .scroll-top-btn.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        .scroll-top-btn:hover { background: var(--accent); border-color: var(--accent); }
+
+        /* PWA Yükleme Şeridi */
+        .install-banner {
+            position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 1500;
+            background: var(--surface); border: 1px solid var(--line-strong);
+            border-radius: 18px; padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+            transform: translateY(120%); transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            max-width: 420px; margin: 0 auto;
+        }
+        .install-banner.show { transform: translateY(0); }
+        .install-banner-icon {
+            width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--accent), var(--cyan));
+            display: flex; align-items: center; justify-content: center; color: white; font-size: 1.1rem;
+        }
+        .install-banner-text { flex: 1; }
+        .install-banner-title { font-weight: 800; font-size: 0.9rem; }
+        .install-banner-sub { font-size: 0.75rem; color: var(--text-soft); font-weight: 700; }
+        .install-banner-btn {
+            background: var(--accent); color: white; border: none; padding: 9px 14px;
+            border-radius: 10px; font-weight: 800; font-size: 0.82rem; cursor: pointer; white-space: nowrap;
+        }
+        .install-banner-close {
+            background: none; border: none; color: var(--text-faint); font-size: 0.95rem; cursor: pointer; padding: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="animated-bg">
+        <div class="synapse-grid"></div>
+        <div class="blob b1"></div>
+        <div class="blob b2"></div>
+        <div class="blob b3"></div>
+    </div>
+
+    <div class="app-wrapper">
+        <!-- HEADER -->
+        <header class="header">
+            <div class="brand">
+                <div class="brand-mark">
+                    <svg viewBox="0 0 42 42" fill="none">
+                        <line x1="10" y1="12" x2="21" y2="21" stroke="var(--line-strong)" stroke-width="1.5"/>
+                        <line x1="32" y1="10" x2="21" y2="21" stroke="var(--line-strong)" stroke-width="1.5"/>
+                        <line x1="10" y1="30" x2="21" y2="21" stroke="var(--line-strong)" stroke-width="1.5"/>
+                        <line x1="32" y1="32" x2="21" y2="21" stroke="var(--line-strong)" stroke-width="1.5"/>
+                        <circle class="node" cx="10" cy="12" r="3.4" fill="#7c5cff"/>
+                        <circle class="node" cx="32" cy="10" r="3.4" fill="#00e5c7"/>
+                        <circle class="node" cx="10" cy="30" r="3.4" fill="#ff6b8b"/>
+                        <circle class="node" cx="32" cy="32" r="3.4" fill="#ffd23f"/>
+                        <circle cx="21" cy="21" r="5.2" fill="#f3f5ff"/>
+                    </svg>
+                </div>
+                <h1 class="brand-name">MuGöl <span class="iq-tag">IQ</span></h1>
+            </div>
+            <div class="header-actions">
+                <button class="circle-btn" onclick="openMenu()" aria-label="Menüyü Aç"><i class="fa-solid fa-bars"></i></button>
+            </div>
+        </header>
+
+        <!-- HAMBURGER YAN MENÜ -->
+        <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+        <nav class="side-menu" id="sideMenu">
+            <div class="side-menu-header">
+                <span class="side-menu-title">Menü</span>
+                <button class="circle-btn" onclick="closeMenu()" aria-label="Menüyü Kapat"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="menu-list">
+                <div class="menu-item" onclick="toggleFavorites(); closeMenu();">
+                    <div class="menu-item-icon icon-fav"><i class="fa-solid fa-heart"></i></div>
+                    <div class="menu-item-text">
+                        <div class="menu-item-title">Favoriler</div>
+                        <div class="menu-item-sub">Beğendiğin oyunlar</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right" style="color: var(--text-faint); font-size: 0.8rem;"></i>
+                </div>
+
+                <div class="menu-item" onclick="openSettings()">
+                    <div class="menu-item-icon icon-settings"><i class="fa-solid fa-gear"></i></div>
+                    <div class="menu-item-text">
+                        <div class="menu-item-title">Ayarlar</div>
+                        <div class="menu-item-sub">Uygulama tercihleri</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right" style="color: var(--text-faint); font-size: 0.8rem;"></i>
+                </div>
+
+                <div class="menu-divider"></div>
+
+                <a href="https://mugol-portal.github.io/" class="menu-item">
+                    <div class="menu-item-icon icon-portal"><i class="fa-solid fa-arrow-left"></i></div>
+                    <div class="menu-item-text">
+                        <div class="menu-item-title">MuGöl PORTAL</div>
+                        <div class="menu-item-sub">Ana portala dön</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right" style="color: var(--text-faint); font-size: 0.8rem;"></i>
+                </a>
+            </div>
+
+            <div class="menu-footer">
+                <p class="menu-footer-text">MuGöl IQ v5.0</p>
+            </div>
+        </nav>
+
+        <main class="main-content" id="mainContent">
+            <!-- GÜNÜN OYUNU -->
+            <div class="hero-banner" id="heroBanner">
+                <span class="hero-tag">GÜNÜN BULMACASI</span>
+                <h2 class="hero-title" id="heroTitle">Kelime Üstadı</h2>
+                <p class="hero-desc" id="heroDesc">Gizli kelimeyi 6 tahminde bulabilecek misin? Hemen yeteneklerini test et.</p>
+                <a href="#" class="hero-play" id="heroBtn">Oyna <i class="fa-solid fa-arrow-right"></i></a>
+                <div class="stat-row">
+                    <div class="stat-pill streak"><i class="fa-solid fa-fire"></i><span id="streakCount">0</span> gün seri</div>
+                    <div class="stat-pill solved"><i class="fa-solid fa-star"></i><span id="favCount">0</span> favori</div>
+                </div>
+                <div class="hero-badge" id="heroIcon">🦉</div>
+            </div>
+
+            <!-- ARAMA + RASTGELE OYUN -->
+            <div class="toolbar-row">
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="searchInput" placeholder="Oyun ara..." oninput="handleSearch(this.value)">
+                    <button class="search-clear" id="searchClearBtn" onclick="clearSearch()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <button class="surprise-btn" onclick="surpriseMe()"><i class="fa-solid fa-shuffle"></i> Beni Şaşırt</button>
+            </div>
+
+            <!-- MOD SEÇİCİ -->
+            <div class="mode-selector">
+                <div class="mode-chip active" onclick="filterBy('all', this)">🌈 Tüm Modlar</div>
+                <div class="mode-chip" onclick="filterBy('relax', this)">☁️ Rahatla</div>
+                <div class="mode-chip" onclick="filterBy('focus', this)">🎯 Odaklan</div>
+                <div class="mode-chip" onclick="filterBy('challenge', this)">⚡ Meydan Oku</div>
+            </div>
+
+            <!-- OYUN GRID -->
+            <div class="grid" id="gameGrid">
+                <!-- Oyunlar JavaScript ile buraya gelecek -->
+            </div>
+
+            <footer class="footer">
+                <p class="footer-text">Zihnini taze tutmaya devam et ✨</p>
+                <p class="footer-text">© 2024 MuGöl IQ</p>
+                <a href="#" class="privacy-link" onclick="openPrivacy()">Gizlilik Politikası</a>
+            </footer>
+        </main>
+    </div>
+
+    <!-- AYARLAR MODALI -->
+    <div class="settings-overlay" id="settingsOverlay" onclick="if(event.target===this) closeSettings()">
+        <div class="settings-panel">
+            <div class="settings-header">
+                <span class="settings-title">⚙️ Ayarlar</span>
+                <button class="circle-btn" onclick="closeSettings()" aria-label="Kapat"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="settings-group">
+                <span class="settings-label">Yazı Boyutu</span>
+                <div class="font-size-row">
+                    <button class="font-size-btn" id="fontSmallBtn" onclick="setFontSize('small')">Küçük</button>
+                    <button class="font-size-btn active" id="fontNormalBtn" onclick="setFontSize('normal')">Normal</button>
+                    <button class="font-size-btn" id="fontLargeBtn" onclick="setFontSize('large')">Büyük</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <span class="settings-label">Uygulama</span>
+                <button class="settings-action" onclick="refreshApp()">
+                    <i class="fa-solid fa-rotate"></i> Sayfayı Yenile
+                </button>
+            </div>
+
+            <div class="settings-group" style="margin-bottom: 8px;">
+                <span class="settings-label">Veriler</span>
+                <button class="settings-action danger" onclick="resetAppData()">
+                    <i class="fa-solid fa-trash"></i> Favorileri ve İlerlemeyi Sıfırla
+                </button>
+            </div>
+
+            <p class="settings-version">MuGöl IQ v5.0 · Nunito yazı tipi</p>
+        </div>
+    </div>
+
+    <!-- YUKARI ÇIK BUTONU -->
+    <button class="scroll-top-btn" id="scrollTopBtn" onclick="scrollToTop()" aria-label="Yukarı çık">
+        <i class="fa-solid fa-arrow-up"></i>
+    </button>
+
+    <!-- PWA YÜKLEME ŞERİDİ -->
+    <div class="install-banner" id="installBanner">
+        <div class="install-banner-icon"><i class="fa-solid fa-download"></i></div>
+        <div class="install-banner-text">
+            <div class="install-banner-title">MuGöl IQ'yu yükle</div>
+            <div class="install-banner-sub">Ana ekranına ekle, çevrimdışı da oyna</div>
+        </div>
+        <button class="install-banner-btn" onclick="installApp()">Yükle</button>
+        <button class="install-banner-close" onclick="dismissInstallBanner()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <script>
+        const gamesDB = [
+            {
+                id: 'kelime-ustadi',
+                title: 'Kelime Üstadı',
+                cat: 'KELİME',
+                mode: 'focus',
+                icon: '🦉',
+                color: '#7c5cff',
+                url: 'https://mugol-portal.github.io/kelime-ustadi/',
+                desc: 'Kelime dağarcığını ve mantığını konuştur, gizli kelimeyi en az tahminde bul.'
+            },
+            {
+                id: 'mugol-bilgin',
+                title: 'MuGöl Bilgin',
+                cat: 'GENEL KÜLTÜR',
+                mode: 'challenge',
+                icon: '🧠',
+                color: '#00e5c7',
+                url: 'https://mugol-portal.github.io/mugol-bilgin/',
+                desc: 'Farklı kategorilerde bilgi yarışması sorularını yanıtla, puanını yükselt.',
+                isNew: true
+            },
+            {
+                id: 'sakin-nefes',
+                title: 'Sakin Nefes',
+                cat: 'ZİHİN',
+                mode: 'relax',
+                icon: '🌙',
+                color: '#a8b4ff',
+                url: 'https://mugol-portal.github.io/sakin-nefes/',
+                desc: 'Rehberli nefes ritmiyle zihnini yavaşlat ve odaklan.',
+                isNew: true
+            },
+            {
+                id: 'sayi-avcisi',
+                title: 'Sayı Avcısı',
+                cat: 'MATEMATİK',
+                mode: 'focus',
+                icon: '🔢',
+                color: '#ffd23f',
+                url: 'https://mugol-portal.github.io/sayi-avcisi/',
+                desc: 'Hızlı zihinsel hesaplarla doğru sayıyı süre bitmeden yakala.',
+                isNew: true
+            }
+            // Yeni oyunlar buraya aynı formatta eklenebilir
+        ];
+
+        let favorites = JSON.parse(localStorage.getItem('mugolFavs')) || [];
+        let currentMode = 'all';
+        let currentSearch = '';
+
+        window.onload = () => {
+            renderGames(gamesDB);
+            updateFavCount();
+            trackStreak();
+            loadFontSize();
+            setupScrollListener();
+            registerServiceWorker();
+        };
+
+        function setupScrollListener() {
+            const content = document.getElementById('mainContent');
+            const btn = document.getElementById('scrollTopBtn');
+            content.addEventListener('scroll', () => {
+                btn.classList.toggle('show', content.scrollTop > 300);
+            });
+        }
+
+        function getActiveList() {
+            let list = currentMode === 'all' ? gamesDB : gamesDB.filter(g => g.mode === currentMode);
+            if (currentSearch.trim() !== '') {
+                const q = currentSearch.trim().toLocaleLowerCase('tr-TR');
+                list = list.filter(g =>
+                    g.title.toLocaleLowerCase('tr-TR').includes(q) ||
+                    g.cat.toLocaleLowerCase('tr-TR').includes(q)
+                );
+            }
+            return list;
+        }
+
+        function renderGames(games) {
+            const grid = document.getElementById('gameGrid');
+            grid.innerHTML = '';
+
+            if (games.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-heart-crack"></i>
+                        <p>Burada henüz bir şey yok.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            games.forEach(game => {
+                const isFav = favorites.includes(game.id);
+                grid.innerHTML += `
+                    <div class="card" onclick="window.location.href='${game.url}'">
+                        ${game.isNew ? '<div class="card-new-tag">YENİ</div>' : ''}
+                        <div class="fav-heart ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); toggleFav('${game.id}')">
+                            <i class="fa-solid fa-heart"></i>
+                        </div>
+                        <div class="card-preview" style="color: ${game.color}">${game.icon}</div>
+                        <div class="card-body">
+                            <div class="card-cat">${game.cat}</div>
+                            <div class="card-title">${game.title}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterBy(mode, el) {
+            document.querySelectorAll('.mode-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            currentMode = mode;
+            renderGames(getActiveList());
+        }
+
+        function handleSearch(value) {
+            currentSearch = value;
+            document.getElementById('searchClearBtn').classList.toggle('show', value.length > 0);
+            renderGames(getActiveList());
+        }
+
+        function clearSearch() {
+            currentSearch = '';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchClearBtn').classList.remove('show');
+            renderGames(getActiveList());
+        }
+
+        function surpriseMe() {
+            const pool = gamesDB;
+            const pick = pool[Math.floor(Math.random() * pool.length)];
+            window.location.href = pick.url;
+        }
+
+        function toggleFav(id) {
+            const idx = favorites.indexOf(id);
+            if(idx > -1) favorites.splice(idx, 1);
+            else favorites.push(id);
+            
+            localStorage.setItem('mugolFavs', JSON.stringify(favorites));
+            renderGames(getActiveList());
+            updateFavCount();
+        }
+
+        function toggleFavorites() {
+            const favGames = gamesDB.filter(g => favorites.includes(g.id));
+            renderGames(favGames);
+        }
+
+        function updateFavCount() {
+            const el = document.getElementById('favCount');
+            if (el) el.textContent = favorites.length;
+        }
+
+        function trackStreak() {
+            const today = new Date().toDateString();
+            const data = JSON.parse(localStorage.getItem('mugolStreak')) || { lastVisit: null, count: 0 };
+
+            if (data.lastVisit !== today) {
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                if (data.lastVisit === yesterday.toDateString()) {
+                    data.count += 1;
+                } else {
+                    data.count = 1;
+                }
+                data.lastVisit = today;
+                localStorage.setItem('mugolStreak', JSON.stringify(data));
+            }
+
+            const el = document.getElementById('streakCount');
+            if (el) el.textContent = data.count;
+        }
+
+        function openSettings() {
+            closeMenu();
+            document.getElementById('settingsOverlay').classList.add('open');
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsOverlay').classList.remove('open');
+        }
+
+        function setFontSize(size) {
+            document.body.classList.remove('font-small', 'font-large');
+            document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('active'));
+
+            if (size === 'small') {
+                document.body.classList.add('font-small');
+                document.getElementById('fontSmallBtn').classList.add('active');
+            } else if (size === 'large') {
+                document.body.classList.add('font-large');
+                document.getElementById('fontLargeBtn').classList.add('active');
+            } else {
+                document.getElementById('fontNormalBtn').classList.add('active');
+            }
+            localStorage.setItem('mugolFontSize', size);
+        }
+
+        function loadFontSize() {
+            const size = localStorage.getItem('mugolFontSize') || 'normal';
+            setFontSize(size);
+        }
+
+        function refreshApp() {
+            window.location.reload();
+        }
+
+        function resetAppData() {
+            if (confirm('Tüm favorilerin ve günlük serin silinecek. Emin misin?')) {
+                localStorage.removeItem('mugolFavs');
+                localStorage.removeItem('mugolStreak');
+                localStorage.removeItem('mugolFontSize');
+                window.location.reload();
+            }
+        }
+
+        function scrollToTop() {
+            document.getElementById('mainContent').scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function openMenu() {
+            document.getElementById('sideMenu').classList.add('open');
+            document.getElementById('menuOverlay').classList.add('open');
+        }
+
+        function closeMenu() {
+            document.getElementById('sideMenu').classList.remove('open');
+            document.getElementById('menuOverlay').classList.remove('open');
+        }
+
+        function openPrivacy() {
+            alert("Gizlilik Politikası: MuGöl IQ, kullanıcı verilerini sadece yerel tarayıcıda saklar. Üçüncü taraflarla veri paylaşımı yapılmaz.");
+        }
+
+        /* --- PWA: Kurulum ve Servis Çalışanı --- */
+        let deferredInstallPrompt = null;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            if (!localStorage.getItem('mugolInstallDismissed')) {
+                document.getElementById('installBanner').classList.add('show');
+            }
+        });
+
+        function installApp() {
+            const banner = document.getElementById('installBanner');
+            if (deferredInstallPrompt) {
+                deferredInstallPrompt.prompt();
+                deferredInstallPrompt.userChoice.finally(() => {
+                    deferredInstallPrompt = null;
+                    banner.classList.remove('show');
+                });
+            } else {
+                banner.classList.remove('show');
+            }
+        }
+
+        function dismissInstallBanner() {
+            document.getElementById('installBanner').classList.remove('show');
+            localStorage.setItem('mugolInstallDismissed', '1');
+        }
+
+        window.addEventListener('appinstalled', () => {
+            document.getElementById('installBanner').classList.remove('show');
+        });
+
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').catch(() => {
+                    /* sw.js bulunamazsa sessizce yok say, uygulama normal çalışmaya devam eder */
+                });
+            }
+        }
+    </script>
+</body>
+</html>
