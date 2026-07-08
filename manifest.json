@@ -2,7 +2,7 @@
   "name": "MuGöl IQ - Zihin Açan Oyunlar",
   "short_name": "MuGöl IQ",
   "description": "Kelime, mantık ve genel kültür oyunlarıyla zihnini taze tut.",
-  "start_url": "./mugol-iq-2-1.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
