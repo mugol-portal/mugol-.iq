@@ -178,6 +178,7 @@
         .icon-fav { background: linear-gradient(135deg, var(--coral), #d63384); }
         .icon-settings { background: linear-gradient(135deg, var(--accent), #5433c9); }
         .icon-portal { background: linear-gradient(135deg, var(--cyan), #00a896); }
+        .icon-install { background: linear-gradient(135deg, var(--spark), #ffb800); }
 
         .menu-divider { height: 1px; background: var(--line); margin: 18px 0; }
 
@@ -447,17 +448,7 @@
         <header class="header">
             <div class="brand">
                 <div class="brand-mark">
-                    <svg viewBox="0 0 42 42" fill="none">
-                        <line x1="10" y1="12" x2="21" y2="21" stroke="var(--line-strong)" stroke-width="1.5"/>
-                        <line x1="32" y1="10" x2="21" y2="21" stroke="var(--line-strong)" stroke-width="1.5"/>
-                        <line x1="10" y1="30" x2="21" y2="21" stroke="var(--line-strong)" stroke-width="1.5"/>
-                        <line x1="32" y1="32" x2="21" y2="21" stroke="var(--line-strong)" stroke-width="1.5"/>
-                        <circle class="node" cx="10" cy="12" r="3.4" fill="#7c5cff"/>
-                        <circle class="node" cx="32" cy="10" r="3.4" fill="#00e5c7"/>
-                        <circle class="node" cx="10" cy="30" r="3.4" fill="#ff6b8b"/>
-                        <circle class="node" cx="32" cy="32" r="3.4" fill="#ffd23f"/>
-                        <circle cx="21" cy="21" r="5.2" fill="#f3f5ff"/>
-                    </svg>
+                    <img src="logo.png" alt="MuGöl IQ Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 10px;">
                 </div>
                 <h1 class="brand-name">MuGöl <span class="iq-tag">IQ</span></h1>
             </div>
@@ -489,6 +480,15 @@
                     <div class="menu-item-text">
                         <div class="menu-item-title">Ayarlar</div>
                         <div class="menu-item-sub">Uygulama tercihleri</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right" style="color: var(--text-faint); font-size: 0.8rem;"></i>
+                </div>
+
+                <div class="menu-item" onclick="installApp(); closeMenu();">
+                    <div class="menu-item-icon icon-install"><i class="fa-solid fa-download"></i></div>
+                    <div class="menu-item-text">
+                        <div class="menu-item-title">Uygulamayı İndir</div>
+                        <div class="menu-item-sub">Ana ekrana ekle</div>
                     </div>
                     <i class="fa-solid fa-chevron-right" style="color: var(--text-faint); font-size: 0.8rem;"></i>
                 </div>
@@ -630,25 +630,25 @@
                 isNew: true
             },
             {
-                id: 'sakin-nefes',
-                title: 'Sakin Nefes',
-                cat: 'ZİHİN',
-                mode: 'relax',
-                icon: '🌙',
-                color: '#a8b4ff',
-                url: 'https://mugol-portal.github.io/sakin-nefes/',
-                desc: 'Rehberli nefes ritmiyle zihnini yavaşlat ve odaklan.',
+                id: 'kelime-puzzle-avi',
+                title: 'Kelime Puzzle Avı',
+                cat: 'KELİME',
+                mode: 'focus',
+                icon: '🧩',
+                color: '#ff6b8b',
+                url: 'https://mugol-portal.github.io/mugol-.iq/kelime_puzzle.html',
+                desc: 'Harfleri doğru sırala, gizlenen kelimeleri bulmaca gibi çöz.',
                 isNew: true
             },
             {
-                id: 'sayi-avcisi',
-                title: 'Sayı Avcısı',
-                cat: 'MATEMATİK',
-                mode: 'focus',
-                icon: '🔢',
+                id: 'adam-asmaca',
+                title: 'Adam Asmaca',
+                cat: 'KELİME',
+                mode: 'challenge',
+                icon: '🎯',
                 color: '#ffd23f',
-                url: 'https://mugol-portal.github.io/sayi-avcisi/',
-                desc: 'Hızlı zihinsel hesaplarla doğru sayıyı süre bitmeden yakala.',
+                url: 'https://mugol-portal.github.io/mugol-.iq/adam-asmaca.html',
+                desc: 'Harfleri tek tek tahmin et, hata payını aşmadan kelimeyi kurtar.',
                 isNew: true
             }
             // Yeni oyunlar buraya aynı formatta eklenebilir
