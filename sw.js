@@ -1,6 +1,6 @@
-const CACHE_NAME = 'mugol-iq-v5';
+const CACHE_NAME = 'mugol-iq-v6';
 const ASSETS_TO_CACHE = [
-  './mugol-iq.html',
+  './mugol-iq-2-1.html',
   './manifest.json'
 ];
 
