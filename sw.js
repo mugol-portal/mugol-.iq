@@ -1,7 +1,7 @@
-const CACHE_NAME = 'mugol-iq-v7';
+const CACHE_NAME = 'mugol-iq-v8';
 const ASSETS_TO_CACHE = [
-  './index.html',
-  './manifest.json'
+  'https://mugol-portal.github.io/mugol-.iq/index.html',
+  'https://mugol-portal.github.io/mugol-.iq/manifest.json'
 ];
 
 // Kurulum: temel varlıkları önbelleğe al
