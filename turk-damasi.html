@@ -1,0 +1,984 @@
+<!-- START OF FILE dama_v10_1_fixed.html -->
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Türk Daması Pro V10.1 - Fixed</title>
+    <meta name="theme-color" content="#1e1e24">
+    <style>
+        :root {
+            /* Tema Değişkenleri */
+            --bg-grad-1: #1e1e24;
+            --bg-grad-2: #2b2b36;
+            --panel-bg: rgba(35, 35, 45, 0.95);
+            --accent: #00d2d3;
+            --accent-glow: rgba(0, 210, 211, 0.5);
+            --board-light: #bdc3c7;
+            --board-dark: #7f8c8d;
+            --text-main: #ffffff;
+            --text-sub: #b2bec3;
+            --highlight: rgba(46, 204, 113, 0.8);
+            --blur: 15px;
+            --radius: 16px;
+        }
+
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; outline: none; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2));
+            color: var(--text-main);
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column; align-items: center;
+            height: 100vh; /* Fallback */
+            height: 100dvh; /* Dynamic viewport height for mobile */
+            overflow: hidden; /* Taşmayı engelle */
+            touch-action: manipulation;
+        }
+
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(var(--blur));
+            -webkit-backdrop-filter: blur(var(--blur));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        .main-container {
+            display: flex; flex-direction: column; align-items: center;
+            width: 100%; max-width: 600px; height: 100%;
+            padding: 10px; justify-content: space-between;
+        }
+
+        /* --- ÜST PANEL (SKOR & AVATAR) --- */
+        .hud-panel {
+            width: 100%; display: grid; grid-template-columns: 1fr auto 1fr;
+            align-items: center; padding: 8px 10px; border-radius: var(--radius); gap: 5px;
+            flex-shrink: 0; /* Küçülmesini engelle */
+        }
+
+        .player-card {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 5px; border-radius: 12px; transition: 0.3s;
+            border: 1px solid transparent; position: relative;
+        }
+        
+        .avatar {
+            font-size: 1.8rem; margin-bottom: 2px; filter: grayscale(1); transition: 0.3s;
+            background: rgba(255,255,255,0.05); border-radius: 50%; width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        
+        .player-active .avatar {
+            filter: grayscale(0); transform: scale(1.1);
+            box-shadow: 0 0 15px var(--accent-glow);
+            border: 2px solid var(--accent);
+            animation: pulse-avatar 2s infinite;
+        }
+        
+        .player-name { font-size: 0.7rem; font-weight: 700; color: var(--text-sub); margin-top: 2px; white-space: nowrap; }
+        .player-active .player-name { color: var(--accent); }
+
+        .timer {
+            font-family: 'Courier New', monospace; font-size: 0.85rem; font-weight: bold;
+            background: rgba(0, 0, 0, 0.3); padding: 2px 5px; border-radius: 4px;
+            color: #777; margin-top: 2px;
+        }
+        .player-active .timer { background: var(--accent); color: #000; }
+
+        .graveyard { display: flex; height: 10px; margin-top: 4px; gap: 2px; justify-content: center; flex-wrap: wrap; }
+        .dead-piece { width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+
+        .center-status { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .status-pill {
+            background: var(--accent); color: #1e1e24; padding: 4px 10px;
+            border-radius: 20px; font-weight: 800; font-size: 0.7rem;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            box-shadow: 0 0 10px var(--accent-glow); white-space: nowrap;
+        }
+
+        /* --- TAHTA --- */
+        .board-wrapper {
+            position: relative; padding: 10px; border-radius: var(--radius);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            /* Esnek boyutlandırma */
+            display: flex; justify-content: center; align-items: center;
+            flex-grow: 1; /* Boş alanı kapla */
+            width: 100%;
+            max-height: 55vh; /* Çok uzamasını engelle */
+        }
+
+        .board {
+            display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr);
+            /* En önemli düzeltme: vmin kullanımı */
+            width: 88vmin; height: 88vmin; 
+            max-width: 400px; max-height: 400px;
+            border: 4px solid rgba(255,255,255,0.1); border-radius: 6px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .cell { position: relative; display: flex; align-items: center; justify-content: center; }
+        .cell.light { background-color: var(--board-light); }
+        .cell.dark { background-color: var(--board-dark); }
+        
+        .coord {
+            position: absolute; font-size: 10px; font-weight: bold;
+            color: var(--text-sub); pointer-events: none; opacity: 0.7;
+        }
+        .c-num { left: -15px; top: 40%; }
+        .c-alpha { bottom: -20px; left: 42%; }
+
+        /* --- TAŞLAR --- */
+        .piece {
+            width: 80%; height: 80%; border-radius: 50%;
+            position: relative; z-index: 2;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.5), inset 0 2px 5px rgba(255,255,255,0.3);
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; justify-content: center; align-items: center;
+        }
+        .piece::before {
+            content:''; position: absolute; width: 70%; height: 70%;
+            border-radius: 50%; border: 2px solid rgba(0,0,0,0.1);
+        }
+        .piece.white { background: radial-gradient(circle at 30% 30%, #ffffff, #bdc3c7); }
+        .piece.black { background: radial-gradient(circle at 30% 30%, #444, #111); border: 1px solid #000; }
+        .piece.selected { box-shadow: 0 0 0 3px var(--accent); transform: scale(1.15); z-index: 10; }
+        .king::after { content: '👑'; font-size: 1.5rem; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.8)); position: absolute; top: -8px; }
+
+        .captured-anim { animation: vanish 0.4s forwards; }
+        @keyframes vanish { to { transform: scale(0) rotate(180deg); opacity: 0; } }
+
+        .valid-move {
+            position: absolute; width: 30%; height: 30%;
+            background: var(--highlight); border-radius: 50%;
+            pointer-events: none; animation: pulse 2s infinite; z-index: 1;
+            box-shadow: 0 0 5px var(--highlight);
+        }
+        .valid-move.kill { background: #e74c3c; width: 40%; height: 40%; box-shadow: 0 0 8px #e74c3c; }
+        .hint-move { background: #f1c40f !important; width: 50%; height: 50%; opacity: 0.8; animation: ping 1s infinite; }
+
+        @keyframes pulse { 0% {transform: scale(0.9);} 50% {transform: scale(1.1);} 100% {transform: scale(0.9);} }
+        @keyframes pulse-avatar { 0% {box-shadow: 0 0 0 0 rgba(0, 210, 211, 0.4);} 70% {box-shadow: 0 0 0 10px rgba(0, 210, 211, 0);} 100% {box-shadow: 0 0 0 0 rgba(0, 210, 211, 0);} }
+        @keyframes ping { 0% {transform: scale(0.8); opacity: 0.8;} 100% {transform: scale(1.5); opacity: 0;} }
+
+        /* --- KONTROLLER --- */
+        .controls {
+            width: 100%; display: flex; gap: 8px; justify-content: space-between;
+            padding-top: 10px; flex-shrink: 0;
+            max-height: 180px;
+        }
+
+        .log-panel {
+            flex: 1; border-radius: 12px; overflow-y: auto; padding: 8px;
+            font-size: 0.8rem; font-family: monospace; color: var(--text-sub);
+            border: 1px solid rgba(255,255,255,0.05);
+            background: rgba(0,0,0,0.2);
+            scrollbar-width: thin;
+            height: 120px; /* Sabit yükseklik taşmayı önler */
+        }
+        .log-entry { 
+            border-bottom: 1px solid rgba(255,255,255,0.05); padding: 2px 0; 
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .btn-group {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+            width: 90px; flex-shrink: 0;
+        }
+
+        .btn {
+            background: linear-gradient(145deg, #34495e, #2c3e50);
+            color: white; border: none; padding: 0; height: 38px; width: 100%;
+            border-radius: 8px; cursor: pointer; font-size: 1.1rem;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.1s;
+        }
+        .btn:active { transform: scale(0.92); }
+        .btn-menu { background: linear-gradient(145deg, #e67e22, #d35400); grid-column: span 2; }
+        .btn-surrender { background: linear-gradient(145deg, #c0392b, #a93226); }
+        .btn-draw { background: linear-gradient(145deg, #8e44ad, #9b59b6); }
+        .btn-hint { background: linear-gradient(145deg, #f1c40f, #f39c12); color: #333; }
+        .btn-undo { background: linear-gradient(145deg, #2980b9, #3498db); }
+
+        /* --- MODAL --- */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 2000; opacity: 0; visibility: hidden; transition: 0.3s;
+        }
+        .modal.active { opacity: 1; visibility: visible; }
+        
+        .modal-box {
+            padding: 20px; border-radius: 20px; width: 85%; max-width: 320px;
+            text-align: center; max-height: 85vh; overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+        .modal-box h2 { 
+            margin-top: 0; color: var(--accent); 
+            border-bottom: 2px solid var(--accent); 
+            display: inline-block; padding-bottom: 5px; 
+            letter-spacing: 2px; font-size: 1.3rem;
+        }
+
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; }
+        .stat-item span { display: block; font-size: 1.4rem; font-weight: bold; margin-bottom: 2px; }
+        
+        select, button.full { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: none; font-size: 0.95rem; outline: none; }
+        select { background: #2c3e50; color: white; border: 1px solid #444; appearance: none; padding-left: 10px; }
+        button.full { margin-top: 15px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-primary { background: var(--accent); color: #000; box-shadow: 0 4px 15px var(--accent-glow); }
+        .btn-secondary { background: #555; color: #fff; }
+        
+        .setting-row { margin: 12px 0; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; }
+        .setting-row label { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; color: #ddd; margin-bottom: 5px; }
+        
+        .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #444; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent); }
+        input:checked + .slider:before { transform: translateX(18px); }
+
+        /* Game Over */
+        .winner-icon { font-size: 4rem; margin-bottom: 10px; display: block; animation: bounce 2s infinite; text-shadow: 0 0 30px rgba(255,255,255,0.3); }
+        .winner-text { font-size: 1.8rem; margin: 10px 0; font-weight: 900; background: -webkit-linear-gradient(#fff, #999); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        #toast {
+            position: fixed; bottom: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9); color: var(--accent); padding: 15px 30px;
+            border-radius: 30px; font-weight: bold; opacity: 0; transition: 0.3s;
+            pointer-events: none; z-index: 3000; width: max-content; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            border: 1px solid var(--accent); font-size: 1.1rem;
+        }
+        #toast.show { opacity: 1; }
+
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; }
+        
+        .fs-btn { background: transparent; border: none; font-size: 1.4rem; color: rgba(255,255,255,0.5); cursor: pointer; padding: 0 5px; }
+        .fs-btn:hover { color: #fff; }
+    </style>
+</head>
+<body>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- GİRİŞ / ANA SAYFA EKRANI -->
+    <div class="modal active" id="start-modal" style="z-index:5000;">
+        <div class="modal-box glass-panel" style="max-width:340px;">
+            <h2 style="border:none; letter-spacing:3px;">🔴 TÜRK DAMASI ⚫</h2>
+            <p style="color:var(--text-sub); font-size:0.85rem; margin:10px 0 18px;">
+                Bir taraf siyah, bir taraf beyaz. Oyuna başlamak veya çıkmak için aşağıdan seçim yapın.
+            </p>
+            <button class="full btn-primary" onclick="enterGame()">🔴 OYUNA BAŞLA</button>
+            <button class="full btn-secondary" onclick="exitGame()">🚪 OYUNDAN ÇIK</button>
+        </div>
+    </div>
+
+    <div class="main-container" style="visibility:hidden;" id="main-container">
+        
+        <!-- ÜST PANEL -->
+        <div class="hud-panel glass-panel">
+            <div class="player-card" id="p-card-black">
+                <div class="avatar" id="avatar-b">🤖</div>
+                <div class="player-name" id="name-b">AI Usta</div>
+                <div class="timer" id="timer-b">10:00</div>
+                <div class="graveyard" id="dead-w"></div>
+            </div>
+            
+            <div class="center-status">
+                <div class="status-pill" id="game-status">BEYAZ</div>
+                <button class="fs-btn" onclick="toggleFullScreen()" title="Tam Ekran">⛶</button>
+            </div>
+
+            <div class="player-card" id="p-card-white">
+                <div class="avatar" id="avatar-w">👤</div>
+                <div class="player-name" id="name-w">SEN</div>
+                <div class="timer active-timer" id="timer-w">10:00</div>
+                <div class="graveyard" id="dead-b"></div>
+            </div>
+        </div>
+
+        <!-- OYUN ALANI -->
+        <div class="board-wrapper glass-panel">
+            <div class="board" id="board"></div>
+        </div>
+
+        <!-- ALT KONTROLLER -->
+        <div class="controls">
+            <div class="log-panel glass-panel" id="move-log">
+                <div style="color:var(--text-sub); font-style:italic; text-align:center; padding-top:10px;">V10.1 Hazır. Başarılar!</div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-menu" onclick="toggleMenu('settings')">⚙️</button>
+                <button class="btn btn-undo" onclick="undoMove()" title="Geri Al">↩️</button>
+                <button class="btn btn-hint" onclick="showHint()" title="İpucu">💡</button>
+                <button class="btn btn-draw" onclick="offerDraw()" title="Beraberlik">🤝</button>
+                <button class="btn btn-surrender" onclick="surrender()" title="Pes Et">🏳️</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST MESAJ -->
+    <div id="toast">Bildirim</div>
+
+    <!-- AYARLAR MODAL -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-box glass-panel">
+            <h2>AYARLAR</h2>
+
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span id="stat-wins" style="color:#2ecc71">0</span>
+                    <label style="font-size:0.8rem; color:#aaa">GALİBİYET</label>
+                </div>
+                <div class="stat-item">
+                    <span id="stat-losses" style="color:#e74c3c">0</span>
+                    <label style="font-size:0.8rem; color:#aaa">YENİLGİ</label>
+                </div>
+            </div>
+            
+            <div class="setting-row">
+                <label>🎮 Oyun Modu:</label>
+                <select id="mode-select" onchange="updateModeLabel()">
+                    <option value="ai">Yapay Zeka (AI)</option>
+                    <option value="pvp">2 Kişilik (Aynı Cihaz)</option>
+                </select>
+            </div>
+
+            <div class="setting-row">
+                <label>🎨 Tema:</label>
+                <select id="theme-select" onchange="changeTheme(this.value)">
+                    <option value="modern">Modern Titanyum</option>
+                    <option value="classic">Klasik Çuha</option>
+                    <option value="wood">Ceviz Ağacı</option>
+                    <option value="neon">Siber Neon</option>
+                </select>
+            </div>
+
+            <div class="setting-row">
+                <label>🔊 Ses Efektleri:
+                    <label class="switch">
+                        <input type="checkbox" id="sound-toggle" onchange="toggleSound(this.checked)" checked>
+                        <span class="slider"></span>
+                    </label>
+                </label>
+            </div>
+
+            <div class="setting-row" id="diff-row">
+                <label>🧠 AI Seviyesi:</label>
+                <select id="diff-select">
+                    <option value="easy">Çırak</option>
+                    <option value="hard" selected>Usta</option>
+                </select>
+            </div>
+
+            <button class="full btn-primary" onclick="confirmRestart()">KAYDET & YENİ OYUN</button>
+            <button class="full btn-secondary" onclick="toggleMenu('settings', false)">DEVAM ET</button>
+        </div>
+    </div>
+
+    <!-- OYUN BITTI MODAL -->
+    <div class="modal" id="game-over-modal">
+        <div class="modal-box glass-panel">
+            <span class="winner-icon" id="go-icon">🏆</span>
+            <h2 style="border:none">OYUN BİTTİ</h2>
+            <div class="winner-text" id="go-text">KAZANDINIZ!</div>
+            <div style="font-size:0.9rem; color:#aaa; margin-bottom:20px;" id="go-subtext">Rakibin hamlesi kalmadı.</div>
+            
+            <button class="full btn-primary" onclick="restartGame()">YENİ OYUN BAŞLAT</button>
+            <button class="full btn-secondary" onclick="toggleMenu('game-over', false); toggleMenu('settings', true)">AYARLAR</button>
+            <button class="full btn-secondary" onclick="backToHome()">🏠 ANA SAYFA</button>
+        </div>
+    </div>
+
+    <script>
+        // --- TEMA VE SABİTLER ---
+        const THEMES = {
+            modern: { '--bg-grad-1': '#1e1e24', '--bg-grad-2': '#2b2b36', '--panel-bg': 'rgba(35, 35, 45, 0.95)', '--accent': '#00d2d3', '--accent-glow': 'rgba(0, 210, 211, 0.5)', '--board-light': '#bdc3c7', '--board-dark': '#7f8c8d', '--text-main': '#ffffff' },
+            classic: { '--bg-grad-1': '#f0f2f5', '--bg-grad-2': '#dff9fb', '--panel-bg': 'rgba(255, 255, 255, 0.95)', '--accent': '#27ae60', '--accent-glow': 'rgba(39, 174, 96, 0.4)', '--board-light': '#eeeed2', '--board-dark': '#769656', '--text-main': '#2c3e50' },
+            wood: { '--bg-grad-1': '#3e2723', '--bg-grad-2': '#251612', '--panel-bg': 'rgba(62, 39, 35, 0.95)', '--accent': '#ffb74d', '--accent-glow': 'rgba(255, 183, 77, 0.4)', '--board-light': '#d7ccc8', '--board-dark': '#8d6e63', '--text-main': '#fff3e0' },
+            neon: { '--bg-grad-1': '#050510', '--bg-grad-2': '#130f40', '--panel-bg': 'rgba(10, 10, 20, 0.95)', '--accent': '#f368e0', '--accent-glow': 'rgba(243, 104, 224, 0.6)', '--board-light': '#2d3436', '--board-dark': '#0984e3', '--text-main': '#ffffff' }
+        };
+
+        const SIZE = 8, WHITE = 'white', BLACK = 'black';
+        let board = [], turn = WHITE, selected = null, moves = [];
+        let mustCapture = null, history = [];
+        let timeW = 600, timeB = 600, timerInterval = null, isGameOver = false;
+        let gameMode = 'ai', stats = { wins: 0, losses: 0 };
+        let soundEnabled = true;
+
+        // --- SES MOTORU ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function resumeAudio() { if(audioCtx.state === 'suspended') audioCtx.resume(); }
+        document.body.addEventListener('click', resumeAudio, {once:true});
+        document.body.addEventListener('touchstart', resumeAudio, {once:true});
+
+        function playSound(type) {
+            if(!soundEnabled) return;
+            const t = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            
+            if(type === 'move') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(250, t); osc.frequency.exponentialRampToValueAtTime(50, t+0.1);
+                gain.gain.setValueAtTime(0.2, t); gain.gain.linearRampToValueAtTime(0, t+0.1);
+                osc.start(t); osc.stop(t+0.1);
+            } else if(type === 'capture') {
+                osc.type = 'square'; osc.frequency.setValueAtTime(150, t); osc.frequency.linearRampToValueAtTime(400, t+0.1);
+                gain.gain.setValueAtTime(0.1, t); gain.gain.linearRampToValueAtTime(0, t+0.15);
+                osc.start(t); osc.stop(t+0.15);
+            } else if(type === 'king') {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(400, t); osc.frequency.linearRampToValueAtTime(800, t+0.2);
+                gain.gain.setValueAtTime(0.2, t); gain.gain.linearRampToValueAtTime(0, t+0.4);
+                osc.start(t); osc.stop(t+0.4);
+            } else if(type === 'win') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(300, t); 
+                osc.frequency.setValueAtTime(300, t); osc.frequency.linearRampToValueAtTime(600, t+0.2);
+                gain.gain.setValueAtTime(0.3, t); gain.gain.linearRampToValueAtTime(0, t+0.6);
+                osc.start(t); osc.stop(t+0.6);
+            }
+        }
+
+        function init() {
+            loadSettings();
+            createBoardHTML();
+            
+            const savedGame = localStorage.getItem('dama_save_v10');
+            if(savedGame) {
+                try {
+                    loadGame(JSON.parse(savedGame));
+                    toast("Kayıtlı oyun yüklendi 💾");
+                } catch(e) { startGame(); }
+            } else {
+                startGame();
+            }
+        }
+
+        function loadSettings() {
+            const s = localStorage.getItem('dama_stats_v10');
+            if(s) stats = JSON.parse(s);
+            document.getElementById('stat-wins').innerText = stats.wins;
+            document.getElementById('stat-losses').innerText = stats.losses;
+
+            const t = localStorage.getItem('dama_theme') || 'modern';
+            document.getElementById('theme-select').value = t;
+            changeTheme(t);
+
+            const snd = localStorage.getItem('dama_sound');
+            soundEnabled = snd === null ? true : (snd === 'true');
+            document.getElementById('sound-toggle').checked = soundEnabled;
+        }
+
+        function changeTheme(name) {
+            const t = THEMES[name] || THEMES.modern;
+            for(let k in t) document.documentElement.style.setProperty(k, t[k]);
+            localStorage.setItem('dama_theme', name);
+        }
+
+        function toggleSound(val) { soundEnabled = val; localStorage.setItem('dama_sound', val); }
+
+        function confirmRestart() {
+            if(confirm("Mevcut oyun silinecek. Emin misiniz?")) {
+                gameMode = document.getElementById('mode-select').value;
+                localStorage.setItem('dama_mode', gameMode);
+                toggleMenu('settings', false);
+                startGame();
+            }
+        }
+        
+        function restartGame() {
+            toggleMenu('game-over', false);
+            startGame();
+        }
+
+        function updateModeLabel() {
+            const m = document.getElementById('mode-select').value;
+            document.getElementById('diff-row').style.display = (m === 'ai') ? 'block' : 'none';
+        }
+
+        function startGame() {
+            gameMode = document.getElementById('mode-select').value;
+            updateModeLabel();
+            timeW = timeB = 600;
+            
+            board = Array(SIZE).fill(null).map(() => Array(SIZE).fill(null));
+            for(let r=0; r<SIZE; r++) for(let c=0; c<SIZE; c++) {
+                if(r===1 || r===2) board[r][c] = {color: BLACK, king: false};
+                else if(r===5 || r===6) board[r][c] = {color: WHITE, king: false};
+            }
+
+            turn = WHITE; selected = null; moves = []; mustCapture = null; history = []; isGameOver = false;
+            localStorage.removeItem('dama_save_v10'); 
+
+            document.getElementById('move-log').innerHTML = '<div style="color:var(--text-sub); text-align:center; padding-top:10px;">Oyun Başladı</div>';
+            document.getElementById('dead-w').innerHTML = '';
+            document.getElementById('dead-b').innerHTML = '';
+            
+            updatePlayerInfo();
+            stopConfetti(); render();
+            updateStatus("Sıra: BEYAZ");
+            highlightPlayer(WHITE);
+
+            if(timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(gameLoopTimer, 1000);
+            updateTimerDisplay();
+        }
+
+        function updatePlayerInfo() {
+            if(gameMode === 'ai') {
+                document.getElementById('name-b').innerText = "AI USTA";
+                document.getElementById('avatar-b').innerText = "🤖";
+                document.getElementById('name-w').innerText = "SEN";
+                document.getElementById('avatar-w').innerText = "👤";
+            } else {
+                document.getElementById('name-b').innerText = "2. OYUNCU";
+                document.getElementById('avatar-b').innerText = "👤";
+                document.getElementById('name-w').innerText = "1. OYUNCU";
+                document.getElementById('avatar-w').innerText = "👤";
+            }
+        }
+
+        function createBoardHTML() {
+            const container = document.getElementById('board');
+            const wrapper = document.querySelector('.board-wrapper');
+            container.innerHTML = '';
+            wrapper.querySelectorAll('.coord').forEach(e => e.remove());
+            
+            for(let r=0; r<SIZE; r++) {
+                let num = document.createElement('div');
+                num.className = 'coord c-num'; num.innerText = 8-r;
+                num.style.top = (r*12.5 + 5) + '%';
+                wrapper.appendChild(num);
+
+                for(let c=0; c<SIZE; c++) {
+                    let cell = document.createElement('div');
+                    cell.className = 'cell ' + ((r+c)%2===0 ? 'light' : 'dark');
+                    cell.dataset.r = r; cell.dataset.c = c;
+                    cell.onclick = () => handleClick(r, c);
+                    container.appendChild(cell);
+                    if(r===7) {
+                        let alpha = document.createElement('div');
+                        alpha.className = 'coord c-alpha'; alpha.innerText = ['A','B','C','D','E','F','G','H'][c];
+                        alpha.style.left = (c*12.5 + 5) + '%';
+                        wrapper.appendChild(alpha);
+                    }
+                }
+            }
+        }
+
+        // --- OYUN MANTIĞI ---
+        function handleClick(r, c) {
+            if(isGameOver || (gameMode === 'ai' && turn === BLACK)) return;
+            
+            const p = board[r][c];
+            const move = moves.find(m => m.toR === r && m.toC === c);
+            if(move) { userMove(move); return; }
+            
+            if(p && p.color === turn) {
+                if(mustCapture && (mustCapture.r !== r || mustCapture.c !== c)) { toast("Zorunlu yeme var! ⚠️"); return; }
+                if(!mustCapture && checkGlobalCapture(turn) && !canCapture(r, c, p)) { toast("Yeme zorunluluğu! ⚔️"); return; }
+
+                selected = {r, c};
+                let raw = getMoves(r, c, p);
+                moves = checkGlobalCapture(turn) ? raw.filter(m => m.captured) : raw;
+                playSound('move'); render();
+            } else if(!mustCapture) {
+                selected = null; moves = []; render();
+            }
+        }
+
+        function userMove(move) {
+            saveHistory();
+            executeMove(move);
+        }
+
+        function executeMove(move) {
+            const p = board[move.fromR][move.fromC];
+            logMove(move, p);
+            board[move.toR][move.toC] = p;
+            board[move.fromR][move.fromC] = null;
+
+            let captured = false;
+            if(move.captured) {
+                const cell = document.querySelector(`.cell[data-r="${move.captured.r}"][data-c="${move.captured.c}"]`);
+                if(cell && cell.firstChild) cell.firstChild.classList.add('captured-anim');
+                board[move.captured.r][move.captured.c] = null;
+                captured = true; 
+                playSound('capture');
+                addGraveyard(p.color === WHITE ? BLACK : WHITE);
+            } else { playSound('move'); }
+
+            if(!p.king && ((p.color === WHITE && move.toR === 0) || (p.color === BLACK && move.toR === 7))) {
+                p.king = true; toast("👑 DAMA OLUŞTU!"); playSound('king');
+            }
+
+            let chain = false;
+            if(captured) {
+                const next = getMoves(move.toR, move.toC, p).filter(m => m.captured);
+                if(next.length > 0) {
+                    chain = true; mustCapture = {r: move.toR, c: move.toC};
+                    if(gameMode === 'pvp' || turn === WHITE) { selected = {r:move.toR, c:move.toC}; moves = next; }
+                }
+            }
+
+            render();
+            if(chain) {
+                if(gameMode === 'ai' && turn === BLACK) setTimeout(aiThink, 600);
+                else saveGame(); 
+            } else {
+                endTurn();
+            }
+        }
+
+        function endTurn() {
+            moves = []; selected = null; mustCapture = null;
+            checkWin(); if(isGameOver) { localStorage.removeItem('dama_save_v10'); return; }
+            
+            turn = (turn === WHITE) ? BLACK : WHITE;
+            updateStatus(turn === WHITE ? "BEYAZ" : "SİYAH");
+            highlightPlayer(turn);
+            updateTimerDisplay();
+            saveGame();
+
+            if(gameMode === 'ai' && turn === BLACK) setTimeout(aiThink, 800);
+        }
+
+        // --- AI (GELİŞMİŞ) ---
+        function aiThink() {
+            if(isGameOver) return;
+            let possibleMoves = [];
+            
+            if(mustCapture) {
+                const p = board[mustCapture.r][mustCapture.c];
+                possibleMoves = getMoves(mustCapture.r, mustCapture.c, p).filter(m => m.captured);
+            } else {
+                const globalCap = checkGlobalCapture(BLACK);
+                for(let r=0; r<SIZE; r++) for(let c=0; c<SIZE; c++) {
+                    const p = board[r][c];
+                    if(p && p.color === BLACK) {
+                        let ms = getMoves(r, c, p);
+                        if(globalCap) ms = ms.filter(m => m.captured);
+                        possibleMoves.push(...ms);
+                    }
+                }
+            }
+
+            if(possibleMoves.length === 0) { endGame(WHITE, "Siyahın hamlesi kalmadı."); return; }
+
+            const diff = document.getElementById('diff-select').value;
+            let chosenMove;
+
+            if(diff === 'easy') {
+                chosenMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+            } else {
+                possibleMoves.forEach(m => {
+                    let score = Math.random() * 5; 
+                    if(m.captured) score += 50; 
+                    if(m.toR === 7 && !board[m.fromR][m.fromC].king) score += 30;
+                    if(m.toC===0 || m.toC===7) score += 10;
+                    if(m.fromR === 0) score -= 5;
+                    m.score = score;
+                });
+                possibleMoves.sort((a,b) => b.score - a.score);
+                chosenMove = possibleMoves[0];
+            }
+            executeMove(chosenMove);
+        }
+
+        // --- SAVE SYSTEM ---
+        function saveGame() {
+            if(isGameOver) return;
+            const state = {
+                board: board, turn: turn, timeW: timeW, timeB: timeB,
+                gameMode: gameMode, mustCapture: mustCapture
+            };
+            localStorage.setItem('dama_save_v10', JSON.stringify(state));
+        }
+
+        function loadGame(state) {
+            board = state.board; turn = state.turn;
+            timeW = state.timeW; timeB = state.timeB;
+            gameMode = state.gameMode || 'ai';
+            mustCapture = state.mustCapture;
+            
+            document.getElementById('mode-select').value = gameMode;
+            updateModeLabel(); updatePlayerInfo(); highlightPlayer(turn);
+            render(); updateTimerDisplay();
+        }
+
+        // --- KURALLAR ---
+        function getMoves(r, c, p) {
+            let m = [];
+            const dir = p.color === WHITE ? -1 : 1;
+            
+            if(!p.king) {
+                [[dir,0], [0,-1], [0,1]].forEach(d => {
+                    const nr = r+d[0], nc = c+d[1];
+                    if(inBoard(nr,nc)) {
+                        if(board[nr][nc] === null) m.push({fromR:r, fromC:c, toR:nr, toC:nc});
+                        else if(board[nr][nc].color !== p.color) {
+                            const jr = nr+d[0], jc = nc+d[1];
+                            if(inBoard(jr,jc) && board[jr][jc] === null) m.push({fromR:r, fromC:c, toR:jr, toC:jc, captured:{r:nr, c:nc}});
+                        }
+                    }
+                });
+            } else {
+                [[-1,0], [1,0], [0,-1], [0,1]].forEach(d => {
+                    let i=1, cap=null;
+                    while(true) {
+                        const nr = r+d[0]*i, nc = c+d[1]*i;
+                        if(!inBoard(nr,nc)) break;
+                        const cell = board[nr][nc];
+                        if(cell === null) m.push({fromR:r, fromC:c, toR:nr, toC:nc, captured:cap});
+                        else {
+                            if(cell.color === p.color) break;
+                            else { if(cap) break; cap={r:nr, c:nc}; }
+                        }
+                        i++;
+                    }
+                });
+            }
+            return m;
+        }
+
+        function checkGlobalCapture(color) {
+            for(let r=0; r<SIZE; r++) for(let c=0; c<SIZE; c++) {
+                const p = board[r][c];
+                if(p && p.color === color && getMoves(r,c,p).some(m=>m.captured)) return true;
+            }
+            return false;
+        }
+        function canCapture(r, c, p) { return getMoves(r, c, p).some(m => m.captured); }
+        function inBoard(r, c) { return r>=0 && r<SIZE && c>=0 && c<SIZE; }
+
+        function checkWin() {
+            let w=0, b=0;
+            for(let r=0; r<SIZE; r++) for(let c=0; c<SIZE; c++) {
+                if(board[r][c]?.color === WHITE) w++; else if(board[r][c]?.color === BLACK) b++;
+            }
+            if(w===0) endGame(BLACK, "Beyazın taşı kalmadı.");
+            else if(b===0) endGame(WHITE, "Siyahın taşı kalmadı.");
+        }
+
+        function offerDraw() {
+            if(isGameOver) return;
+            if(gameMode === 'ai') {
+                if(confirm("AI Usta'ya beraberlik teklif ediyorsun. Kabul edilsin mi?")) {
+                    endGame(null, "Anlaşmalı Beraberlik.");
+                }
+            } else {
+                if(confirm("Rakibine beraberlik teklif ediyorsun. Rakip kabul ediyor mu?")) {
+                    endGame(null, "Dostça Beraberlik.");
+                }
+            }
+        }
+
+        function surrender() {
+            if(isGameOver) return;
+            if(!confirm("Oyunu kaybetmiş sayılacaksınız. Emin misiniz?")) return;
+            endGame(turn === WHITE ? BLACK : WHITE, turn === WHITE ? "Beyaz pes etti." : "Siyah pes etti.");
+        }
+
+        function endGame(winner, msg) {
+            isGameOver = true; 
+            clearInterval(timerInterval);
+            localStorage.removeItem('dama_save_v10');
+            
+            if(winner === null) {
+                document.getElementById('go-icon').innerText = "🤝";
+                document.getElementById('go-text').innerText = "BERABERE";
+                document.getElementById('go-text').style.background = "#aaa";
+                document.getElementById('go-text').style.webkitTextFillColor = "#aaa";
+                playSound('win');
+            } else {
+                if(gameMode === 'ai') {
+                    if(winner === WHITE) { 
+                        stats.wins++; playSound('win'); startConfetti(); 
+                        document.getElementById('go-icon').innerText = "🏆";
+                        document.getElementById('go-text').innerText = "KAZANDINIZ!";
+                        document.getElementById('go-text').style.background = "-webkit-linear-gradient(#f1c40f, #f39c12)";
+                        document.getElementById('go-text').style.webkitTextFillColor = "transparent";
+                    } else { 
+                        stats.losses++; playSound('win');
+                        document.getElementById('go-icon').innerText = "💀";
+                        document.getElementById('go-text').innerText = "KAYBETTİNİZ";
+                        document.getElementById('go-text').style.background = "-webkit-linear-gradient(#e74c3c, #c0392b)";
+                        document.getElementById('go-text').style.webkitTextFillColor = "transparent";
+                    }
+                    localStorage.setItem('dama_stats_v10', JSON.stringify(stats));
+                    document.getElementById('stat-wins').innerText = stats.wins;
+                    document.getElementById('stat-losses').innerText = stats.losses;
+                } else {
+                    playSound('win'); startConfetti();
+                    document.getElementById('go-icon').innerText = "🎉";
+                    const wText = winner === WHITE ? "BEYAZ KAZANDI" : "SİYAH KAZANDI";
+                    document.getElementById('go-text').innerText = wText;
+                    document.getElementById('go-text').style.background = winner === WHITE ? "#fff" : "#aaa";
+                    document.getElementById('go-text').style.webkitTextFillColor = winner === WHITE ? "#fff" : "#aaa";
+                }
+            }
+            
+            document.getElementById('go-subtext').innerText = msg;
+            updateStatus("OYUN BİTTİ");
+            setTimeout(() => { toggleMenu('game-over', true); }, 1000);
+        }
+
+        function updateStatus(msg) { document.getElementById('game-status').innerText = msg; }
+        
+        function highlightPlayer(t) {
+            document.getElementById('p-card-white').classList.toggle('player-active', t===WHITE);
+            document.getElementById('p-card-black').classList.toggle('player-active', t===BLACK);
+        }
+
+        function updateTimerDisplay() {
+            const tw = document.getElementById('timer-w'), tb = document.getElementById('timer-b');
+            tw.innerText = fmt(timeW); tb.innerText = fmt(timeB);
+        }
+        function fmt(s) { const m=Math.floor(s/60), sec=s%60; return `${m}:${sec<10?'0'+sec:sec}`; }
+        function gameLoopTimer() {
+            if(isGameOver) return;
+            if(turn === WHITE) { timeW--; if(timeW<=0) endGame(BLACK, "Süre bitti"); }
+            else { timeB--; if(timeB<=0) endGame(WHITE, "Süre bitti"); }
+            updateTimerDisplay();
+            if(timeW % 10 === 0) saveGame(); 
+        }
+
+        function render() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.innerHTML = ''; cell.classList.remove('last-move');
+                const r = parseInt(cell.dataset.r), c = parseInt(cell.dataset.c);
+                if(board[r][c]) {
+                    const pd = document.createElement('div');
+                    pd.className = `piece ${board[r][c].color} ${board[r][c].king?'king':''}`;
+                    if(selected && selected.r===r && selected.c===c) pd.classList.add('selected');
+                    cell.appendChild(pd);
+                }
+                const mv = moves.find(m => m.toR===r && m.toC===c);
+                if(mv) {
+                    const dot = document.createElement('div');
+                    dot.className = 'valid-move' + (mv.captured ? ' kill' : '');
+                    cell.appendChild(dot);
+                }
+            });
+        }
+
+        function showHint() {
+            if(isGameOver || (gameMode==='ai' && turn===BLACK)) return;
+            const global = checkGlobalCapture(turn);
+            let all = [];
+            for(let r=0; r<SIZE; r++) for(let c=0; c<SIZE; c++) {
+                const p = board[r][c];
+                if(p && p.color === turn) {
+                    let ms = getMoves(r, c, p);
+                    if(global) ms = ms.filter(m => m.captured);
+                    all.push(...ms);
+                }
+            }
+            if(all.length === 0) return;
+            all.sort((a,b) => (b.captured?1:0) - (a.captured?1:0));
+            const best = all[0];
+            const cell = document.querySelector(`.cell[data-r="${best.fromR}"][data-c="${best.fromC}"]`);
+            if(cell) {
+                const h = document.createElement('div'); h.className = 'valid-move hint-move';
+                cell.appendChild(h); setTimeout(()=>h.remove(), 1200);
+            }
+            toast("İpucu gösterildi 💡");
+        }
+
+        function saveHistory() {
+            history.push({ board: board.map(r => r.map(c => c ? {...c} : null)), turn, timeW, timeB, mustCapture });
+            if(history.length > 5) history.shift();
+        }
+
+        function undoMove() {
+            if(history.length === 0 || isGameOver) { toast("Geri alınacak hamle yok 🚫"); return; }
+            if(gameMode === 'ai' && turn === BLACK) return;
+
+            let steps = (gameMode === 'ai') ? 2 : 1;
+            if(gameMode === 'ai' && history.length < 2) return;
+
+            while(steps > 0 && history.length > 0) {
+                const s = history.pop();
+                if(steps === 1 || (gameMode !== 'ai')) {
+                    board = s.board.map(r => r.map(c => c ? {...c} : null));
+                    turn = s.turn; timeW = s.timeW; timeB = s.timeB; mustCapture = s.mustCapture;
+                }
+                steps--;
+            }
+            render(); updateTimerDisplay(); highlightPlayer(turn); saveGame();
+            toast("Hamle geri alındı ↩️");
+        }
+
+        function logMove(m, p) {
+            const log = document.getElementById('move-log');
+            const col = ['A','B','C','D','E','F','G','H'];
+            const div = document.createElement('div'); div.className = 'log-entry';
+            const colorName = p.color === 'white' ? 'BEYAZ' : 'SİYAH';
+            const icon = m.captured ? '⚔️' : '➖';
+            div.innerHTML = `<span style="color:${p.color==='white'?'var(--accent)':'#e74c3c'}; font-weight:bold;">${colorName}</span> <span>${col[m.fromC]}${8-m.fromR} ${icon} ${col[m.toC]}${8-m.toR}</span>`;
+            log.prepend(div);
+        }
+
+        function addGraveyard(c) {
+            const d = document.createElement('div'); d.className='dead-piece';
+            d.style.backgroundColor = c===BLACK ? '#333' : '#eee';
+            document.getElementById(c===BLACK ? 'dead-b' : 'dead-w').appendChild(d);
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+                const elem = document.documentElement;
+                if (elem.requestFullscreen) { elem.requestFullscreen(); } 
+                else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); } 
+                else if (elem.msRequestFullscreen) { elem.msRequestFullscreen(); }
+                else { toast("Tam ekran bu cihazda desteklenmiyor"); }
+            } else {
+                if (document.exitFullscreen) { document.exitFullscreen(); }
+                else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
+            }
+        }
+
+        function toast(m) { const t=document.getElementById('toast'); t.innerText=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+        function toggleMenu(id, state) { const m = document.getElementById(id + '-modal'); if(typeof state === 'undefined') m.classList.toggle('active'); else state ? m.classList.add('active') : m.classList.remove('active'); }
+
+        const cCanvas = document.getElementById('confetti-canvas'), cCtx = cCanvas.getContext('2d');
+        let particles = [], cActive = false;
+        function startConfetti() { cActive = true; particles = []; for(let i=0; i<150; i++) particles.push({x:Math.random()*window.innerWidth, y:Math.random()-window.innerHeight, c:`hsl(${Math.random()*360},100%,50%)`, v:Math.random()*5+3, a:Math.random()*6}); cLoop(); }
+        function stopConfetti() { cActive = false; cCtx.clearRect(0,0,window.innerWidth,window.innerHeight); }
+        function cLoop() {
+            if(!cActive) return; cCanvas.width=window.innerWidth; cCanvas.height=window.innerHeight;
+            particles.forEach((p,i) => { p.y+=p.v; p.x+=Math.sin(p.a); if(p.y>window.innerHeight) particles[i].y=-10; cCtx.fillStyle=p.c; cCtx.beginPath(); cCtx.arc(p.x,p.y,5,0,6); cCtx.fill(); });
+            requestAnimationFrame(cLoop);
+        }
+
+        function enterGame() {
+            document.getElementById('start-modal').classList.remove('active');
+            document.getElementById('main-container').style.visibility = 'visible';
+            init();
+        }
+
+        function exitGame() {
+            if(!confirm('Oyundan çıkmak istediğinizden emin misiniz?')) return;
+            window.location.href = 'https://mugol-portal.github.io/mugol-.iq/';
+        }
+
+        function backToHome() {
+            toggleMenu('game-over', false);
+            if(timerInterval) clearInterval(timerInterval);
+            stopConfetti();
+            localStorage.removeItem('dama_save_v10');
+            document.getElementById('main-container').style.visibility = 'hidden';
+            document.getElementById('start-modal').classList.add('active');
+        }
+
+        // window.onload = init;  -- init artık "OYUNA BAŞLA" butonuna basılınca çalışır
+    </script>
+</body>
+</html>
