@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zeka Oyunu: 2048 Premium</title>
+    <style>
+        /* TEMA DEĞİŞKENLERİ */
+        :root {
+            /* Klasik Tema (Varsayılan) */
+            --bg-color: #faf8ef;
+            --main-text: #776e65;
+            --board-bg: #bbada0;
+            --cell-empty: #cdc1b4;
+            --btn-bg: #8f7a66;
+            --btn-hover: #9f8b77;
+            
+            /* Kutu Renkleri */
+            --c-2: #eee4da; --c-4: #ede0c8; --c-8: #f2b179; --c-16: #f59563;
+            --c-32: #f67c5f; --c-64: #f65e3b; --c-128: #edcf72; --c-256: #edcc61;
+            --c-512: #edc850; --c-1024: #edc53f; --c-2048: #edc22e; --c-super: #3c3a32;
+            --t-dark: #776e65; --t-light: #f9f6f2;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a2e;
+            --main-text: #e0e0e0;
+            --board-bg: #16213e;
+            --cell-empty: #0f3460;
+            --btn-bg: #e94560;
+            --btn-hover: #ff5277;
+            
+            --c-2: #243b55; --c-4: #2b5876; --c-8: #4e4376; --c-16: #5b247a;
+            --c-32: #8e2de2; --c-64: #4a00e0; --c-128: #00c6ff; --c-256: #0072ff;
+            --c-512: #11998e; --c-1024: #38ef7d; --c-2048: #e94560; --c-super: #ff0055;
+            --t-dark: #ffffff; --t-light: #ffffff;
+        }
+
+        [data-theme="neon"] {
+            --bg-color: #000000;
+            --main-text: #00ffcc;
+            --board-bg: #111;
+            --cell-empty: #222;
+            --btn-bg: #00ffcc;
+            --btn-hover: #00ccaa;
+            
+            --c-2: #003322; --c-4: #005533; --c-8: #008855; --c-16: #00aa66;
+            --c-32: #00cc88; --c-64: #00ffaa; --c-128: #00ffcc; --c-256: #33ffcc;
+            --c-512: #66ffcc; --c-1024: #99ffcc; --c-2048: #ccffcc; --c-super: #ffffff;
+            --t-dark: #00ffcc; --t-light: #000000;
+        }
+
+        /* GENEL AYARLAR */
+        body {
+            font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--main-text);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            user-select: none;
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .page {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 450px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .active-page { display: flex; }
+
+        /* BUTONLAR */
+        button {
+            background-color: var(--btn-bg);
+            color: var(--bg-color); 
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s, background-color 0.2s;
+            width: 100%;
+        }
+        button:hover { background-color: var(--btn-hover); }
+        button:active { transform: scale(0.95); }
+        
+        .btn-text-white { color: #fff; } 
+        
+        /* GERİ DÖN BUTONU ÖZEL RENGİ */
+        .btn-exit {
+            background-color: #e74c3c !important;
+            color: white !important;
+            margin-top: 10px;
+        }
+        .btn-exit:hover {
+            background-color: #c0392b !important;
+        }
+
+        /* BAŞLIK & TEMA SEÇİCİ */
+        .header { display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 10px; }
+        .title-small { font-size: 45px; font-weight: bold; margin: 0; }
+        
+        .top-controls { display: flex; width: 100%; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px;}
+        
+        select {
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 2px solid var(--board-bg);
+            background-color: var(--bg-color);
+            color: var(--main-text);
+            font-weight: bold;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* SKOR ALANI */
+        .scores { display: flex; gap: 10px; }
+        .score-box {
+            background: var(--board-bg); padding: 5px 15px; border-radius: 5px; 
+            color: var(--c-2); font-weight: bold; text-align: center; font-size: 12px; text-transform: uppercase;
+        }
+        .score-box span { font-size: 20px; display: block; color: var(--t-light); margin-top: 2px; }
+
+        .actions { display: flex; justify-content: space-between; width: 100%; margin-bottom: 15px; gap: 10px; }
+        .actions button { flex: 1; padding: 10px; }
+
+        /* OYUN TAHTASI (SABİT BOYUTLU GRID) */
+        .grid-container {
+            width: 100%;
+            max-width: 360px;
+            aspect-ratio: 1 / 1;
+            background-color: var(--board-bg);
+            padding: 10px;
+            border-radius: 10px;
+            box-sizing: border-box; 
+        }
+
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 10px;
+            width: 100%;
+            height: 100%;
+            touch-action: none; 
+        }
+
+        /* KUTULAR (SABİT) */
+        .tile {
+            width: 100%;
+            height: 100%;
+            background-color: var(--cell-empty);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            box-sizing: border-box;
+        }
+
+        /* TEMA RENK ATAMALARI */
+        .tile[data-val] { color: var(--t-light); }
+        .tile[data-val="2"] { background-color: var(--c-2); color: var(--t-dark); }
+        .tile[data-val="4"] { background-color: var(--c-4); color: var(--t-dark); }
+        .tile[data-val="8"] { background-color: var(--c-8); }
+        .tile[data-val="16"] { background-color: var(--c-16); }
+        .tile[data-val="32"] { background-color: var(--c-32); }
+        .tile[data-val="64"] { background-color: var(--c-64); }
+        .tile[data-val="128"] { background-color: var(--c-128); font-size: 26px; }
+        .tile[data-val="256"] { background-color: var(--c-256); font-size: 26px; }
+        .tile[data-val="512"] { background-color: var(--c-512); font-size: 26px; }
+        .tile[data-val="1024"] { background-color: var(--c-1024); font-size: 22px; }
+        .tile[data-val="2048"] { background-color: var(--c-2048); font-size: 22px; }
+        .tile[data-val="super"] { background-color: var(--c-super); font-size: 20px; }
+
+        /* ANİMASYONLAR */
+        @keyframes pop { 0% { transform: scale(0); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes merge { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .tile.new { animation: pop 0.2s ease forwards; }
+        .tile.merged { animation: merge 0.2s ease forwards; }
+
+        #message { margin-top: 15px; font-size: 20px; font-weight: bold; color: var(--btn-bg); height: 25px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. SAYFA: ANA MENÜ -->
+    <div id="main-menu" class="page active-page">
+        <h1 style="font-size: 60px; margin: 0; font-weight: bold;">2048 PRO</h1>
+        <p style="font-size: 18px; text-align: center; margin-bottom: 30px; line-height: 1.5;">Karelerin boyu bozulmaz. <b>Tema</b> ve <b>Geri Al</b> destekli geliştirilmiş sürüm.</p>
+        
+        <select id="theme-selector-main" onchange="changeTheme(this.value)" style="margin-bottom: 20px; padding: 10px; font-size: 16px;">
+            <option value="classic">Krem Tema (Klasik)</option>
+            <option value="dark">Uzay Teması (Karanlık)</option>
+            <option value="neon">Matrix Teması (Neon)</option>
+        </select>
+
+        <div style="width: 100%; max-width: 250px;">
+            <button class="btn-text-white" onclick="goToPage('game-page')" style="padding: 15px; font-size: 20px;">▶ Oyuna Başla</button>
+            
+            <!-- TARAYICIDA ÖNCEKİ SAYFAYA DÖNME BUTONU -->
+            <button class="btn-exit" onclick="window.history.back()">⬅ Önceki Sayfaya Dön</button>
+        </div>
+    </div>
+
+    <!-- 2. SAYFA: OYUN EKRANI -->
+    <div id="game-page" class="page">
+        <div class="top-controls">
+            <!-- OYUN İÇİNDEN ANA MENÜYE DÖNME BUTONU -->
+            <button class="btn-exit" onclick="goToPage('main-menu')" style="padding: 8px 10px; font-size: 14px; margin-top:0; width: auto;">⬅ Menü</button>
+            
+            <select id="theme-selector-game" onchange="changeTheme(this.value)">
+                <option value="classic">Klasik</option>
+                <option value="dark">Karanlık</option>
+                <option value="neon">Neon</option>
+            </select>
+        </div>
+        
+        <div class="header">
+            <h2 class="title-small">2048</h2>
+            <div class="scores">
+                <div class="score-box">Skor <span id="score">0</span></div>
+                <div class="score-box">Rekor <span id="best-score">0</span></div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="btn-text-white" onclick="undoMove()">↩️ Geri Al</button>
+            <button class="btn-text-white" onclick="initGame()">🔄 Yenile</button>
+        </div>
+
+        <!-- OYUN TAHTASI -->
+        <div class="grid-container">
+            <div id="grid">
+                <!-- Javascript buraya kutuları çizecek -->
+            </div>
+        </div>
+
+        <div id="message"></div>
+    </div>
+
+    <script>
+        // --- TEMA SİSTEMİ ---
+        function changeTheme(themeName) {
+            document.documentElement.setAttribute('data-theme', themeName);
+            localStorage.setItem('2048-theme', themeName);
+            document.getElementById('theme-selector-main').value = themeName;
+            document.getElementById('theme-selector-game').value = themeName;
+            
+            const btns = document.querySelectorAll('.btn-text-white');
+            btns.forEach(btn => btn.style.color = themeName === 'neon' ? '#000' : '#fff');
+        }
+
+        window.onload = () => {
+            let savedTheme = localStorage.getItem('2048-theme') || 'classic';
+            changeTheme(savedTheme);
+        };
+
+        // --- OYUN DEĞİŞKENLERİ ---
+        let board = [];
+        let score = 0;
+        let bestScore = localStorage.getItem('2048-best-score') || 0;
+        let gameOver = false;
+        let history = []; 
+
+        function goToPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
+            document.getElementById(pageId).classList.add('active-page');
+            
+            if (pageId === 'game-page' && board.length === 0) {
+                initGame();
+            }
+            document.getElementById('best-score').innerText = bestScore;
+        }
+
+        function initGame() {
+            board = Array(4).fill().map(() => Array(4).fill(0));
+            score = 0;
+            gameOver = false;
+            history = []; 
+            document.getElementById('message').innerText = "";
+            document.getElementById('score').innerText = score;
+            
+            addRandomTile();
+            addRandomTile();
+            updateBoard();
+        }
+
+        function saveState() {
+            if(history.length > 10) history.shift(); 
+            history.push({ board: JSON.parse(JSON.stringify(board)), score: score });
+        }
+
+        function undoMove() {
+            if (history.length > 0 && !gameOver) {
+                let previousState = history.pop();
+                board = previousState.board;
+                score = previousState.score;
+                updateBoard();
+            } else if(history.length === 0) {
+                document.getElementById('message').innerText = "Geri alınacak hamle yok!";
+                setTimeout(() => document.getElementById('message').innerText = "", 1500);
+            }
+        }
+
+        function addRandomTile() {
+            let emptyTiles = [];
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    if (board[r][c] === 0 || board[r][c] === "new") emptyTiles.push({ r, c });
+                }
+            }
+            if (emptyTiles.length > 0) {
+                let randomTile = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
+                board[randomTile.r][randomTile.c] = { val: Math.random() > 0.1 ? 2 : 4, type: 'new' };
+            }
+        }
+
+        function updateBoard() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    let cellData = board[r][c];
+                    let val = typeof cellData === 'object' ? cellData.val : cellData;
+                    let type = typeof cellData === 'object' ? cellData.type : '';
+                    
+                    board[r][c] = val; 
+
+                    let tile = document.createElement('div');
+                    tile.className = 'tile';
+                    if(type === 'new') tile.classList.add('new');
+                    if(type === 'merged') tile.classList.add('merged');
+
+                    if(val > 0) {
+                        tile.innerText = val;
+                        tile.setAttribute('data-val', val > 2048 ? 'super' : val);
+                    }
+                    
+                    grid.appendChild(tile);
+                }
+            }
+            
+            document.getElementById('score').innerText = score;
+            
+            if (score > bestScore) {
+                bestScore = score;
+                localStorage.setItem('2048-best-score', bestScore);
+                document.getElementById('best-score').innerText = bestScore;
+            }
+        }
+
+        function slide(row) {
+            let newRow = row.filter(val => val !== 0);
+            for (let i = 0; i < newRow.length - 1; i++) {
+                let val1 = typeof newRow[i] === 'object' ? newRow[i].val : newRow[i];
+                let val2 = typeof newRow[i + 1] === 'object' ? newRow[i + 1].val : newRow[i + 1];
+
+                if (val1 === val2) {
+                    newRow[i] = { val: val1 * 2, type: 'merged' }; 
+                    score += val1 * 2;
+                    newRow[i + 1] = 0;
+                }
+            }
+            newRow = newRow.filter(val => val !== 0);
+            while (newRow.length < 4) newRow.push(0);
+            return newRow;
+        }
+
+        function handleMove(direction) {
+            if (gameOver) return;
+            
+            let cleanBoard = board.map(row => row.map(cell => typeof cell === 'object' ? cell.val : cell));
+            let oldBoardStr = JSON.stringify(cleanBoard);
+
+            saveState();
+
+            if (direction === 'ArrowLeft') { for (let r = 0; r < 4; r++) board[r] = slide(board[r]); } 
+            else if (direction === 'ArrowRight') { for (let r = 0; r < 4; r++) board[r] = slide(board[r].reverse()).reverse(); } 
+            else if (direction === 'ArrowUp') {
+                for (let c = 0; c < 4; c++) {
+                    let col = slide([board[0][c], board[1][c], board[2][c], board[3][c]]);
+                    for (let r = 0; r < 4; r++) board[r][c] = col[r];
+                }
+            } 
+            else if (direction === 'ArrowDown') {
+                for (let c = 0; c < 4; c++) {
+                    let col = slide([board[0][c], board[1][c], board[2][c], board[3][c]].reverse()).reverse();
+                    for (let r = 0; r < 4; r++) board[r][c] = col[r];
+                }
+            }
+
+            let newCleanBoard = board.map(row => row.map(cell => typeof cell === 'object' ? cell.val : cell));
+            if (oldBoardStr !== JSON.stringify(newCleanBoard)) {
+                addRandomTile();
+                updateBoard();
+                checkGameOver();
+            } else {
+                history.pop();
+            }
+        }
+
+        function checkGameOver() {
+            for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) if (board[r][c] === 0) return;
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    if (c !== 3 && board[r][c] === board[r][c + 1]) return;
+                    if (r !== 3 && board[r][c] === board[r + 1][c]) return;
+                }
+            }
+            gameOver = true;
+            document.getElementById('message').innerText = "Oyun Bitti!";
+        }
+
+        // --- KONTROLLER ---
+        document.addEventListener('keydown', (e) => {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                e.preventDefault(); 
+                handleMove(e.key);
+            }
+        });
+
+        let touchStartX = 0, touchStartY = 0;
+        const gridElement = document.getElementById('grid');
+
+        gridElement.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, {passive: false});
+
+        gridElement.addEventListener('touchend', e => {
+            handleSwipe(touchStartX, touchStartY, e.changedTouches[0].screenX, e.changedTouches[0].screenY);
+        });
+
+        let isDragging = false;
+        gridElement.addEventListener('mousedown', e => {
+            isDragging = true; touchStartX = e.clientX; touchStartY = e.clientY;
+        });
+        document.addEventListener('mouseup', e => {
+            if(isDragging) { isDragging = false; handleSwipe(touchStartX, touchStartY, e.clientX, e.clientY); }
+        });
+
+        function handleSwipe(startX, startY, endX, endY) {
+            let dx = endX - startX, dy = endY - startY;
+            if (Math.max(Math.abs(dx), Math.abs(dy)) > 30) {
+                if (Math.abs(dx) > Math.abs(dy)) handleMove(dx > 0 ? 'ArrowRight' : 'ArrowLeft');
+                else handleMove(dy > 0 ? 'ArrowDown' : 'ArrowUp');
+            }
+        }
+    </script>
+</body>
+</html>
