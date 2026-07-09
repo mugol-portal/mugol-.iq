@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Yapboz Oyunu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1880946354382681" crossorigin="anonymous"></script>
+    <style>
+        :root {
+            --bg: #020617;
+            --surface: #1e293b;
+            --accent: #38bdf8;
+            --success: #22c55e;
+            --danger: #f43f5e;
+            --text: #f8fafc;
+            --primary: #3b82f6;
+            --primary-glow: rgba(59,130,246,0.45);
+        }
+
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 5px 10px;
+            display: flex;
+            flex-direction: column;
+            height: 100dvh;
+            overflow: hidden;
+        }
+
+        /* Geri Dön Tuşu */
+        .top-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            padding: 5px 0;
+            flex-shrink: 0;
+        }
+        .nav-title {
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+
+        .btn-back {
+            background: #334155;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-back:hover { background: #475569; }
+
+        /* İstatistik Paneli */
+        .header-card {
+            flex-shrink: 0;
+            background: var(--surface);
+            padding: 10px;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+            margin-bottom: 10px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-item {
+            flex: 1;
+            background: rgba(0,0,0,0.35);
+            padding: 6px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-item span { display: block; font-size: 8px; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+        .stat-item b { color: var(--accent); font-size: 14px; font-weight: 900; }
+
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: #0f172a;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            transition: width 0.4s ease;
+            border-radius: 10px;
+        }
+
+        .btn-row { display: flex; gap: 5px; margin-bottom: 5px; }
+
+        button, select, label {
+            padding: 8px;
+            border-radius: 8px;
+            border: none;
+            background: #334155;
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            flex: 1;
+            font-family: 'Outfit', sans-serif;
+            transition: background 0.2s, transform 0.1s;
+        }
+        button:active { transform: scale(0.96); }
+        .btn-accent { background: var(--accent); color: #020617; }
+        .btn-success { background: var(--success); color: #020617; }
+        .btn-outline { background: transparent; border: 1.5px solid #475569; }
+
+        /* Oyun Tahtası */
+        #board-box {
+            flex-shrink: 0;
+            position: relative;
+            width: min(85vw, 350px);
+            height: min(85vw, 350px);
+            margin: 0 auto;
+            background: #000;
+            border: 3px solid rgba(59,130,246,0.3);
+            border-radius: 14px;
+            display: grid;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(59,130,246,0.1);
+        }
+
+        #ghost-img {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            opacity: 0.35;
+            pointer-events: none;
+            border-radius: 8px;
+            transition: opacity 0.3s;
+        }
+
+        .slot {
+            width: 100%;
+            height: 100%;
+            border: 1px solid rgba(255,255,255,0.12);
+            position: relative;
+            transition: background 0.2s;
+        }
+        .slot.drag-over { background: rgba(59,130,246,0.15); border-color: var(--primary); }
+
+        /* Parça Kutusu */
+        #piece-pool {
+            flex: 1;
+            min-height: 100px;
+            margin-top: 10px;
+            padding: 15px;
+            background: rgba(30,41,59,0.3);
+            border-radius: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-content: flex-start;
+            overflow-y: auto !important;
+            border: 2px dashed rgba(51,65,85,0.5);
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
+        }
+
+        #piece-pool::-webkit-scrollbar { width: 5px; }
+        #piece-pool::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+
+        .tile {
+            position: relative;
+            background-repeat: no-repeat;
+            border-radius: 5px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            touch-action: none;
+            transition: box-shadow 0.2s;
+        }
+        .tile:hover:not(.placed) { box-shadow: 0 6px 20px rgba(56,189,248,0.3); }
+        .tile.dragging { z-index: 1000; opacity: 0.85; transform: scale(1.12); box-shadow: 0 10px 30px rgba(56,189,248,0.4); }
+        .tile.placed { cursor: default; border: 1.5px solid var(--success); box-shadow: none; z-index: 1; }
+
+        /* ========================
+           OYUN SONU GEÇİŞ EKRANI
+           ======================== */
+        #win-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(2,6,23,0.0);
+            z-index: 99999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 20px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            backdrop-filter: blur(0px);
+            transition: background 0.6s ease, backdrop-filter 0.6s ease;
+        }
+        #win-overlay.visible {
+            background: rgba(2,6,23,0.96);
+            backdrop-filter: blur(16px);
+        }
+
+        /* Confetti parçaları */
+        .confetti-piece {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            animation: confettiFall linear forwards;
+            z-index: 99998;
+            pointer-events: none;
+        }
+        @keyframes confettiFall {
+            0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Win kartı animasyonu */
+        .win-card {
+            background: linear-gradient(160deg, #1e293b 0%, #0f172a 100%);
+            padding: 30px 25px;
+            border-radius: 28px;
+            border: 2px solid var(--success);
+            max-width: 340px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.7), 0 0 40px rgba(34,197,94,0.15) inset;
+            transform: scale(0.6) translateY(60px);
+            opacity: 0;
+            transition: transform 0.55s cubic-bezier(0.175,0.885,0.32,1.275), opacity 0.4s ease;
+        }
+        #win-overlay.visible .win-card {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+
+        /* Trofey animasyonu */
+        .trophy-icon {
+            font-size: 64px;
+            display: block;
+            margin-bottom: 8px;
+            animation: trophyBounce 1s cubic-bezier(0.175,0.885,0.32,1.275) 0.5s both;
+        }
+        @keyframes trophyBounce {
+            0%   { transform: scale(0) rotate(-20deg); }
+            60%  { transform: scale(1.25) rotate(5deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        .win-title {
+            font-size: 30px;
+            font-weight: 900;
+            color: var(--success);
+            letter-spacing: 2px;
+            margin: 0 0 5px;
+            text-shadow: 0 0 20px rgba(34,197,94,0.5);
+        }
+        .win-subtitle {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 18px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Sonuç kutuları */
+        .win-stats {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+        .win-stat {
+            flex: 1;
+            background: rgba(0,0,0,0.3);
+            border-radius: 14px;
+            padding: 12px 8px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .win-stat-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+        .win-stat-val { font-size: 18px; font-weight: 900; color: var(--accent); display: block; }
+        .win-stat-lbl { font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+
+        /* Puan rozetleri */
+        .rating-row {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .rating-star {
+            font-size: 24px;
+            animation: starPop 0.4s cubic-bezier(0.175,0.885,0.32,1.275) both;
+        }
+        @keyframes starPop { from { transform: scale(0); } to { transform: scale(1); } }
+
+        /* Butonlar */
+        .win-btn-next {
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            border: none;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--success), #16a34a);
+            color: #fff;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            box-shadow: 0 8px 20px rgba(34,197,94,0.35);
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'Outfit', sans-serif;
+            flex: unset;
+        }
+        .win-btn-next:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(34,197,94,0.5); }
+        .win-btn-retry {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1.5px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.05);
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 16px;
+            transition: background 0.2s, color 0.2s;
+            font-family: 'Outfit', sans-serif;
+            flex: unset;
+        }
+        .win-btn-retry:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+        /* ── AdSense Reklam Kutusu (Geçiş / Win Overlay) ──
+        .mg-ad-box {
+            position: relative;
+            width: 300px;
+            background: rgba(2, 6, 23, 0.7);
+            border: 1px solid rgba(56, 189, 248, 0.15);
+            border-radius: 12px;
+            padding: 24px 10px 10px;
+            overflow: visible;
+            box-sizing: border-box;
+            min-height: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mg-ad-box ins.adsbygoogle {
+            display: block !important;
+            width: 300px !important;
+            height: 250px !important;
+        }
+        .mg-ad-label {
+            position: absolute;
+            top: 7px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.58rem;
+            font-weight: 700;
+            color: rgba(56, 189, 248, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            background: rgba(2, 6, 23, 0.95);
+            padding: 2px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(56, 189, 248, 0.15);
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 1;
+            font-family: 'Outfit', monospace;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav">
+        <button class="btn-back" onclick="window.history.back()">⬅ Geri Dön</button>
+        <span class="nav-title">🧩 Yapboz Oyunu</span>
+        <div style="width:80px;"></div>
+    </div>
+
+    <div class="header-card">
+        <div class="stats-row">
+            <div class="stat-item"><span>Hamle</span><b id="move-txt">0</b></div>
+            <div class="stat-item"><span>❌ Yanlış</span><b id="remain-txt" style="color:#f43f5e;">0</b></div>
+            <div class="stat-item"><span>✅ Doğru</span><b id="correct-txt" style="color:#22c55e;">0</b></div>
+            <div class="stat-item"><span>Süre</span><b id="time-txt">00:00</b></div>
+        </div>
+        <div class="stats-row" style="margin-bottom:4px;">
+            <div class="stat-item" style="background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);">
+                <span>🏅 En İyi (Bu Boyut)</span><b id="best-txt" style="color:#a78bfa;font-size:11px;">—</b>
+            </div>
+        </div>
+        
+        <div class="progress-container"><div id="progress-bar"></div></div>
+
+        <div class="btn-row">
+            <select id="size-select" onchange="initGame()">
+                <option value="3">3x3</option>
+                <option value="4" selected>4x4</option>
+                <option value="5">5x5</option>
+                <option value="6">6x6</option>
+                <option value="7">7x7</option>
+                <option value="8">8x8</option>
+                <option value="9">9x9</option>
+                <option value="10">10x10</option>
+            </select>
+            <button class="btn-outline" onclick="toggleGuide()">👁 Rehber</button>
+            <label for="file-in" class="btn-accent">📷 Foto Seç</label>
+            <input type="file" id="file-in" accept="image/*" style="display:none" onchange="loadImg(event)">
+        </div>
+        
+        <div class="btn-row">
+            <button onclick="changeRandom()">🔀 Yeni Resim</button>
+            <button onclick="useHint()" id="hint-btn" style="background: #7c3aed;">💡 İpucu <span id="hint-count" style="background:rgba(255,255,255,0.2);padding:1px 5px;border-radius:10px;margin-left:2px;">3</span></button>
+            <button onclick="autoSolve()" style="background: var(--danger);">🏳 Pes Et</button>
+        </div>
+    </div>
+
+    <div id="board-box"><div id="ghost-img"></div></div>
+
+    <div id="piece-pool">
+        <!-- Parçalar buraya gelecek -->
+    </div>
+
+    <div id="win-overlay">
+        <div class="win-card">
+            <span class="trophy-icon">🏆</span>
+            <div class="win-title">TEBRİKLER!</div>
+            <div class="win-subtitle">Yapboz Tamamlandı</div>
+            <div id="new-record-badge" style="display:none;background:linear-gradient(135deg,#f59e0b,#ef4444);color:white;font-size:11px;font-weight:900;padding:4px 14px;border-radius:20px;letter-spacing:1px;margin-bottom:12px;display:none;">🏅 YENİ REKOR!</div>
+
+            <div class="win-stats">
+                <div class="win-stat">
+                    <span class="win-stat-icon">🎯</span>
+                    <span class="win-stat-val" id="win-moves">0</span>
+                    <span class="win-stat-lbl">Hamle</span>
+                </div>
+                <div class="win-stat">
+                    <span class="win-stat-icon">❌</span>
+                    <span class="win-stat-val" id="win-wrong" style="color:#f43f5e;">0</span>
+                    <span class="win-stat-lbl">Yanlış</span>
+                </div>
+                <div class="win-stat">
+                    <span class="win-stat-icon">⏱️</span>
+                    <span class="win-stat-val" id="win-time">00:00</span>
+                    <span class="win-stat-lbl">Süre</span>
+                </div>
+                <div class="win-stat">
+                    <span class="win-stat-icon">📐</span>
+                    <span class="win-stat-val" id="win-size">4x4</span>
+                    <span class="win-stat-lbl">Boyut</span>
+                </div>
+            </div>
+
+            <div class="rating-row" id="rating-row"></div>
+
+            <button class="win-btn-next" onclick="changeRandom()">🔀 YENİ BÖLÜM</button>
+            <button class="win-btn-retry" onclick="initGame()">↩ Aynı Resmi Tekrar Oyna</button>
+
+            <div class="mg-ad-box" aria-label="Reklam" role="complementary">
+                <span class="mg-ad-label">Reklam</span>
+                <ins class="adsbygoogle"
+                     style="display:block;width:300px;height:250px;"
+                     data-ad-client="ca-pub-1880946354382681"
+                     data-ad-slot="1689789138"
+                     data-ad-format="rectangle"></ins>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let size = 4, moves = 0, placedCount = 0, seconds = 0, timer;
+        let wrongMoves = 0;
+        let hintsLeft = 3;
+        let imgUrl = "https://picsum.photos/600/600?random=" + Math.floor(Math.random() * 2000);
+        let tilePx, currentOpacity = 0.35;
+
+        /* ---- Ses Efektleri ---- */
+        function playSound(type) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.connect(g); g.connect(ctx.destination);
+                if (type === 'correct') {
+                    o.frequency.setValueAtTime(523, ctx.currentTime);
+                    o.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
+                    o.frequency.setValueAtTime(784, ctx.currentTime + 0.2);
+                    g.gain.setValueAtTime(0.2, ctx.currentTime);
+                    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+                    o.start(); o.stop(ctx.currentTime + 0.4);
+                } else if (type === 'wrong') {
+                    o.frequency.setValueAtTime(220, ctx.currentTime);
+                    o.type = 'sawtooth';
+                    g.gain.setValueAtTime(0.15, ctx.currentTime);
+                    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+                    o.start(); o.stop(ctx.currentTime + 0.2);
+                } else if (type === 'win') {
+                    [523,659,784,1047].forEach((f,i) => {
+                        const o2 = ctx.createOscillator(); const g2 = ctx.createGain();
+                        o2.connect(g2); g2.connect(ctx.destination);
+                        o2.frequency.value = f;
+                        g2.gain.setValueAtTime(0.2, ctx.currentTime + i*0.12);
+                        g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i*0.12 + 0.3);
+                        o2.start(ctx.currentTime + i*0.12); o2.stop(ctx.currentTime + i*0.12 + 0.3);
+                    });
+                }
+            } catch(e) {}
+        }
+
+        /* ---- En İyi Skor ---- */
+        function getBestKey() { return 'best_' + size; }
+        function loadBestScore() {
+            try {
+                const b = JSON.parse(localStorage.getItem(getBestKey()));
+                if (b) document.getElementById('best-txt').innerText = b.moves + ' hamle / ' + b.time;
+                else document.getElementById('best-txt').innerText = '—';
+            } catch(e) { document.getElementById('best-txt').innerText = '—'; }
+        }
+        function saveBestScore(moves, timeStr) {
+            try {
+                const key = getBestKey();
+                const prev = JSON.parse(localStorage.getItem(key));
+                if (!prev || moves < prev.moves) {
+                    localStorage.setItem(key, JSON.stringify({moves, time: timeStr}));
+                    loadBestScore();
+                    return true;
+                }
+            } catch(e) {}
+            return false;
+        }
+
+        /* ---- İpucu (Hint) ---- */
+        function useHint() {
+            if (hintsLeft <= 0) return;
+            const unplacedTiles = Array.from(document.querySelectorAll('.tile:not(.placed)'));
+            if (unplacedTiles.length === 0) return;
+            const tile = unplacedTiles[Math.floor(Math.random() * unplacedTiles.length)];
+            const slot = document.querySelector(`.slot[data-idx="${tile.dataset.correct}"]`);
+            if (!slot || slot.hasChildNodes()) { useHint(); return; }
+            tile.style.position = 'static';
+            tile.style.width  = '100%';
+            tile.style.height = '100%';
+            tile.classList.add('placed');
+            tile.style.border = '2px solid #a78bfa';
+            slot.appendChild(tile);
+            placedCount++;
+            moves++;
+            hintsLeft--;
+            document.getElementById('hint-count').innerText = hintsLeft;
+            if (hintsLeft === 0) document.getElementById('hint-btn').style.opacity = '0.4';
+            updateUI();
+            playSound('correct');
+            if (placedCount === size * size) win();
+        }
+
+        const board = document.getElementById('board-box');
+        const pool  = document.getElementById('piece-pool');
+
+        /* ---- Rehber ---- */
+        function toggleGuide() {
+            currentOpacity = currentOpacity < 0.3 ? 0.45 : (currentOpacity < 0.5 ? 0.75 : 0.15);
+            const g = document.getElementById('ghost-img');
+            if (g) g.style.opacity = currentOpacity;
+        }
+
+        /* ---- Oyun Başlat ---- */
+        function initGame() {
+            size = parseInt(document.getElementById('size-select').value);
+            moves = 0; placedCount = 0; seconds = 0; wrongMoves = 0; hintsLeft = 3;
+            document.getElementById('move-txt').innerText  = "0";
+            document.getElementById('remain-txt').innerText = "0";
+            document.getElementById('correct-txt').innerText = "0";
+            document.getElementById('time-txt').innerText  = "00:00";
+            document.getElementById('hint-count').innerText = "3";
+            document.getElementById('hint-btn').style.opacity = '1';
+            loadBestScore();
+            document.getElementById('progress-bar').style.width = "0%";
+
+            // Win ekranını kapat
+            const ov = document.getElementById('win-overlay');
+            ov.classList.remove('visible');
+            setTimeout(() => { ov.style.display = 'none'; }, 400);
+
+            // Confetti temizle
+            document.querySelectorAll('.confetti-piece').forEach(c => c.remove());
+
+            clearInterval(timer);
+            startTimer();
+            setupGame();
+        }
+
+        /* ---- Oyun Kurulum ---- */
+        function setupGame() {
+            const bDim = board.clientWidth;
+            tilePx = Math.floor(bDim / size);
+            board.innerHTML = '<div id="ghost-img"></div>';
+            const g = document.getElementById('ghost-img');
+            g.style.backgroundImage = `url(${imgUrl})`;
+            g.style.opacity = currentOpacity;
+            board.style.gridTemplateColumns = `repeat(${size}, ${tilePx}px)`;
+            board.style.gridTemplateRows    = `repeat(${size}, ${tilePx}px)`;
+            pool.innerHTML = '';
+
+            for (let i = 0; i < size * size; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'slot';
+                slot.dataset.idx = i;
+                slot.style.width  = tilePx + "px";
+                slot.style.height = tilePx + "px";
+                board.appendChild(slot);
+            }
+
+            let nums = [...Array(size * size).keys()].sort(() => Math.random() - 0.5);
+            nums.forEach(n => {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.dataset.correct = n;
+                tile.style.width  = (tilePx - 1) + "px";
+                tile.style.height = (tilePx - 1) + "px";
+                tile.style.backgroundImage = `url(${imgUrl})`;
+                tile.style.backgroundSize  = `${bDim}px ${bDim}px`;
+                const r = Math.floor(n / size), c = n % size;
+                tile.style.backgroundPosition = `-${c * tilePx}px -${r * tilePx}px`;
+                addDrag(tile);
+                pool.appendChild(tile);
+            });
+        }
+
+        /* ---- Sürükle & Bırak ---- */
+        function addDrag(tile) {
+            let sX, sY, oX, oY, isDragging = false;
+
+            tile.addEventListener('pointerdown', e => {
+                if (tile.classList.contains('placed')) return;
+                isDragging = true;
+                tile.classList.add('dragging');
+                const r = tile.getBoundingClientRect();
+                sX = e.clientX; sY = e.clientY;
+                oX = r.left;   oY = r.top;
+                tile.style.position = 'fixed';
+                tile.style.left = oX + 'px';
+                tile.style.top  = oY + 'px';
+                tile.setPointerCapture(e.pointerId);
+            });
+
+            tile.addEventListener('pointermove', e => {
+                if (!isDragging) return;
+                tile.style.left = (oX + (e.clientX - sX)) + 'px';
+                tile.style.top  = (oY + (e.clientY - sY)) + 'px';
+
+                // Hover highlight
+                tile.style.visibility = 'hidden';
+                const target = document.elementFromPoint(e.clientX, e.clientY);
+                tile.style.visibility = 'visible';
+                document.querySelectorAll('.slot.drag-over').forEach(s => s.classList.remove('drag-over'));
+                const hSlot = target?.closest('.slot');
+                if (hSlot && !hSlot.hasChildNodes()) hSlot.classList.add('drag-over');
+            });
+
+            tile.addEventListener('pointerup', e => {
+                if (!isDragging) return;
+                isDragging = false;
+                tile.classList.remove('dragging');
+                document.querySelectorAll('.slot.drag-over').forEach(s => s.classList.remove('drag-over'));
+
+                tile.style.visibility = 'hidden';
+                const target = document.elementFromPoint(e.clientX, e.clientY);
+                tile.style.visibility = 'visible';
+
+                const slot = target?.closest('.slot');
+                if (slot && slot.dataset.idx == tile.dataset.correct && !slot.hasChildNodes()) {
+                    // Doğru slot
+                    tile.style.position = 'static';
+                    tile.style.width  = '100%';
+                    tile.style.height = '100%';
+                    tile.classList.add('placed');
+                    slot.appendChild(tile);
+                    placedCount++;
+                    moves++;
+                    playSound('correct');
+                    updateUI();
+                    if (placedCount === size * size) win();
+                } else {
+                    // Yanlış slot — geri havuza
+                    tile.style.position = 'relative';
+                    tile.style.left = '0'; tile.style.top = '0';
+                    tile.style.width  = (tilePx - 1) + "px";
+                    tile.style.height = (tilePx - 1) + "px";
+                    pool.appendChild(tile);
+                    moves++;
+                    wrongMoves++;
+                    playSound('wrong');
+                    updateUI();
+                }
+            });
+        }
+
+        /* ---- UI Güncelle ---- */
+        function updateUI() {
+            document.getElementById('move-txt').innerText   = moves;
+            document.getElementById('remain-txt').innerText = wrongMoves;
+            document.getElementById('correct-txt').innerText = placedCount;
+            document.getElementById('progress-bar').style.width = (placedCount / (size * size) * 100) + "%";
+        }
+
+        /* ---- Timer ---- */
+        function startTimer() {
+            timer = setInterval(() => {
+                seconds++;
+                const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const s = (seconds % 60).toString().padStart(2, '0');
+                document.getElementById('time-txt').innerText = `${m}:${s}`;
+            }, 1000);
+        }
+
+        /* ---- Yıldız Puanı ---- */
+        function calcStars(moves, size, seconds) {
+            const total = size * size;
+            const ideal = total * 1.5;
+            const timeLimit = total * 15;
+            let stars = 1;
+            if (moves <= ideal * 1.5 && seconds <= timeLimit * 1.5) stars = 2;
+            if (moves <= ideal       && seconds <= timeLimit)        stars = 3;
+            return stars;
+        }
+
+        /* ---- Konfeti ---- */
+        function launchConfetti() {
+            const colors = ['#38bdf8','#22c55e','#f43f5e','#f59e0b','#a78bfa','#fb7185'];
+            for (let i = 0; i < 80; i++) {
+                const el = document.createElement('div');
+                el.className = 'confetti-piece';
+                el.style.left = Math.random() * 100 + 'vw';
+                el.style.top  = '-10px';
+                el.style.background = colors[Math.floor(Math.random() * colors.length)];
+                el.style.width  = (6 + Math.random() * 8) + 'px';
+                el.style.height = (6 + Math.random() * 8) + 'px';
+                el.style.animationDuration  = (1.5 + Math.random() * 2.5) + 's';
+                el.style.animationDelay     = (Math.random() * 0.8) + 's';
+                el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 4500);
+            }
+        }
+
+        /* ---- Oyun Kazanıldı ---- */
+        function win() {
+            clearInterval(timer);
+            playSound('win');
+
+            const timeStr = document.getElementById('time-txt').innerText;
+            const stars   = calcStars(moves, size, seconds);
+            const isNewBest = saveBestScore(moves, timeStr);
+
+            // Yeni rekor rozeti
+            const badge = document.getElementById('new-record-badge');
+            badge.style.display = isNewBest ? 'inline-block' : 'none';
+
+            // Stat değerleri
+            document.getElementById('win-moves').innerText = moves;
+            document.getElementById('win-wrong').innerText = wrongMoves;
+            document.getElementById('win-time').innerText  = timeStr;
+            document.getElementById('win-size').innerText  = size + 'x' + size;
+
+            // Yıldızlar
+            const row = document.getElementById('rating-row');
+            row.innerHTML = '';
+            for (let i = 1; i <= 3; i++) {
+                const s = document.createElement('span');
+                s.className = 'rating-star';
+                s.textContent = i <= stars ? '⭐' : '☆';
+                s.style.animationDelay = (0.6 + i * 0.15) + 's';
+                row.appendChild(s);
+            }
+
+            // Overlay aç
+            const ov = document.getElementById('win-overlay');
+            ov.style.display = 'flex';
+            requestAnimationFrame(() => requestAnimationFrame(() => ov.classList.add('visible')));
+
+            // Konfeti
+            setTimeout(launchConfetti, 300);
+        }
+
+        /* ---- Pes Et (Otomatik Çöz) ---- */
+        function autoSolve() {
+            const tiles = Array.from(document.querySelectorAll('.tile:not(.placed)'));
+            tiles.forEach(tile => {
+                const slot = document.querySelector(`.slot[data-idx="${tile.dataset.correct}"]`);
+                tile.style.position = 'static';
+                tile.style.width  = '100%';
+                tile.style.height = '100%';
+                tile.classList.add('placed');
+                slot.appendChild(tile);
+            });
+            placedCount = size * size;
+            updateUI();
+            setTimeout(win, 300);
+        }
+
+        /* ---- Fotoğraf Yükle ---- */
+        function loadImg(e) {
+            const reader = new FileReader();
+            reader.onload = (ev) => { imgUrl = ev.target.result; initGame(); };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+
+        /* ---- Yeni Rastgele Resim ---- */
+        function changeRandom() {
+            imgUrl = "https://picsum.photos/600/600?random=" + Math.floor(Math.random() * 5000);
+            initGame();
+        }
+
+        window.onload   = initGame;
+        window.onresize = initGame;
+
+    /* ── AdSense Lazy Push ── */
+    (function() {
+        function mgPushAds() {
+            document.querySelectorAll('ins.adsbygoogle').forEach(function(ins) {
+                if (!ins.getAttribute('data-adsbygoogle-status')) {
+                    try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+                }
+            });
+        }
+        // win-overlay açılınca push et
+        document.addEventListener('DOMContentLoaded', function() {
+            var winOv = document.getElementById('win-overlay');
+            if (winOv) {
+                new MutationObserver(function(mutations) {
+                    mutations.forEach(function(m) {
+                        if (m.type === 'attributes' && m.attributeName === 'style') {
+                            if (winOv.style.display !== 'none') { setTimeout(mgPushAds, 300); }
+                        }
+                    });
+                }).observe(winOv, { attributes: true });
+            }
+        });
+    })();
+    </script>
+</body>
+</html>
