@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Tek Çizgi Bulmaca</title>
+    <style>
+        /* --- TEMA DEĞİŞKENLERİ --- */
+        :root {
+            /* Lavanta (Klasik Orijinal Tema) */
+            --bg-color: #2C353F;
+            --cell-bg: #4C545C;
+            --cell-active-bg: #F0CCFC;
+            --line-color: #9D62CA;
+            --accent-color: #4C2865;
+            --btn-bg: #3B444F;
+            --btn-hover: #4B5561;
+            --hint-btn-bg: #E25E97;
+            --hint-btn-hover: #ED71A5;
+        }
+
+        body.theme-neon {
+            --bg-color: #0F172A;
+            --cell-bg: #1E293B;
+            --cell-active-bg: #22D3EE;
+            --line-color: #0891B2;
+            --accent-color: #0F172A;
+            --btn-bg: #1E293B;
+            --btn-hover: #334155;
+            --hint-btn-bg: #F43F5E;
+            --hint-btn-hover: #FB7185;
+        }
+
+        body.theme-rose {
+            --bg-color: #2D2224;
+            --cell-bg: #4A3B3D;
+            --cell-active-bg: #FBCFE8;
+            --line-color: #DB2777;
+            --accent-color: #4C1D24;
+            --btn-bg: #3D2E30;
+            --btn-hover: #4F3D40;
+            --hint-btn-bg: #D97706;
+            --hint-btn-hover: #F59E0B;
+        }
+
+        body.theme-forest {
+            --bg-color: #14211A;
+            --cell-bg: #22362B;
+            --cell-active-bg: #A7F3D0;
+            --line-color: #059669;
+            --accent-color: #064E3B;
+            --btn-bg: #1E3327;
+            --btn-hover: #294736;
+            --hint-btn-bg: #3B82F6;
+            --hint-btn-hover: #60A5FA;
+        }
+
+        /* --- GENEL TASARIM --- */
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: #FFFFFF;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100vh;
+            height: 100dvh;
+            padding: 16px 16px 24px 16px;
+            overflow: hidden;
+            touch-action: none;
+            transition: background-color 0.4s ease;
+        }
+
+        /* Üst Panel */
+        header {
+            width: 100%;
+            max-width: 340px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            flex-shrink: 0;
+        }
+        .header-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+        }
+        .difficulty {
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #A0AAB5;
+            background-color: rgba(255, 255, 255, 0.08);
+            padding: 2px 10px;
+            border-radius: 20px;
+            margin-bottom: 4px;
+        }
+        .level-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        h1 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            min-width: 110px;
+            text-align: center;
+        }
+        .nav-arrow {
+            background: none;
+            border: none;
+            color: #A0AAB5;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0 8px;
+            transition: color 0.2s, transform 0.1s;
+        }
+        .nav-arrow:hover {
+            color: #FFFFFF;
+        }
+        .nav-arrow:active {
+            transform: scale(0.85);
+        }
+
+        /* Sağ Buton Grubu */
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Genel Buton Yapısı */
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            outline: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background-color: var(--btn-bg);
+            color: #FFFFFF;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        .icon-btn:hover {
+            background-color: var(--btn-hover);
+        }
+        .icon-btn:active {
+            transform: scale(0.92);
+        }
+        .icon-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* Oyun Alanı Taşıyıcısı */
+        .game-container {
+            position: relative;
+            flex: 1;
+            width: 100%;
+            max-width: 340px;
+            min-height: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: auto 0;
+            overflow: hidden;
+        }
+
+        /* Esnek Grid Yapısı */
+        .grid {
+            display: grid;
+            gap: 10px;
+            position: relative;
+            z-index: 1;
+            margin: auto;
+        }
+
+        /* Hücre Yapısı */
+        .cell {
+            background-color: var(--cell-bg);
+            border-radius: 14px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: inset 0 -3px 0 rgba(0,0,0,0.22);
+            transition: background-color 0.4s ease, transform 0.1s ease, box-shadow 0.2s ease;
+        }
+        .cell.active {
+            background-color: var(--cell-active-bg);
+            box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.15);
+            animation: popEffect 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+        }
+        .cell.hidden {
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        @keyframes popEffect {
+            0% { transform: scale(0.85); }
+            100% { transform: scale(1); }
+        }
+
+        /* Başlangıç Dairesi */
+        .start-indicator {
+            width: 40%;
+            height: 40%;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+            z-index: 3;
+            transition: background-color 0.4s ease;
+        }
+
+        /* Son Hücrede Parlayarak Çıkan Yıldız */
+        .end-indicator {
+            width: 46%;
+            height: 46%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+            animation: starPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.3) forwards;
+        }
+        @keyframes starPop {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .end-indicator svg {
+            width: 100%;
+            height: 100%;
+            fill: var(--accent-color);
+            transition: fill 0.4s ease;
+        }
+
+        /* SVG Çizgi Katmanı */
+        .svg-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+        #line-path {
+            fill: none;
+            stroke: var(--line-color);
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: stroke 0.4s ease;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+        }
+
+        /* İpucu Parlama Efekti */
+        @keyframes hintPulse {
+            0% { box-shadow: 0 0 0 0 rgba(240, 204, 252, 0.8); transform: scale(1); }
+            70% { box-shadow: 0 0 0 12px rgba(240, 204, 252, 0); transform: scale(1.05); }
+            100% { box-shadow: 0 0 0 0 rgba(240, 204, 252, 0); transform: scale(1); }
+        }
+        .cell.hint-glow {
+            animation: hintPulse 1.5s infinite;
+            z-index: 4;
+            background-color: #5D6670;
+        }
+
+        /* Alt Panel */
+        footer {
+            display: flex;
+            width: 100%;
+            max-width: 340px;
+            justify-content: flex-end;
+            align-items: center;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        /* Pembe İpucu Butonu */
+        .hint-btn {
+            position: relative;
+            background-color: var(--hint-btn-bg);
+            color: #FFFFFF;
+            box-shadow: 0 4px 15px rgba(226, 94, 151, 0.4);
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+        .hint-btn:hover {
+            background-color: var(--hint-btn-hover);
+        }
+        .hint-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background-color: #FFFFFF;
+            color: var(--hint-btn-bg);
+            font-size: 0.72rem;
+            font-weight: bold;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            transition: color 0.2s;
+        }
+
+        /* Bölüm Sonu Ekranı */
+        .win-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(44, 53, 63, 0.96);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+        .win-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .win-card {
+            background-color: #3B444F;
+            padding: 35px;
+            border-radius: 24px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            transform: scale(0.85);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+            max-width: 90%;
+            width: 300px;
+        }
+        .win-overlay.active .win-card {
+            transform: scale(1);
+        }
+        .win-card h2 {
+            font-size: 1.8rem;
+            color: #F0CCFC;
+            margin-bottom: 8px;
+        }
+        .win-card p {
+            color: #A0AAB5;
+            margin-bottom: 24px;
+        }
+        .next-btn {
+            background-color: #9D62CA;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            width: 100%;
+        }
+        .next-btn:hover {
+            background-color: #AF76DB;
+        }
+        .next-btn:active {
+            transform: scale(0.97);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Üst Panel -->
+    <header>
+        <button class="icon-btn" onclick="goBack()" title="Geri Dön">
+            <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        </button>
+        <div class="header-center">
+            <div class="difficulty" id="level-diff">ORTA</div>
+            <div class="level-selector">
+                <button class="nav-arrow" id="prev-btn" title="Önceki Bölüm">&lt;</button>
+                <h1 id="level-title">Seviye 1</h1>
+                <button class="nav-arrow" id="next-btn" title="Sonraki Bölüm">&gt;</button>
+            </div>
+        </div>
+        <div class="header-actions">
+            <!-- Tema Seçim Butonu -->
+            <button class="icon-btn" id="theme-btn" title="Tema Değiştir">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c1.25 0 2.25-1.01 2.25-2.25 0-.55-.21-1.08-.57-1.49-.36-.4-.58-.95-.58-1.54 0-1.25 1.01-2.25 2.25-2.25h1.9c2.61 0 4.75-2.14 4.75-4.75C22 5.56 17.51 2 12 2zm-5 9c-.83 0-1.5-.67-1.5-1.5S6.17 8 7 8s1.5.67 1.5 1.5S7.83 11 7 11zm3-3c-.83 0-1.5-.67-1.5-1.5S9.17 5 10 5s1.5.67 1.5 1.5S10.83 8 10 8zm4 0c-.83 0-1.5-.67-1.5-1.5S13.17 5 14 5s1.5.67 1.5 1.5S14.83 8 14 8zm3 3c-.83 0-1.5-.67-1.5-1.5S16.17 8 17 8s1.5.67 1.5 1.5S17.83 11 17 11z"/></svg>
+            </button>
+            <!-- Yeniden Başlat Butonu -->
+            <button class="icon-btn" id="restart-btn" title="Yeniden Başlat">
+                <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Oyun Alanı -->
+    <main class="game-container">
+        <div class="grid" id="grid"></div>
+    </main>
+
+    <!-- Alt Panel -->
+    <footer>
+        <button class="icon-btn hint-btn" id="hint-btn" title="İpucu Al">
+            <svg viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6A4.973 4.973 0 0 1 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.09-2.15 4.1z"/></svg>
+            <div class="hint-badge" id="hint-count">2</div>
+        </button>
+    </footer>
+
+    <!-- Bölüm Sonu Ekranı -->
+    <div class="win-overlay" id="win-overlay">
+        <div class="win-card">
+            <h2>Tebrikler!</h2>
+            <p>Bölümü başarıyla tamamladınız.</p>
+            <button class="next-btn" id="next-level-btn">Sonraki Bölüm</button>
+        </div>
+    </div>
+
+    <!-- Seviye Dosyası Çağrısı -->
+    <script src="level/tekseviye.js"></script>
+
+    <script>
+        let currentLevelIndex = 0;
+        let path = [];
+        let isDrawing = false;
+        let hintsLeft = 2;
+
+        const gridElement = document.getElementById('grid');
+        const levelTitle = document.getElementById('level-title');
+        const levelDiff = document.getElementById('level-diff');
+        const winOverlay = document.getElementById('win-overlay');
+        const hintCountBadge = document.getElementById('hint-count');
+
+        const starSvgMarkup = `
+            <div class="end-indicator">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                </svg>
+            </div>
+        `;
+
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                alert("Geri dönülecek geçmiş sayfa yok.");
+            }
+        }
+
+        // --- TEMA YÖNETİMİ ---
+        const themes = ['classic', 'neon', 'rose', 'forest'];
+        let activeThemeIdx = 0;
+
+        function toggleTheme() {
+            activeThemeIdx = (activeThemeIdx + 1) % themes.length;
+            setTheme(themes[activeThemeIdx]);
+            playTick(1.2);
+        }
+
+        function setTheme(themeName) {
+            document.body.classList.remove('theme-neon', 'theme-rose', 'theme-forest');
+            if (themeName !== 'classic') {
+                document.body.classList.add(`theme-${themeName}`);
+            }
+            requestAnimationFrame(resizeGrid);
+        }
+
+        // --- DİNAMİK BOYUTLANDIRMA ---
+        function resizeGrid() {
+            if (typeof levels === 'undefined' || !levels[currentLevelIndex]) return;
+            const lvl = levels[currentLevelIndex];
+            const container = document.querySelector('.game-container');
+            if (!container) return;
+
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+
+            const gap = 10;
+
+            const maxCellWidth = (containerWidth - gap * (lvl.cols - 1)) / lvl.cols;
+            const maxCellHeight = (containerHeight - gap * (lvl.rows - 1)) / lvl.rows;
+
+            const cellSize = Math.floor(Math.min(maxCellWidth, maxCellHeight));
+
+            const gridWidth = cellSize * lvl.cols + gap * (lvl.cols - 1);
+            const gridHeight = cellSize * lvl.rows + gap * (lvl.rows - 1);
+
+            gridElement.style.width = `${gridWidth}px`;
+            gridElement.style.height = `${gridHeight}px`;
+
+            gridElement.style.gridTemplateColumns = `repeat(${lvl.cols}, ${cellSize}px)`;
+            gridElement.style.gridTemplateRows = `repeat(${lvl.rows}, ${cellSize}px)`;
+
+            requestAnimationFrame(drawPath);
+        }
+
+        // --- SES SENTEZLEYİCİ (Web Audio API) ---
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        function playTick(pitchMultiplier = 1) {
+            initAudio();
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(260 * pitchMultiplier, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.12);
+        }
+        function playWinSound() {
+            initAudio();
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const melody = [261.63, 329.63, 392.00, 523.25];
+            melody.forEach((freq, idx) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                gain.gain.setValueAtTime(0.15, now + idx * 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+                osc.start(now + idx * 0.08);
+                osc.stop(now + idx * 0.08 + 0.25);
+            });
+        }
+
+        // --- BÖLÜM KURULUMU ---
+        function loadLevel(index) {
+            if (typeof levels === 'undefined' || !levels[index]) return;
+            currentLevelIndex = index;
+            const lvl = levels[currentLevelIndex];
+            
+            // Çözümü hücrelere dönüştür
+            lvl.cells = lvl.solution;
+            
+            levelTitle.innerText = lvl.name;
+            levelDiff.innerText = lvl.difficulty.toUpperCase();
+            path = [{ ...lvl.start }];
+            isDrawing = false;
+            
+            gridElement.innerHTML = '';
+
+            // Dinamik Çizim Katmanı (SVG)
+            const svgNs = "http://www.w3.org/2000/svg";
+            const svgEl = document.createElementNS(svgNs, "svg");
+            svgEl.setAttribute("class", "svg-overlay");
+            const pathEl = document.createElementNS(svgNs, "path");
+            pathEl.setAttribute("id", "line-path");
+            svgEl.appendChild(pathEl);
+            gridElement.appendChild(svgEl);
+
+            for (let r = 0; r < lvl.rows; r++) {
+                for (let c = 0; c < lvl.cols; c++) {
+                    const cellDiv = document.createElement('div');
+                    cellDiv.dataset.row = r;
+                    cellDiv.dataset.col = c;
+
+                    const isValid = lvl.cells.some(cell => cell.r === r && cell.c === c);
+                    if (!isValid) {
+                        cellDiv.className = 'cell hidden';
+                    } else {
+                        cellDiv.className = 'cell';
+                        
+                        if (r === lvl.start.r && c === lvl.start.c) {
+                            cellDiv.classList.add('active');
+                            const indicator = document.createElement('div');
+                            indicator.className = 'start-indicator';
+                            cellDiv.appendChild(indicator);
+                        }
+                    }
+                    gridElement.appendChild(cellDiv);
+                }
+            }
+
+            winOverlay.classList.remove('active');
+            
+            resizeGrid();
+            updateUI();
+        }
+
+        // --- HAREKET MANTIĞI ---
+        function startDrawing(r, c) {
+            const lvl = levels[currentLevelIndex];
+            const indexInPath = path.findIndex(p => p.r === r && p.c === c);
+            
+            if (r === lvl.start.r && c === lvl.start.c && path.length <= 1) {
+                path = [{r, c}];
+                isDrawing = true;
+                playTick(1);
+            } else if (indexInPath !== -1) {
+                path = path.slice(0, indexInPath + 1);
+                isDrawing = true;
+                playTick(0.9);
+            }
+            clearHintGlow();
+            updateUI();
+        }
+
+        function handleDragMove(clientX, clientY) {
+            if (!isDrawing) return;
+            const el = document.elementFromPoint(clientX, clientY);
+            if (!el) return;
+            const cell = el.closest('.cell');
+            if (!cell || cell.classList.contains('hidden')) return;
+
+            const r = parseInt(cell.dataset.row);
+            const c = parseInt(cell.dataset.col);
+            continueDrawing(r, c);
+        }
+
+        function continueDrawing(r, c) {
+            const head = path[path.length - 1];
+            if (head.r === r && head.c === c) return;
+
+            const isAdjacent = Math.abs(head.r - r) + Math.abs(head.c - c) === 1;
+            if (!isAdjacent) return;
+
+            const indexInPath = path.findIndex(p => p.r === r && p.c === c);
+
+            if (indexInPath !== -1) {
+                if (indexInPath === path.length - 2) {
+                    path.pop();
+                    playTick(0.85);
+                    clearHintGlow();
+                    updateUI();
+                }
+            } else {
+                path.push({ r, c });
+                playTick(1 + path.length * 0.05);
+                clearHintGlow();
+                updateUI();
+                checkWinCondition();
+            }
+        }
+
+        // --- EKRAN GÜNCELLEMELERİ ---
+        function updateUI() {
+            const cells = document.querySelectorAll('.cell:not(.hidden)');
+            
+            document.querySelectorAll('.end-indicator').forEach(el => el.remove());
+
+            cells.forEach(cell => {
+                const r = parseInt(cell.dataset.row);
+                const c = parseInt(cell.dataset.col);
+                const inPath = path.some(p => p.r === r && p.c === c);
+                
+                if (inPath) {
+                    cell.classList.add('active');
+                } else {
+                    cell.classList.remove('active');
+                }
+            });
+
+            // Bölüm bittiğinde son kareye yıldız yerleştir
+            if (typeof levels !== 'undefined' && levels[currentLevelIndex]) {
+                const lvl = levels[currentLevelIndex];
+                if (path.length === lvl.cells.length) {
+                    const lastPoint = path[path.length - 1];
+                    const lastCell = document.querySelector(`[data-row="${lastPoint.r}"][data-col="${lastPoint.c}"]`);
+                    if (lastCell) {
+                        lastCell.insertAdjacentHTML('beforeend', starSvgMarkup);
+                    }
+                }
+            }
+
+            requestAnimationFrame(drawPath);
+        }
+
+        function drawPath() {
+            const pathElement = document.getElementById('line-path');
+            if (!pathElement) return;
+
+            if (path.length < 2) {
+                pathElement.setAttribute('d', '');
+                return;
+            }
+
+            const gridRect = gridElement.getBoundingClientRect();
+            let d = '';
+
+            const firstActiveCell = document.querySelector('.cell:not(.hidden)');
+            if (firstActiveCell) {
+                const cellRect = firstActiveCell.getBoundingClientRect();
+                const strokeWidth = cellRect.width * 0.38;
+                pathElement.style.strokeWidth = `${strokeWidth}px`;
+            }
+
+            path.forEach((point, index) => {
+                const cell = document.querySelector(`[data-row="${point.r}"][data-col="${point.c}"]`);
+                if (cell) {
+                    const rect = cell.getBoundingClientRect();
+                    const x = rect.left - gridRect.left + rect.width / 2;
+                    const y = rect.top - gridRect.top + rect.height / 2;
+
+                    if (index === 0) {
+                        d += `M ${x} ${y}`;
+                    } else {
+                        d += ` L ${x} ${y}`;
+                    }
+                }
+            });
+
+            pathElement.setAttribute('d', d);
+        }
+
+        // --- KAZANMA DURUMU ---
+        function checkWinCondition() {
+            const lvl = levels[currentLevelIndex];
+            const totalValidCells = lvl.cells.length;
+
+            if (path.length === totalValidCells) {
+                isDrawing = false;
+                setTimeout(() => {
+                    playWinSound();
+                    winOverlay.classList.add('active');
+                }, 200);
+            }
+        }
+
+        // --- İPUCU SİSTEMİ ---
+        function useHint() {
+            if (hintsLeft <= 0) return;
+            
+            const lvl = levels[currentLevelIndex];
+            const solution = lvl.solution;
+            
+            let isPrefix = true;
+            for (let i = 0; i < path.length; i++) {
+                if (path[i].r !== solution[i].r || path[i].c !== solution[i].c) {
+                    isPrefix = false;
+                    break;
+                }
+            }
+
+            if (!isPrefix) {
+                let lastCorrectIndex = -1;
+                for (let i = 0; i < path.length; i++) {
+                    if (path[i].r === solution[i].r && path[i].c === solution[i].c) {
+                        lastCorrectIndex = i;
+                    } else {
+                        break;
+                    }
+                }
+                path = path.slice(0, lastCorrectIndex + 1);
+                updateUI();
+            }
+
+            const nextStepIndex = path.length;
+            if (nextStepIndex < solution.length) {
+                const nextStep = solution[nextStepIndex];
+                const nextCell = document.querySelector(`[data-row="${nextStep.r}"][data-col="${nextStep.c}"]`);
+                if (nextCell) {
+                    clearHintGlow();
+                    nextCell.classList.add('hint-glow');
+                    hintsLeft--;
+                    hintCountBadge.innerText = hintsLeft;
+                }
+            }
+        }
+
+        function clearHintGlow() {
+            document.querySelectorAll('.cell.hint-glow').forEach(el => {
+                el.classList.remove('hint-glow');
+            });
+        }
+
+        // --- KONTROLLER ---
+        gridElement.addEventListener('mousedown', (e) => {
+            const cell = e.target.closest('.cell');
+            if (cell && !cell.classList.contains('hidden')) {
+                const r = parseInt(cell.dataset.row);
+                const c = parseInt(cell.dataset.col);
+                startDrawing(r, c);
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isDrawing) {
+                handleDragMove(e.clientX, e.clientY);
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDrawing = false;
+        });
+
+        gridElement.addEventListener('touchstart', (e) => {
+            const cell = e.target.closest('.cell');
+            if (cell && !cell.classList.contains('hidden')) {
+                const r = parseInt(cell.dataset.row);
+                const c = parseInt(cell.dataset.col);
+                startDrawing(r, c);
+                e.preventDefault(); 
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchmove', (e) => {
+            if (isDrawing && e.touches.length > 0) {
+                handleDragMove(e.touches[0].clientX, e.touches[0].clientY);
+                e.preventDefault(); 
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', () => {
+            isDrawing = false;
+        });
+
+        window.addEventListener('resize', () => {
+            resizeGrid();
+        });
+
+        // Buton Dinleyicileri
+        document.getElementById('restart-btn').addEventListener('click', () => {
+            loadLevel(currentLevelIndex);
+        });
+
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            if (currentLevelIndex > 0) {
+                loadLevel(currentLevelIndex - 1);
+            }
+        });
+
+        document.getElementById('next-btn').addEventListener('click', () => {
+            if (currentLevelIndex < levels.length - 1) {
+                loadLevel(currentLevelIndex + 1);
+            }
+        });
+
+        document.getElementById('next-level-btn').addEventListener('click', () => {
+            if (currentLevelIndex < levels.length - 1) {
+                loadLevel(currentLevelIndex + 1);
+            } else {
+                loadLevel(0);
+            }
+        });
+
+        document.getElementById('theme-btn').addEventListener('click', toggleTheme);
+        document.getElementById('hint-btn').addEventListener('click', useHint);
+
+        // --- GÜVENLİ OYUN BAŞLATICI ---
+        window.addEventListener('DOMContentLoaded', () => {
+            // Seviye dosyasının yüklenip yüklenmediğini akıllıca test eder
+            if (typeof levels === 'undefined' || !Array.isArray(levels) || levels.length === 0) {
+                const container = document.querySelector('.game-container');
+                if (container) {
+                    container.innerHTML = `
+                        <div style="text-align: center; color: #FFA0A0; padding: 20px; font-size: 0.9rem; max-width: 300px; margin: auto; background: rgba(0,0,0,0.3); border-radius: 16px; border: 1px solid rgba(255,0,0,0.25); box-shadow: 0 4px 15px rgba(0,0,0,0.2)">
+                            <p style="font-weight: bold; margin-bottom: 8px;">HATA: Seviye Verisi Yüklenemedi!</p>
+                            <p style="font-size: 0.8rem; color: #A0AAB5; line-height: 1.4;">
+                                Lütfen <b>level</b> adında bir klasör oluşturup içine <b>tekseviye.js</b> dosyasını yerleştirdiğinizden emin olun.<br><br>
+                                Dosya yapısı:<br>
+                                <span style="font-family: monospace; color:#FFFFFF;">├── index.html</span><br>
+                                <span style="font-family: 'monospace'; color:#FFFFFF;">└── level/tekseviye.js</span>
+                            </p>
+                        </div>
+                    `;
+                }
+                return;
+            }
+            // Başarılıysa yükle
+            loadLevel(0);
+        });
+    </script>
+</body>
+</html>
