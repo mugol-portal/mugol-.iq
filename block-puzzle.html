@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Legendary Block Puzzle</title>
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1880946354382681" crossorigin="anonymous"></script>
+    <style>
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0b0b14;
+            color: #fff;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            touch-action: none; overflow: hidden; height: 100vh;
+            position: relative;
+        }
+
+        /* Arka Plan Aurası */
+        .ambient-bg {
+            position: absolute; width: 150vw; height: 150vw; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); z-index: -1; pointer-events: none;
+            background: radial-gradient(circle at 30% 30%, rgba(78, 204, 163, 0.12), transparent 40%),
+                        radial-gradient(circle at 70% 70%, rgba(255, 107, 129, 0.1), transparent 40%),
+                        radial-gradient(circle at 50% 50%, rgba(155, 89, 182, 0.15), transparent 50%);
+            animation: breathe 10s ease-in-out infinite alternate;
+        }
+        @keyframes breathe { 0% { transform: translate(-50%, -50%) scale(1) rotate(0deg); } 100% { transform: translate(-50%, -50%) scale(1.15) rotate(5deg); } }
+
+        #header { text-align: center; margin-bottom: 5px; width: 100%; position: relative; z-index: 10;}
+        h1 { margin: 0; font-size: 24px; color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.4); letter-spacing: 2px; font-weight: 900;}
+        h1 span { color: #f9a826; }
+        
+        /* Gösterge Paneli */
+        .dashboard { display: flex; justify-content: center; gap: 8px; margin-top: 5px; width: 92vmin; max-width: 420px; }
+        .stat-box { 
+            flex: 1; background: rgba(20, 20, 35, 0.8); padding: 5px 2px; 
+            border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+        }
+        .stat-label { font-size: 10px; color: #a1a1b5; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;}
+        .stat-value { font-size: 20px; font-weight: 900; color: #fff; margin-top: 2px; transition: transform 0.2s, color 0.2s; }
+        
+        .score-highlight { transform: scale(1.4); color: #4ecca3 !important; text-shadow: 0 0 15px #4ecca3;}
+        .streak-highlight { color: #ff6b81 !important; text-shadow: 0 0 10px #ff6b81;}
+        .stat-value.high { color: #f9a826; }
+
+        /* XP Bar */
+        .progress-container { width: 90vmin; max-width: 400px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; margin: 10px 0; overflow: hidden; position: relative; box-shadow: inset 0 0 5px rgba(0,0,0,0.8);}
+        .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #9b59b6, #e056fd, #f9a826); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 10px;}
+
+        /* Aksiyon Çubuğu */
+        #action-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            width: 90vmin; max-width: 400px; margin-bottom: 12px; gap: 5px;
+        }
+
+        .action-btn {
+            flex: 1; padding: 10px 0; font-size: 13px; font-weight: 900; color: white;
+            border: none; border-radius: 10px; cursor: pointer;
+            transition: all 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+            box-shadow: inset 0 -3px 0 rgba(0,0,0,0.2), 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .action-btn span { font-size: 10px; background: rgba(0,0,0,0.4); padding: 2px 8px; border-radius: 8px;}
+        
+        #btn-hammer { background: linear-gradient(135deg, #e67e22, #d35400); }
+        #btn-bomb { background: linear-gradient(135deg, #ff4757, #c0392b); }
+        #btn-reroll { background: linear-gradient(135deg, #3498db, #2980b9); }
+        .action-btn:active { transform: translateY(2px); box-shadow: inset 0 -1px 0 rgba(0,0,0,0.2), 0 2px 5px rgba(0,0,0,0.3); }
+        
+        #stash-zone {
+            flex: 1; height: 48px; border: 2px dashed rgba(78, 204, 163, 0.6); border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; position: relative; background: rgba(0,0,0,0.3); transition: all 0.2s;
+        }
+        #stash-zone.drag-over { background: rgba(78, 204, 163, 0.2); border-color: #4ecca3; transform: scale(1.05); }
+        .stash-label { position: absolute; top: -6px; background: #0b0b14; padding: 0 4px; font-size: 8px; color: #4ecca3; font-weight: bold; border-radius: 4px; letter-spacing: 1px;}
+        #stash-zone .shape { transform: scale(0.70); margin: 0; padding: 0;}
+
+        /* Tahta Konteyneri ve Animasyonu */
+        #game-container { position: relative; transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
+        .impact-anim { transform: scale(0.97) translateY(2px) !important; }
+
+        #grid {
+            display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); gap: 2px;
+            background-color: rgba(18, 18, 28, 0.85); padding: 5px; border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,255,255,0.05);
+            width: 90vmin; max-width: 400px; height: 90vmin; max-height: 400px;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05);
+            position: relative; overflow: hidden;
+        }
+
+        .cell { background-color: rgba(30, 30, 45, 0.5); border-radius: 6px; transition: all 0.2s; position: relative;}
+        .cell.filled { box-shadow: 0 2px 5px rgba(0,0,0,0.6), inset 0 2px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.4); border: 1px solid rgba(0,0,0,0.5); }
+        
+        .cell.filled::after, .shape-cell::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 50%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+            border-radius: 6px 6px 0 0; pointer-events: none;
+        }
+
+        .cell.pop { transform: scale(0) rotate(45deg); opacity: 0; border-radius: 50%; }
+        .cell.preview { background-color: rgba(255, 255, 255, 0.2) !important; box-shadow: inset 0 0 15px rgba(255,255,255,0.5); transform: scale(0.85); border-radius: 8px;}
+
+        /* Güç Aktif Modları */
+        body.hammer-active #grid { box-shadow: 0 0 30px rgba(230, 126, 34, 0.6); border: 2px solid #e67e22; }
+        body.hammer-active .cell.filled { cursor: crosshair; animation: pulsePower 1s infinite; }
+        
+        body.bomb-active #grid { box-shadow: 0 0 40px rgba(255, 71, 87, 0.8); border: 2px solid #ff4757; }
+        body.bomb-active .cell.filled { cursor: crosshair; animation: pulseBomb 0.5s infinite alternate; }
+
+        @keyframes pulsePower { 0% { filter: brightness(1); } 50% { filter: brightness(1.3) drop-shadow(0 0 5px orange); transform: scale(0.95); } 100% { filter: brightness(1); } }
+        @keyframes pulseBomb { 0% { filter: brightness(1); transform: scale(1);} 100% { filter: brightness(1.5) drop-shadow(0 0 10px red); transform: scale(0.90); } }
+        
+        /* Laser Kesimi */
+        .laser { position: absolute; background: #fff; box-shadow: 0 0 15px 5px #4ecca3, 0 0 30px 10px #3498db; z-index: 100; border-radius: 10px; opacity: 0; transition: all 0.3s ease-out; pointer-events: none;}
+        .laser.h { height: 8px; width: 0%; top: 50%; transform: translateY(-50%); left: 0; }
+        .laser.v { width: 8px; height: 0%; left: 50%; transform: translateX(-50%); top: 0; }
+
+        .shake-anim { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 0, 0); } 40%, 60% { transform: translate3d(6px, 0, 0); } }
+
+        #shapes-container { display: flex; justify-content: space-around; align-items: center; margin-top: 10px; width: 92vmin; max-width: 420px; min-height: 100px; gap: 8px; transition: opacity 0.3s; }
+        .shape { display: grid; gap: 2px; cursor: pointer; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s; padding: 10px; }
+        .shape:active { transform: scale(0.9); }
+        .shape-cell { border-radius: 5px; position: relative; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.6), inset 0 2px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.4); border: 1px solid rgba(0,0,0,0.5); }
+        
+        .dragging { position: fixed; pointer-events: none; z-index: 1000; opacity: 0.95; transform: scale(1.1) !important; filter: drop-shadow(0px 25px 25px rgba(0,0,0,0.9)); padding: 0; }
+
+        /* Metin Efektleri */
+        .floating-text { position: fixed; pointer-events: none; z-index: 10000; font-weight: 900; font-size: 28px; text-shadow: 0 4px 8px rgba(0,0,0,0.9); animation: floatUp 1.2s ease-out forwards; white-space: nowrap;}
+        .floating-text.streak { font-size: 38px; color: #ff6b81; text-shadow: 0 0 20px #ff4757, 0 5px 10px #000; animation: floatUpCenter 2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        
+        .particle { position: fixed; pointer-events: none; z-index: 9999; border-radius: 4px; box-shadow: 0 0 8px currentColor; animation: particleAnim 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+
+        @keyframes floatUp { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } 15% { transform: translate(-50%, -80%) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -150%) scale(1); opacity: 0; } }
+        @keyframes floatUpCenter { 0% { transform: translate(-50%, -50%) scale(0) rotate(-5deg); opacity: 0; } 15% { transform: translate(-50%, -50%) scale(1.2) rotate(5deg); opacity: 1; } 80% { transform: translate(-50%, -70%) scale(1) rotate(0deg); opacity: 1; filter: blur(0px);} 100% { transform: translate(-50%, -90%) scale(1.5); opacity: 0; filter: blur(15px); } }
+        @keyframes particleAnim { 0% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; } 100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0) rotate(360deg); opacity: 0; } }
+
+        #game-over-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 10, 18, 0.95); backdrop-filter: blur(8px); display: none; flex-direction: column; justify-content: center; align-items: center; border-radius: 12px; z-index: 2000; animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        #game-over-overlay h2 { color: #f9a826; font-size: 45px; margin-bottom: 0px; text-shadow: 0 0 25px rgba(249,168,38,0.5);}
+        #game-over-overlay p { color: #fff; font-size: 22px; margin-bottom: 30px; }
+
+        .btn-play { padding: 16px 40px; font-size: 24px; font-weight: 900; color: #fff; background: linear-gradient(135deg, #e056fd, #9b59b6); border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 8px 25px rgba(155, 89, 182, 0.5), inset 0 -4px 0 rgba(0,0,0,0.2); transition: all 0.2s; text-transform: uppercase; }
+        .btn-play:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(155, 89, 182, 0.7), inset 0 -4px 0 rgba(0,0,0,0.2); filter: brightness(1.1);}
+        .btn-play:active { transform: scale(0.95) translateY(2px); box-shadow: 0 2px 5px rgba(155, 89, 182, 0.4), inset 0 -1px 0 rgba(0,0,0,0.2); }
+
+        /* ── AdSense Reklam Kutusu ── */
+        .mg-ad-box {
+            position: relative;
+            width: 100%;
+            max-width: 320px;
+            background: rgba(10, 10, 20, 0.7);
+            border: 1px solid rgba(78, 204, 163, 0.12);
+            border-radius: 14px;
+            padding: 26px 10px 10px;
+            margin-top: 18px;
+            overflow: visible;
+            box-sizing: border-box;
+            min-height: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mg-ad-box ins.adsbygoogle {
+            display: block !important;
+            width: 300px !important;
+            height: 250px !important;
+        }
+        .mg-ad-label {
+            position: absolute;
+            top: 7px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.58rem;
+            font-weight: 700;
+            color: rgba(78, 204, 163, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(10, 10, 20, 0.95);
+            padding: 2px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(78, 204, 163, 0.12);
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-bg"></div>
+
+    <div id="header">
+        <h1>BLOCK <span>LEGEND</span></h1>
+    </div>
+
+    <div class="dashboard">
+        <div class="stat-box"><div class="stat-label">Skor</div><div class="stat-value" id="score">0</div></div>
+        <div class="stat-box"><div class="stat-label">Seviye</div><div class="stat-value" style="color:#e056fd" id="level-display">1</div></div>
+        <div class="stat-box"><div class="stat-label">Seri 🔥</div><div class="stat-value" style="color:#ff6b81" id="streak-display">0</div></div>
+    </div>
+
+    <div class="progress-container">
+        <div class="progress-fill" id="level-progress"></div>
+    </div>
+
+    <div id="action-bar">
+        <button id="btn-hammer" class="action-btn" onclick="toggleHammer()">
+            🔨 KIRICI <span id="hammer-count">3</span>
+        </button>
+        <button id="btn-bomb" class="action-btn" onclick="toggleBomb()">
+            💣 BOMBA <span id="bomb-count">1</span>
+        </button>
+        <button id="btn-reroll" class="action-btn" onclick="useReroll()">
+            🎲 YENİLE <span id="reroll-count">2</span>
+        </button>
+        <button class="action-btn" onclick="exportSave()" style="background:linear-gradient(135deg,#1abc9c,#16a085); flex:0.7;" title="Kaydet">
+            💾 <span>KAYDET</span>
+        </button>
+        <button class="action-btn" onclick="document.getElementById('vault-import').click()" style="background:linear-gradient(135deg,#3498db,#2471a3); flex:0.7;" title="Yükle">
+            📂 <span>YÜKLE</span>
+        </button>
+        <input type="file" id="vault-import" accept=".json" style="display:none;" onchange="importSave(event)">
+        <div id="stash-zone">
+            <div class="stash-label">DEPO</div>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <div id="grid"></div>
+        <!-- Lazer Efektleri için Containerlar Grid İçinde Yaratılacak -->
+        <div id="game-over-overlay">
+            <h2>OYUN BİTTİ</h2>
+            <p>Son Skor: <strong id="final-score">0</strong></p>
+            <p style="font-size:14px; color:#f9a826; margin:-15px 0 20px;">En Yüksek: <strong id="final-high">0</strong></p>
+            <button class="btn-play" onclick="resetGame()">YENİ OYUN</button>
+            <div style="display:flex;gap:10px;margin-top:14px;">
+                <button class="btn-play" style="font-size:14px;padding:10px 18px;background:linear-gradient(135deg,#1abc9c,#16a085);" onclick="exportSave()">💾 Kaydet</button>
+                <button class="btn-play" style="font-size:14px;padding:10px 18px;background:linear-gradient(135deg,#3498db,#2471a3);" onclick="document.getElementById('vault-import').click()">📂 Yükle</button>
+            </div>
+
+            <!-- ── ADSENSE REKLAM — Oyun Sonu ── -->
+            <div class="mg-ad-box" aria-label="Reklam" role="complementary">
+                <span class="mg-ad-label">Reklam</span>
+                <ins class="adsbygoogle"
+                     style="display:block;width:300px;height:250px;"
+                     data-ad-client="ca-pub-1880946354382681"
+                     data-ad-slot="1689789138"
+                     data-ad-format="rectangle"></ins>
+            </div>
+        </div>
+    </div>
+
+    <div id="shapes-container"></div>
+
+    <script>
+        const GRID_SIZE = 8;
+        const GAP = 2;
+        const POINTS_PER_LEVEL = 1000;
+
+        let grid = [];
+        let cellElems =[];
+        let score = 0;
+        let highScore = localStorage.getItem('blockPuzzleLegendHigh') || 0;
+        
+        let activeClone = null;
+        let activeShapeElem = null;
+        let hoverStartRow = -1;
+        let hoverStartCol = -1;
+
+        let isDragging = false;
+        let dragStartX = 0; let dragStartY = 0;
+
+        // Yetenek & Sistem Değişkenleri
+        let currentLevel = 1;
+        let hammerCount = 3;
+        let bombCount = 1;
+        let rerollCount = 2;
+        let isHammerActive = false;
+        let isBombActive = false;
+        let currentStreak = 0;
+
+        const colors =['#4ecca3', '#ff6b81', '#f9a826', '#9b59b6', '#3498db', '#1abc9c', '#e056fd', '#ff4757', '#ffa502'];
+
+        const SHAPE_TEMPLATES = [
+            [[1]], [[1,1]], [[1],[1]], [[1,1,1]], [[1],[1],[1]], [[1,1,1,1]], [[1],[1],[1],[1]],
+            [[1,1],[1,1]], [[1,1,1],[1,1,1],[1,1,1]], [[1,0],[1,1]], [[0,1],[1,1]], [[1,1],[1,0]],
+            [[1,1],[0,1]], [[1,1,1],[1,0,0],[1,0,0]], [[1,1,1],[0,0,1],[0,0,1]], [[1,0,0],[1,0,0],[1,1,1]], [[0,0,1],[0,0,1],[1,1,1]]
+        ];
+
+        const gridElem = document.getElementById('grid');
+        const stashZone = document.getElementById('stash-zone');
+        const gameContainer = document.getElementById('game-container');
+        const shapesContainer = document.getElementById('shapes-container');
+        const scoreElem = document.getElementById('score');
+        const streakElem = document.getElementById('streak-display');
+        
+        // ----- YENİ: TİTREŞİM (HAPTIC) MOTORU -----
+        function vibe(pattern) {
+            if (navigator.vibrate) {
+                try { navigator.vibrate(pattern); } catch(e){}
+            }
+        }
+
+        // ----- SES SİSTEMİ -----
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function playSound(type) {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+            
+            if (type === 'place') {
+                vibe(15);
+                osc.type = 'sine'; osc.frequency.setValueAtTime(450, now); osc.frequency.exponentialRampToValueAtTime(150, now + 0.1);
+                gainNode.gain.setValueAtTime(0.4, now); gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+            } else if (type === 'clear') {
+                vibe([30, 50, 30]);
+                osc.type = 'square'; osc.frequency.setValueAtTime(300, now); osc.frequency.linearRampToValueAtTime(1000, now + 0.3);
+                gainNode.gain.setValueAtTime(0.3, now); gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc.start(now); osc.stop(now + 0.4);
+            } else if (type === 'rotate') {
+                vibe(10);
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(700, now); osc.frequency.exponentialRampToValueAtTime(400, now + 0.05);
+                gainNode.gain.setValueAtTime(0.2, now); gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now); osc.stop(now + 0.05);
+            } else if (type === 'bomb') { // Bomba Sesi
+                vibe([50, 50, 100, 50, 200]);
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); osc.frequency.exponentialRampToValueAtTime(5, now + 0.6);
+                gainNode.gain.setValueAtTime(0.8, now); gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                osc.start(now); osc.stop(now + 0.6);
+            } else if (type === 'break') { 
+                vibe([40, 30]);
+                osc.type = 'square'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(20, now + 0.25);
+                gainNode.gain.setValueAtTime(0.6, now); gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now); osc.stop(now + 0.25);
+            } else if (type === 'levelup') { 
+                vibe([50, 50, 100]);
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(400, now); osc.frequency.setValueAtTime(500, now + 0.1); osc.frequency.setValueAtTime(600, now + 0.2); osc.frequency.setValueAtTime(800, now + 0.3);
+                gainNode.gain.setValueAtTime(0.5, now); gainNode.gain.linearRampToValueAtTime(0, now + 0.6);
+                osc.start(now); osc.stop(now + 0.6);
+            } else if (type === 'gameover') {
+                vibe([100, 50, 200, 50, 300]);
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(30, now + 0.8);
+                gainNode.gain.setValueAtTime(0.5, now); gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+                osc.start(now); osc.stop(now + 0.8);
+            }
+        }
+
+        function initGame() {
+            gridElem.innerHTML = '';
+            cellElems =[];
+            grid = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
+            
+            score = 0; currentLevel = 1; currentStreak = 0; 
+            hammerCount = 3; bombCount = 1; rerollCount = 2; 
+            isHammerActive = false; isBombActive = false;
+            document.body.className = '';
+            
+            updateDashboard();
+            stashZone.innerHTML = '<div class="stash-label">DEPO</div>';
+            document.getElementById('game-over-overlay').style.display = 'none';
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                let rowElems =[];
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    let cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.onclick = () => handleCellClick(r, c);
+                    gridElem.appendChild(cell);
+                    rowElems.push(cell);
+                }
+                cellElems.push(rowElems);
+            }
+
+            updateGridVisuals();
+            shapesContainer.innerHTML = '';
+            generateShapes();
+        }
+
+        function resetGame() { initGame(); }
+
+        /* ══════════════════════════════════
+           KASA: Dışa Aktar / İçe Aktar
+        ══════════════════════════════════ */
+        function buildSaveData() {
+            return {
+                _info: "Block Legend Kayıt Dosyası",
+                _version: 1,
+                _date: new Date().toLocaleString('tr-TR'),
+                score: score,
+                highScore: highScore,
+                currentLevel: currentLevel,
+                currentStreak: currentStreak,
+                hammerCount: hammerCount,
+                bombCount: bombCount,
+                rerollCount: rerollCount,
+                grid: grid,
+                stashShape: (() => {
+                    const s = document.querySelector('#stash-zone .shape');
+                    return s ? { shape: s.dataset.shape, color: s.dataset.color } : null;
+                })(),
+                shapes: Array.from(document.querySelectorAll('#shapes-container .shape')).map(s => ({
+                    shape: s.dataset.shape, color: s.dataset.color
+                }))
+            };
+        }
+
+        function exportSave() {
+            const data = buildSaveData();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `block-legend-kayit-${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a); a.click();
+            document.body.removeChild(a); URL.revokeObjectURL(url);
+            showInGameToast('💾 Kayıt indirildi!', '#1abc9c');
+        }
+
+        function importSave(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const d = JSON.parse(e.target.result);
+                    if (typeof d.score !== 'number' || !Array.isArray(d.grid)) throw new Error('Geçersiz');
+
+                    // Durumu geri yükle
+                    score = d.score || 0;
+                    highScore = Math.max(d.highScore || 0, localStorage.getItem('blockPuzzleLegendHigh') || 0);
+                    localStorage.setItem('blockPuzzleLegendHigh', highScore);
+                    currentLevel = d.currentLevel || 1;
+                    currentStreak = d.currentStreak || 0;
+                    hammerCount = d.hammerCount ?? 3;
+                    bombCount = d.bombCount ?? 1;
+                    rerollCount = d.rerollCount ?? 2;
+                    isHammerActive = false; isBombActive = false;
+                    document.body.className = '';
+
+                    // Izgara
+                    grid = d.grid;
+                    gridElem.innerHTML = ''; cellElems = [];
+                    for (let r = 0; r < GRID_SIZE; r++) {
+                        let rowE = [];
+                        for (let c = 0; c < GRID_SIZE; c++) {
+                            let cell = document.createElement('div');
+                            cell.className = 'cell';
+                            cell.onclick = () => handleCellClick(r, c);
+                            gridElem.appendChild(cell); rowE.push(cell);
+                        }
+                        cellElems.push(rowE);
+                    }
+                    updateGridVisuals();
+
+                    // Şekiller
+                    shapesContainer.innerHTML = '';
+                    (d.shapes || []).forEach(s => {
+                        shapesContainer.appendChild(createShapeElement(JSON.parse(s.shape), s.color, 25));
+                    });
+
+                    // Depo
+                    stashZone.innerHTML = '<div class="stash-label">DEPO</div>';
+                    if (d.stashShape) {
+                        stashZone.appendChild(createShapeElement(JSON.parse(d.stashShape.shape), d.stashShape.color, 25));
+                    }
+
+                    document.getElementById('game-over-overlay').style.display = 'none';
+                    updateDashboard();
+                    showInGameToast(`📂 Seviye ${currentLevel} · ${score} puan yüklendi!`, '#3498db');
+                } catch(err) {
+                    showInGameToast('❌ Geçersiz veya bozuk dosya!', '#ff4757');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function showInGameToast(msg, color) {
+            const el = document.createElement('div');
+            el.textContent = msg;
+            el.style.cssText = `position:fixed;top:12px;left:50%;transform:translateX(-50%);background:rgba(10,10,20,0.95);color:${color||'#4ecca3'};border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:7px 18px;font-size:13px;font-weight:900;z-index:99999;pointer-events:none;backdrop-filter:blur(10px);white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.5);transition:opacity 0.4s;`;
+            document.body.appendChild(el);
+            setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 400); }, 2200);
+        }
+
+        function updateGridVisuals() {
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    let cell = cellElems[r][c];
+                    cell.classList.remove('preview');
+                    cell.classList.remove('pop'); 
+                    
+                    if (grid[r][c] !== 0) {
+                        cell.style.backgroundColor = grid[r][c];
+                        cell.classList.add('filled');
+                    } else {
+                        cell.style.backgroundColor = '';
+                        cell.classList.remove('filled');
+                    }
+                }
+            }
+        }
+
+        function generateShapes() {
+            for (let i = 0; i < 3; i++) {
+                let template = SHAPE_TEMPLATES[Math.floor(Math.random() * SHAPE_TEMPLATES.length)];
+                let color = colors[Math.floor(Math.random() * colors.length)];
+                shapesContainer.appendChild(createShapeElement(template, color, 25));
+            }
+            checkGameOver();
+        }
+
+        function createShapeElement(matrix, color, size) {
+            let el = document.createElement('div');
+            el.className = 'shape'; el.dataset.shape = JSON.stringify(matrix); el.dataset.color = color;
+            renderShapeInsideElement(el, matrix, color, size);
+            return el;
+        }
+
+        function renderShapeInsideElement(el, matrix, color, size) {
+            el.style.gridTemplateColumns = `repeat(${matrix[0].length}, ${size}px)`;
+            el.style.gridTemplateRows = `repeat(${matrix.length}, ${size}px)`;
+            el.innerHTML = '';
+            for (let r = 0; r < matrix.length; r++) {
+                for (let c = 0; c < matrix[r].length; c++) {
+                    let cell = document.createElement('div');
+                    if (matrix[r][c] === 1) {
+                        cell.className = 'shape-cell'; cell.style.backgroundColor = color;
+                    }
+                    el.appendChild(cell);
+                }
+            }
+        }
+
+        function rotateMatrix(matrix) {
+            const rows = matrix.length, cols = matrix[0].length;
+            let rotated = Array(cols).fill().map(() => Array(rows).fill(0));
+            for (let r = 0; r < rows; r++) { for (let c = 0; c < cols; c++) { rotated[c][rows - 1 - r] = matrix[r][c]; } }
+            return rotated;
+        }
+
+        function rotateShapeElem(el) {
+            playSound('rotate');
+            let matrix = JSON.parse(el.dataset.shape); let rotated = rotateMatrix(matrix);
+            el.dataset.shape = JSON.stringify(rotated);
+            el.style.transform = "scale(0.8)"; setTimeout(() => el.style.transform = "scale(1)", 100);
+            renderShapeInsideElement(el, rotated, el.dataset.color, 25);
+            checkGameOver(); 
+        }
+
+        function useReroll() {
+            if (rerollCount <= 0 || isHammerActive || isBombActive || isDragging) return;
+            rerollCount--; document.getElementById('reroll-count').innerText = rerollCount;
+            playSound('rotate');
+            shapesContainer.style.opacity = '0'; 
+            setTimeout(() => { shapesContainer.innerHTML = ''; generateShapes(); shapesContainer.style.opacity = '1'; }, 300);
+        }
+
+        function toggleHammer() {
+            if (hammerCount <= 0 && !isHammerActive) return;
+            isHammerActive = !isHammerActive; isBombActive = false;
+            document.body.className = isHammerActive ? 'hammer-active' : '';
+            playSound('rotate');
+        }
+
+        function toggleBomb() {
+            if (bombCount <= 0 && !isBombActive) return;
+            isBombActive = !isBombActive; isHammerActive = false;
+            document.body.className = isBombActive ? 'bomb-active' : '';
+            playSound('rotate');
+        }
+
+        function handleCellClick(r, c) {
+            if (isHammerActive && grid[r][c] !== 0) {
+                let color = grid[r][c]; grid[r][c] = 0;
+                hammerCount--; document.getElementById('hammer-count').innerText = hammerCount;
+                toggleHammer(); playSound('break');
+                
+                let rect = cellElems[r][c].getBoundingClientRect();
+                spawnParticles(rect, color, 15); cellElems[r][c].classList.add('pop');
+                setTimeout(() => { updateGridVisuals(); checkLines(); checkGameOver(); }, 200);
+            } 
+            else if (isBombActive) {
+                // 3x3 Alan Patlatma
+                bombCount--; document.getElementById('bomb-count').innerText = bombCount;
+                toggleBomb(); playSound('bomb');
+                gameContainer.classList.add('shake-anim'); setTimeout(() => gameContainer.classList.remove('shake-anim'), 400);
+
+                let destroyed = 0;
+                for(let i=r-1; i<=r+1; i++) {
+                    for(let j=c-1; j<=c+1; j++) {
+                        if(i>=0 && i<GRID_SIZE && j>=0 && j<GRID_SIZE) {
+                            if(grid[i][j] !== 0) {
+                                let rect = cellElems[i][j].getBoundingClientRect();
+                                spawnParticles(rect, grid[i][j] || '#ff4757', 10);
+                                cellElems[i][j].classList.add('pop');
+                                grid[i][j] = 0; destroyed++;
+                            }
+                        }
+                    }
+                }
+                if(destroyed > 0) addScore(destroyed * 5); // Bomba bonusu
+                setTimeout(() => { updateGridVisuals(); checkLines(); checkGameOver(); }, 300);
+            }
+        }
+
+        document.addEventListener('mousedown', handleDragStart, { passive: false }); document.addEventListener('mousemove', handleDragMove, { passive: false }); document.addEventListener('mouseup', handleDragEnd);
+        document.addEventListener('touchstart', handleDragStart, { passive: false }); document.addEventListener('touchmove', handleDragMove, { passive: false }); document.addEventListener('touchend', handleDragEnd);
+
+        function handleDragStart(e) {
+            if (!audioCtx) { audioCtx = new AudioContext(); audioCtx.resume(); }
+            if (isHammerActive || isBombActive) return; 
+            
+            let target = e.target.closest('.shape');
+            if (!target || (shapesContainer.contains(target) === false && stashZone.contains(target) === false)) return;
+            
+            e.preventDefault();
+            activeShapeElem = target; isDragging = false;
+            dragStartX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX; dragStartY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+        }
+
+        function handleDragMove(e) {
+            if (!activeShapeElem) return;
+            e.preventDefault();
+            let clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX; let clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+
+            if (!isDragging) {
+                let dist = Math.hypot(clientX - dragStartX, clientY - dragStartY);
+                if (dist > 10) {
+                    isDragging = true;
+                    let matrix = JSON.parse(activeShapeElem.dataset.shape); let color = activeShapeElem.dataset.color;
+                    let gridRect = gridElem.getBoundingClientRect(); let dynamicCellSize = (gridRect.width - (GAP * (GRID_SIZE - 1))) / GRID_SIZE;
+
+                    activeClone = createShapeElement(matrix, color, dynamicCellSize); activeClone.classList.add('dragging'); document.body.appendChild(activeClone);
+                    activeShapeElem.style.opacity = '0.1';
+                }
+            }
+
+            if (isDragging && activeClone) {
+                let isTouch = e.type.includes('touch'); let offsetY = isTouch ? (activeClone.offsetHeight + 80) : (activeClone.offsetHeight / 2);
+                activeClone.style.left = (clientX - activeClone.offsetWidth / 2) + 'px'; activeClone.style.top = (clientY - offsetY) + 'px';
+
+                let sr = stashZone.getBoundingClientRect();
+                if (clientX >= sr.left && clientX <= sr.right && clientY >= sr.top && clientY <= sr.bottom) { stashZone.classList.add('drag-over'); } else { stashZone.classList.remove('drag-over'); }
+
+                let matrix = JSON.parse(activeShapeElem.dataset.shape); let cloneRect = activeClone.getBoundingClientRect(); let gridRect = gridElem.getBoundingClientRect(); let step = gridRect.width / GRID_SIZE;
+                let col = Math.round((cloneRect.left - gridRect.left) / step); let row = Math.round((cloneRect.top - gridRect.top) / step);
+
+                if (row !== hoverStartRow || col !== hoverStartCol) {
+                    hoverStartRow = row; hoverStartCol = col; clearPreview();
+                    if (canPlace(matrix, row, col)) drawPreview(matrix, row, col);
+                }
+            }
+        }
+
+        function handleDragEnd(e) {
+            if (!activeShapeElem) return;
+            stashZone.classList.remove('drag-over');
+
+            if (!isDragging) { rotateShapeElem(activeShapeElem); activeShapeElem = null; return; }
+
+            let endX = e.type.includes('mouse') ? e.clientX : e.changedTouches[0].clientX; let endY = e.type.includes('mouse') ? e.clientY : e.changedTouches[0].clientY;
+            let sr = stashZone.getBoundingClientRect(); let isDropOnStash = (endX >= sr.left && endX <= sr.right && endY >= sr.top && endY <= sr.bottom);
+            let draggedFromStash = stashZone.contains(activeShapeElem);
+
+            if (isDropOnStash && !draggedFromStash) {
+                let existingStashShape = stashZone.querySelector('.shape');
+                if (existingStashShape) { shapesContainer.insertBefore(existingStashShape, activeShapeElem); }
+                stashZone.appendChild(activeShapeElem);
+                playSound('rotate'); finalizeDragCleanup(); nextTurn(); return;
+            }
+
+            let matrix = JSON.parse(activeShapeElem.dataset.shape); let color = activeShapeElem.dataset.color; clearPreview();
+
+            let placed = false;
+            if (canPlace(matrix, hoverStartRow, hoverStartCol)) {
+                placeShape(matrix, color, hoverStartRow, hoverStartCol);
+                playSound('place'); placed = true;
+                
+                // Dinamik Darbe Hissi
+                gameContainer.classList.add('impact-anim');
+                setTimeout(() => gameContainer.classList.remove('impact-anim'), 150);
+            }
+
+            if (placed) { activeShapeElem.remove(); checkLines(); } else { activeShapeElem.style.opacity = '1'; }
+            finalizeDragCleanup();
+        }
+
+        function finalizeDragCleanup() {
+            if(activeClone) activeClone.remove(); activeClone = null;
+            if(activeShapeElem) activeShapeElem.style.opacity = '1'; activeShapeElem = null;
+            hoverStartRow = -1; hoverStartCol = -1; isDragging = false;
+        }
+
+        function canPlace(matrix, startRow, startCol) {
+            for (let r = 0; r < matrix.length; r++) {
+                for (let c = 0; c < matrix[r].length; c++) {
+                    if (matrix[r][c] === 1) {
+                        let boardR = startRow + r; let boardC = startCol + c;
+                        if (boardR < 0 || boardR >= GRID_SIZE || boardC < 0 || boardC >= GRID_SIZE) return false;
+                        if (grid[boardR][boardC] !== 0) return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function drawPreview(matrix, startRow, startCol) {
+            for (let r = 0; r < matrix.length; r++) {
+                for (let c = 0; c < matrix[r].length; c++) {
+                    if (matrix[r][c] === 1) {
+                        let bR = startRow + r, bC = startCol + c;
+                        if(bR >= 0 && bR < GRID_SIZE && bC >= 0 && bC < GRID_SIZE) cellElems[bR][bC].classList.add('preview');
+                    }
+                }
+            }
+        }
+        function clearPreview() { cellElems.forEach(row => row.forEach(cell => cell.classList.remove('preview'))); }
+
+        function placeShape(matrix, color, startRow, startCol) {
+            let blocksPlaced = 0;
+            for (let r = 0; r < matrix.length; r++) {
+                for (let c = 0; c < matrix[r].length; c++) {
+                    if (matrix[r][c] === 1) { grid[startRow + r][startCol + c] = color; blocksPlaced++; }
+                }
+            }
+            addScore(blocksPlaced); updateGridVisuals();
+        }
+
+        function spawnParticles(rect, color, count=10) {
+            for(let i=0; i<count; i++) {
+                let p = document.createElement('div');
+                p.className = 'particle'; p.style.color = color; p.style.backgroundColor = color;
+                p.style.width = (Math.random() * 8 + 4) + 'px'; p.style.height = p.style.width;
+                p.style.left = (rect.left + rect.width/2) + 'px'; p.style.top = (rect.top + rect.height/2) + 'px';
+                
+                let angle = Math.random() * Math.PI * 2; let velocity = Math.random() * 80 + 30;
+                p.style.setProperty('--dx', Math.cos(angle)*velocity + 'px'); p.style.setProperty('--dy', Math.sin(angle)*velocity + 'px');
+                document.body.appendChild(p); setTimeout(() => p.remove(), 800);
+            }
+        }
+
+        function showFloatingText(x, y, text, color, extraClass='') {
+            let el = document.createElement('div');
+            el.className = 'floating-text ' + extraClass;
+            el.innerText = text; el.style.color = color;
+            el.style.left = x + 'px'; el.style.top = y + 'px';
+            document.body.appendChild(el); setTimeout(() => el.remove(), extraClass ? 2500 : 1200);
+        }
+
+        // Lazer Efekti
+        function drawLaser(index, isRow) {
+            let laser = document.createElement('div');
+            laser.className = `laser ${isRow ? 'h' : 'v'}`;
+            let rect = cellElems[isRow ? index : 0][isRow ? 0 : index].getBoundingClientRect();
+            let gridRect = gridElem.getBoundingClientRect();
+            
+            if (isRow) { laser.style.top = (rect.top - gridRect.top + rect.height/2) + 'px'; }
+            else { laser.style.left = (rect.left - gridRect.left + rect.width/2) + 'px'; }
+            
+            gridElem.appendChild(laser);
+            
+            setTimeout(() => {
+                laser.style.opacity = '1';
+                if(isRow) laser.style.width = '100%'; else laser.style.height = '100%';
+            }, 10);
+            
+            setTimeout(() => { laser.style.opacity = '0'; setTimeout(()=>laser.remove(), 300); }, 300);
+        }
+
+        function checkLines() {
+            let rowsToClear = []; let colsToClear =[];
+
+            for (let r = 0; r < GRID_SIZE; r++) if (grid[r].every(val => val !== 0)) rowsToClear.push(r);
+            for (let c = 0; c < GRID_SIZE; c++) {
+                let isFull = true; for (let r = 0; r < GRID_SIZE; r++) if (grid[r][c] === 0) { isFull = false; break; }
+                if (isFull) colsToClear.push(c);
+            }
+
+            let linesCleared = rowsToClear.length + colsToClear.length;
+
+            if (linesCleared > 0) {
+                playSound('clear');
+                currentStreak++; // Streak artışı
+                
+                gameContainer.classList.add('shake-anim'); setTimeout(() => gameContainer.classList.remove('shake-anim'), 400);
+                
+                let earnedPoints = linesCleared * 10;
+                // Seri Çarpanı (Streak Multiplier) - Her seride %20 ekstra puan
+                let streakMultiplier = 1 + (currentStreak * 0.2); 
+                earnedPoints = Math.floor(earnedPoints * streakMultiplier);
+
+                let comboText = ""; let textColor = '#4ecca3';
+                if (linesCleared > 1) {
+                    earnedPoints += (linesCleared * 5); 
+                    comboText = ` ${linesCleared}x COMBO!`; textColor = '#f9a826';
+                }
+                
+                addScore(earnedPoints);
+                updateDashboard();
+
+                let centerR = rowsToClear.length > 0 ? rowsToClear[0] : GRID_SIZE/2;
+                let centerC = colsToClear.length > 0 ? colsToClear[0] : GRID_SIZE/2;
+                let rct = cellElems[Math.floor(centerR)][Math.floor(centerC)].getBoundingClientRect();
+                
+                showFloatingText(rct.left, rct.top, `+${earnedPoints}${comboText}`, textColor);
+                if (currentStreak > 1) {
+                    streakElem.classList.add('streak-highlight');
+                    setTimeout(() => streakElem.classList.remove('streak-highlight'), 500);
+                    showFloatingText(window.innerWidth/2, window.innerHeight/3, `🔥 ${currentStreak}x SERİ!`, '#ff6b81', 'streak');
+                }
+
+                // Lazerleri çiz
+                rowsToClear.forEach(r => drawLaser(r, true));
+                colsToClear.forEach(c => drawLaser(c, false));
+
+                // Patlama efektlerini biraz geciktir (Lazer geçsin diye)
+                setTimeout(() => {
+                    rowsToClear.forEach(r => {
+                        for (let c = 0; c < GRID_SIZE; c++) {
+                            if(grid[r][c]) spawnParticles(cellElems[r][c].getBoundingClientRect(), grid[r][c], 5);
+                            cellElems[r][c].classList.add('pop');
+                        }
+                    });
+                    colsToClear.forEach(c => {
+                        for (let r = 0; r < GRID_SIZE; r++) {
+                            if(grid[r][c] && !cellElems[r][c].classList.contains('pop')) spawnParticles(cellElems[r][c].getBoundingClientRect(), grid[r][c], 5);
+                            cellElems[r][c].classList.add('pop');
+                        }
+                    });
+
+                    setTimeout(() => {
+                        rowsToClear.forEach(r => { for (let c = 0; c < GRID_SIZE; c++) grid[r][c] = 0; });
+                        colsToClear.forEach(c => { for (let r = 0; r < GRID_SIZE; r++) grid[r][c] = 0; });
+                        updateGridVisuals(); nextTurn();
+                    }, 250);
+                }, 150);
+                
+            } else {
+                currentStreak = 0; // Seriyi sıfırla
+                updateDashboard();
+                nextTurn();
+            }
+        }
+
+        function nextTurn() { if (shapesContainer.children.length === 0) generateShapes(); else checkGameOver(); }
+
+        function canPlaceAnywhere(matrix) {
+            for (let r = 0; r < GRID_SIZE; r++) { for (let c = 0; c < GRID_SIZE; c++) { if (canPlace(matrix, r, c)) return true; } }
+            return false;
+        }
+
+        function checkGameOver() {
+            let shapeElems = document.querySelectorAll('#shapes-container .shape');
+            let stashShapeElem = document.querySelector('#stash-zone .shape');
+            let canPlaceAny = false;
+
+            let checkShape = (el) => {
+                let testMatrix = JSON.parse(el.dataset.shape);
+                for(let i=0; i<4; i++) { if (canPlaceAnywhere(testMatrix)) return true; testMatrix = rotateMatrix(testMatrix); }
+                return false;
+            };
+
+            shapeElems.forEach(el => { if (checkShape(el)) canPlaceAny = true; });
+            if (stashShapeElem && checkShape(stashShapeElem)) canPlaceAny = true;
+
+            if (!canPlaceAny && !stashShapeElem && shapeElems.length > 0) {
+                if (shapeElems.length === 1) canPlaceAny = true; 
+            }
+
+            // Bomba veya Çekiç varsa oyun bitmesin! (Kurtulma şansı)
+            if (!canPlaceAny && (hammerCount > 0 || bombCount > 0 || rerollCount > 0)) {
+                canPlaceAny = true;
+            }
+
+            if (!canPlaceAny && (shapeElems.length > 0 || stashShapeElem)) {
+                playSound('gameover');
+                document.getElementById('final-score').innerText = score;
+                document.getElementById('final-high').innerText = highScore;
+                document.getElementById('game-over-overlay').style.display = 'flex';
+            }
+        }
+
+        function addScore(points) {
+            score += points;
+            scoreElem.classList.add('score-highlight');
+            setTimeout(() => scoreElem.classList.remove('score-highlight'), 200);
+
+            if (score > highScore) { highScore = score; localStorage.setItem('blockPuzzleLegendHigh', highScore); }
+            
+            let prevThreshold = (currentLevel - 1) * POINTS_PER_LEVEL; let nextThreshold = currentLevel * POINTS_PER_LEVEL;
+            let progressPct = ((score - prevThreshold) / POINTS_PER_LEVEL) * 100;
+
+            if (score >= nextThreshold) {
+                currentLevel++; progressPct = ((score - (currentLevel-1)*POINTS_PER_LEVEL) / POINTS_PER_LEVEL) * 100;
+                playSound('levelup');
+                showFloatingText(window.innerWidth/2, window.innerHeight/3, `SEVİYE ${currentLevel}!`, '#f9a826', 'streak');
+                
+                // Ödüller
+                if(currentLevel % 2 === 0) bombCount++; // Her 2 levelda 1 bomba
+                hammerCount++; rerollCount++;
+                document.getElementById('level-display').classList.add('score-highlight');
+                setTimeout(() => document.getElementById('level-display').classList.remove('score-highlight'), 400);
+            }
+            
+            document.getElementById('level-progress').style.width = Math.min(progressPct, 100) + '%';
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            document.getElementById('score').innerText = score;
+            document.getElementById('level-display').innerText = currentLevel;
+            document.getElementById('streak-display').innerText = currentStreak;
+            document.getElementById('hammer-count').innerText = hammerCount;
+            document.getElementById('bomb-count').innerText = bombCount;
+            document.getElementById('reroll-count').innerText = rerollCount;
+            
+            let prevT = (currentLevel - 1) * POINTS_PER_LEVEL; let p = ((score - prevT) / POINTS_PER_LEVEL) * 100;
+            document.getElementById('level-progress').style.width = (p < 0 ? 0 : p) + '%';
+        }
+
+        initGame();
+
+    </script>
+
+    <!-- ── AdSense Lazy Push ── -->
+    <script>
+    (function() {
+        function mgPushAds() {
+            document.querySelectorAll('ins.adsbygoogle').forEach(function(ins) {
+                if (!ins.getAttribute('data-adsbygoogle-status')) {
+                    try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+                }
+            });
+        }
+        // Sayfa yüklenince push et
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() { setTimeout(mgPushAds, 800); });
+        } else {
+            setTimeout(mgPushAds, 800);
+        }
+        // Oyun bitince overlay açılınca push et
+        document.addEventListener('DOMContentLoaded', function() {
+            var overlay = document.getElementById('game-over-overlay');
+            if (overlay) {
+                new MutationObserver(function(mutations) {
+                    mutations.forEach(function(m) {
+                        if (m.type === 'attributes' && m.attributeName === 'style') {
+                            if (overlay.style.display === 'flex') { setTimeout(mgPushAds, 300); }
+                        }
+                    });
+                }).observe(overlay, { attributes: true });
+            }
+        });
+    })();
+    </script>
+
+</body>
+</html>
