@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kelime Avı — Adam Asmaca</title>
+<title>Karakteri Kurtar</title>
 <!-- Kelimeler dosyasını asmaca klasöründen çekiyoruz -->
 <script src="sorular/kelimeler.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Baloo+2:wght@500;600;700&display=swap');
 
@@ -57,7 +58,7 @@ body {
 .nav-bar {
     width: 100%;
     max-width: 900px;
-    padding: 16px 20px;
+    padding: 10px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -104,20 +105,42 @@ body {
     border-radius: 16px;
     box-shadow: 0 4px 0 #d8ccb8;
 }
-.heart { transition: 0.35s; display: inline-block; }
-.heart.lost { filter: grayscale(1) opacity(0.35); transform: scale(0.85); }
+#topStats {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    font-family: 'Baloo 2', sans-serif;
+}
+
+.mute-icon-btn {
+    border: none;
+    background: white;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 8px;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    box-shadow: 0 4px 0 #d8ccb8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.15s;
+}
+.mute-icon-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #d8ccb8; }
 
 /* ---------- ANA ALAN ---------- */
 .stage {
     width: 100%;
     max-width: 900px;
-    padding: 10px 16px 50px;
+    padding: 4px 16px 20px;
     position: relative;
     z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 18px;
+    gap: 10px;
 }
 
 .score-row {
@@ -143,11 +166,11 @@ body {
     width: 100%;
     background: white;
     border-radius: 28px;
-    padding: 26px;
+    padding: 16px;
     box-shadow: 0 8px 0 #d8ccb8, 0 20px 40px rgba(0,0,0,0.08);
     display: grid;
     grid-template-columns: 1fr 1.1fr;
-    gap: 24px;
+    gap: 16px;
 }
 
 @media (max-width: 720px) {
@@ -161,19 +184,13 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 20px;
-}
-
-.mascot {
-    font-size: 3rem;
-    margin-bottom: 6px;
-    transition: transform 0.3s;
+    padding: 10px;
 }
 
 .hangman-svg {
     width: 100%;
-    max-width: 220px;
-    height: 220px;
+    max-width: 150px;
+    height: 150px;
     stroke: var(--ink);
     stroke-width: 5;
     fill: none;
@@ -201,43 +218,63 @@ body {
 
 .hint-box {
     background: var(--yellow);
-    border-radius: 16px;
-    padding: 12px 16px;
-    font-size: 0.9rem;
+    border-radius: 14px;
+    padding: 8px 12px;
+    font-size: 0.78rem;
     color: var(--ink-soft);
     font-weight: 500;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 5px;
 }
-.hint-box .label { font-weight: 700; color: var(--ink); }
+.hint-box .label { font-weight: 700; color: var(--ink); font-size: 0.85rem; }
+.score-guide { font-size: 0.6rem; color: var(--ink-soft); opacity: 0.85; line-height: 1.3; }
 
 .hint-buy-btn {
     align-self: flex-start;
     font-family: 'Baloo 2', sans-serif;
     font-weight: 600;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     background: white;
     border: none;
-    border-radius: 12px;
-    padding: 7px 12px;
+    border-radius: 10px;
+    padding: 5px 10px;
     cursor: pointer;
     box-shadow: 0 3px 0 #d8ccb8;
 }
 .hint-buy-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .hint-buy-btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #d8ccb8; }
 
+.share-btn {
+    align-self: center;
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 600;
+    font-size: 0.78rem;
+    background: var(--sky);
+    color: var(--ink);
+    border: none;
+    border-radius: 12px;
+    padding: 9px 18px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 var(--sky-dark);
+    transition: 0.12s;
+}
+.share-btn:active { transform: translateY(3px); box-shadow: 0 0 0 var(--sky-dark); }
+
 .word-display {
     display: flex;
     justify-content: center;
     gap: 8px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     margin: 4px 0;
+    width: 100%;
 }
 
 .letter {
-    width: 32px;
-    height: 42px;
+    flex: 1 1 32px;
+    max-width: 32px;
+    aspect-ratio: 32 / 42;
+    min-width: 0;
     background: #eef7f8;
     border-radius: 10px;
     border-bottom: 4px solid var(--sky);
@@ -245,7 +282,7 @@ body {
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 1.3rem;
+    font-size: clamp(0.7rem, 4vw, 1.3rem);
     color: var(--ink);
     transition: 0.2s;
 }
@@ -256,34 +293,9 @@ body {
     100% { transform: scale(1); opacity: 1; }
 }
 
-.timer-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-family: 'Baloo 2', sans-serif;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--ink-soft);
-}
-.timer-track {
-    flex: 1;
-    height: 10px;
-    background: #f0f0f0;
-    border-radius: 6px;
-    overflow: hidden;
-}
-.timer-fill {
-    height: 100%;
-    background: var(--sky);
-    width: 100%;
-    border-radius: 6px;
-    transition: width 1s linear, background 0.4s;
-}
-.timer-fill.low { background: var(--red-dark); }
-
 .keyboard {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+    grid-template-columns: repeat(8, 1fr);
     gap: 7px;
 }
 
@@ -434,8 +446,8 @@ body {
 
 <nav class="nav-bar">
     <button class="back-btn" onclick="goBack()">← Geri</button>
-    <span class="logo">🎈 Kelime Avı</span>
-    <span class="hearts" id="livesDisplay"></span>
+    <span class="logo">🎈 Karakteri Kurtar</span>
+    <button class="mute-icon-btn" id="muteBtn" onclick="toggleMute()">🔊</button>
 </nav>
 
 <div class="stage">
@@ -443,11 +455,11 @@ body {
     <div class="score-row">
         <div class="pill">⭐ Skor: <b id="scoreCount">0</b></div>
         <div class="pill">🔥 Seri: <b id="streakCount">0</b></div>
+        <div class="pill">🏆 Rekor: <b id="bestCountTop">0</b></div>
     </div>
 
     <div class="board">
         <div class="drawing-side">
-            <div class="mascot" id="mascot">🙈</div>
             <svg class="hangman-svg" viewBox="0 0 100 100">
                 <path d="M20 90 L80 90 M30 90 L30 10 L70 10 L70 20" />
                 <circle id="p1" class="part" cx="70" cy="30" r="8" />
@@ -465,22 +477,14 @@ body {
                 <span class="label">💡 İpucu</span>
                 <span id="hintText">Yükleniyor...</span>
                 <button class="hint-buy-btn" id="extraHintBtn" onclick="revealExtraHint()">🔍 Harf Aç (-15 puan)</button>
+                <span class="score-guide">✅ Doğru harf: +10 puan &nbsp;•&nbsp; 🔍 Harf açma: -15 puan &nbsp;•&nbsp; 🎉 Kazanınca: +25 puan</span>
             </div>
+
+            <button class="share-btn" id="shareBtn" onclick="downloadAsPng()">📥 PNG İndir</button>
 
             <div id="wordDisplay" class="word-display"></div>
 
-            <div class="timer-row">
-                <span>⏱️</span>
-                <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
-                <span id="timerText">60s</span>
-            </div>
-
             <div id="keyboard" class="keyboard"></div>
-
-            <div class="bottom-row">
-                <button class="mute-btn" id="muteBtn" onclick="toggleMute()">🔊 Ses Açık</button>
-                <span class="streak-badge">🏆 Rekor: <span id="bestCount">0</span></span>
-            </div>
         </div>
     </div>
 </div>
@@ -518,12 +522,8 @@ body {
     let streak = 0;
     let best = Number(safeGet("ka_best", 0));
     let soundOn = true;
-    const gameTime = 60;
-    let timeLeft = gameTime;
-    let timerInterval = null;
     let extraHintUsed = false;
-
-    const mascotStages = ["🙈","🙉","🙊","😬","😟","😢","💀"];
+    let kullanilanIndexler = [];
 
     function safeGet(key, fallback) {
         try { const v = localStorage.getItem(key); return v !== null ? v : fallback; }
@@ -561,7 +561,7 @@ body {
 
     function toggleMute() {
         soundOn = !soundOn;
-        document.getElementById("muteBtn").innerText = soundOn ? "🔊 Ses Açık" : "🔇 Ses Kapalı";
+        document.getElementById("muteBtn").innerText = soundOn ? "🔊" : "🔇";
     }
 
     function showToast(msg) {
@@ -572,14 +572,188 @@ body {
         showToast._tm = setTimeout(() => t.classList.remove("show"), 1800);
     }
 
+    // ---------- PNG olarak indir / paylaş ----------
+    function downloadAsPng() {
+        if (typeof html2canvas === 'undefined') {
+            showToast("PNG aracı yüklenemedi 😿");
+            return;
+        }
+        const OUT_W = 1080, OUT_H = 1350;
+
+        // Gizli, PNG'ye özel şablon oluştur (klavye ve ipucu kutusu içermez)
+        const tpl = document.createElement("div");
+        tpl.style.position = "fixed";
+        tpl.style.left = "-9999px";
+        tpl.style.top = "0";
+        tpl.style.width = "600px";
+        tpl.style.background = "linear-gradient(160deg, #fef6e4 0%, #f3d2c1 100%)";
+        tpl.style.padding = "36px 30px";
+        tpl.style.boxSizing = "border-box";
+        tpl.style.fontFamily = "'Fredoka', sans-serif";
+        tpl.style.display = "flex";
+        tpl.style.flexDirection = "column";
+        tpl.style.alignItems = "center";
+        tpl.style.gap = "22px";
+
+        const gameTitle = document.createElement("div");
+        gameTitle.style.fontFamily = "'Baloo 2', sans-serif";
+        gameTitle.style.fontWeight = "700";
+        gameTitle.style.fontSize = "2rem";
+        gameTitle.style.color = "#3d3d3d";
+        gameTitle.style.display = "flex";
+        gameTitle.style.alignItems = "center";
+        gameTitle.style.gap = "10px";
+        gameTitle.innerHTML = `<span>🎈</span><span>Karakteri Kurtar</span>`;
+
+        const svgClone = document.querySelector(".hangman-svg").cloneNode(true);
+        svgClone.style.width = "100%";
+        svgClone.style.maxWidth = "250px";
+        svgClone.style.height = "250px";
+        svgClone.style.stroke = "#3d3d3d";
+        svgClone.style.strokeWidth = "5";
+        svgClone.style.fill = "none";
+        svgClone.style.strokeLinecap = "round";
+        svgClone.style.strokeLinejoin = "round";
+        svgClone.querySelectorAll(".part.is-visible").forEach(p => { p.style.opacity = "1"; p.style.stroke = "#d16060"; });
+        svgClone.querySelectorAll(".part:not(.is-visible)").forEach(p => { p.style.opacity = "0"; });
+
+        const drawWrap = document.createElement("div");
+        drawWrap.style.background = "linear-gradient(180deg, #eef7f8, #ffffff)";
+        drawWrap.style.borderRadius = "24px";
+        drawWrap.style.padding = "26px";
+        drawWrap.style.width = "100%";
+        drawWrap.style.boxSizing = "border-box";
+        drawWrap.style.boxShadow = "0 8px 0 #d8ccb8, 0 16px 30px rgba(0,0,0,0.08)";
+        drawWrap.style.display = "flex";
+        drawWrap.style.justifyContent = "center";
+        drawWrap.appendChild(svgClone);
+
+        const hintBig = document.createElement("div");
+        hintBig.style.background = "linear-gradient(160deg, #f9e29c, #f7d876)";
+        hintBig.style.borderRadius = "18px";
+        hintBig.style.padding = "22px 24px";
+        hintBig.style.width = "100%";
+        hintBig.style.boxSizing = "border-box";
+        hintBig.style.boxShadow = "0 6px 0 #e0b95c";
+        hintBig.style.textAlign = "center";
+        hintBig.style.display = "flex";
+        hintBig.style.flexDirection = "column";
+        hintBig.style.alignItems = "center";
+        hintBig.style.gap = "6px";
+
+        const hintLabel = document.createElement("div");
+        hintLabel.style.fontFamily = "'Baloo 2', sans-serif";
+        hintLabel.style.fontWeight = "700";
+        hintLabel.style.fontSize = "0.85rem";
+        hintLabel.style.letterSpacing = "1px";
+        hintLabel.style.color = "#8a6d1f";
+        hintLabel.style.textTransform = "uppercase";
+        hintLabel.innerText = "💡 İpucu";
+
+        const hintText = document.createElement("div");
+        hintText.style.fontWeight = "700";
+        hintText.style.fontSize = "1.7rem";
+        hintText.style.color = "#3d3d3d";
+        hintText.innerText = hint;
+
+        hintBig.appendChild(hintLabel);
+        hintBig.appendChild(hintText);
+
+        const wordClone = document.getElementById("wordDisplay").cloneNode(true);
+        wordClone.style.display = "flex";
+        wordClone.style.justifyContent = "center";
+        wordClone.style.flexWrap = "wrap";
+        wordClone.style.gap = "10px";
+        wordClone.querySelectorAll(".letter").forEach(l => {
+            l.style.width = "44px";
+            l.style.height = "56px";
+            l.style.maxWidth = "44px";
+            l.style.fontSize = "1.5rem";
+            l.style.background = "#eef7f8";
+            l.style.borderRadius = "10px";
+            l.style.borderBottom = "4px solid #8bd3dd";
+            l.style.boxShadow = "0 3px 0 #d8ccb8";
+            l.style.display = "flex";
+            l.style.alignItems = "center";
+            l.style.justifyContent = "center";
+            l.style.fontWeight = "700";
+            l.style.color = "#3d3d3d";
+        });
+
+        const slogan = document.createElement("div");
+        slogan.style.marginTop = "6px";
+        slogan.style.fontFamily = "'Baloo 2', sans-serif";
+        slogan.style.fontWeight = "700";
+        slogan.style.fontSize = "1.3rem";
+        slogan.style.color = "#6b5b2a";
+        slogan.style.textAlign = "center";
+        slogan.innerText = "Harfleri Çöz, Karakteri Kurtar!";
+
+        tpl.appendChild(gameTitle);
+        tpl.appendChild(drawWrap);
+        tpl.appendChild(hintBig);
+        tpl.appendChild(wordClone);
+        tpl.appendChild(slogan);
+        document.body.appendChild(tpl);
+
+        const renderTpl = () => new Promise(resolve => setTimeout(resolve, 50)).then(() => html2canvas(tpl, { backgroundColor: "#fef6e4", scale: 2 }));
+        const fontsReady = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+
+        fontsReady.then(renderTpl).then(canvas => {
+            document.body.removeChild(tpl);
+            const outCanvas = document.createElement("canvas");
+            outCanvas.width = OUT_W;
+            outCanvas.height = OUT_H;
+            const ctx = outCanvas.getContext("2d");
+            ctx.fillStyle = "#fef6e4";
+            ctx.fillRect(0, 0, OUT_W, OUT_H);
+
+            const scale = Math.min(OUT_W / canvas.width, OUT_H / canvas.height);
+            const drawW = canvas.width * scale;
+            const drawH = canvas.height * scale;
+            const offsetX = (OUT_W - drawW) / 2;
+            const offsetY = (OUT_H - drawH) / 2;
+            ctx.drawImage(canvas, offsetX, offsetY, drawW, drawH);
+
+            outCanvas.toBlob(blob => {
+                if (!blob) { showToast("PNG oluşturulamadı 😿"); return; }
+                const fileName = `karakteri-kurtar-${Date.now()}.png`;
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast("PNG indirildi! 📥");
+            }, "image/png");
+        }).catch(() => {
+            if (document.body.contains(tpl)) document.body.removeChild(tpl);
+            showToast("PNG oluşturulamadı 😿");
+        });
+    }
+
+    // ---------- Tekrar etmeyen kelime seçimi ----------
+    function kelimeSec() {
+        // Tüm kelimeler kullanıldıysa listeyi sıfırla
+        if (kullanilanIndexler.length >= aktifListe.length) {
+            kullanilanIndexler = [];
+        }
+        let index;
+        do {
+            index = Math.floor(Math.random() * aktifListe.length);
+        } while (kullanilanIndexler.includes(index));
+        kullanilanIndexler.push(index);
+        return aktifListe[index];
+    }
+
     // ---------- Oyun başlatma ----------
     function initGame() {
-        clearInterval(timerInterval);
         maxMistakes = 6;
-        timeLeft = gameTime;
         extraHintUsed = false;
 
-        const item = aktifListe[Math.floor(Math.random() * aktifListe.length)];
+        const item = kelimeSec();
         word = item.kelime.toUpperCase('tr-TR');
         hint = item.ipucu;
         guessed = [];
@@ -588,54 +762,18 @@ body {
         document.getElementById("hintText").innerText = hint;
         document.getElementById("extraHintBtn").disabled = false;
         document.getElementById("modal").style.display = "none";
-        document.getElementById("mascot").innerText = mascotStages[0];
         document.getElementById("progressCaption").innerText = "Hadi başlayalım!";
         document.querySelectorAll(".part").forEach(p => p.classList.remove("is-visible"));
 
-        renderLives();
         renderWord();
         renderKeyboard();
-        startTimer();
         updateHUD();
-    }
-
-    function renderLives() {
-        const box = document.getElementById("livesDisplay");
-        box.innerHTML = "";
-        for (let i = 0; i < maxMistakes; i++) {
-            const span = document.createElement("span");
-            span.className = "heart" + (i < mistakes ? " lost" : "");
-            span.innerText = "❤️";
-            box.appendChild(span);
-        }
     }
 
     function updateHUD() {
         document.getElementById("scoreCount").innerText = score;
         document.getElementById("streakCount").innerText = streak;
-        document.getElementById("bestCount").innerText = best;
-    }
-
-    // ---------- Zamanlayıcı ----------
-    function startTimer() {
-        updateTimerUI();
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            if (timeLeft <= 10 && timeLeft > 0) sfx.tick();
-            updateTimerUI();
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                endGame(false, true);
-            }
-        }, 1000);
-    }
-
-    function updateTimerUI() {
-        const pct = Math.max(0, (timeLeft / gameTime) * 100);
-        const fill = document.getElementById("timerFill");
-        fill.style.width = pct + "%";
-        fill.classList.toggle("low", timeLeft <= 10);
-        document.getElementById("timerText").innerText = timeLeft + "s";
+        document.getElementById("bestCountTop").innerText = best;
     }
 
     // ---------- Kelime & klavye ----------
@@ -663,7 +801,7 @@ body {
     }
 
     function handleGuess(l) {
-        if (guessed.includes(l) || mistakes >= maxMistakes || timeLeft <= 0) return;
+        if (guessed.includes(l)) return;
         guessed.push(l);
 
         const buttons = document.querySelectorAll(".key");
@@ -678,13 +816,12 @@ body {
             mistakes++;
             if (btn) btn.classList.add("miss");
             sfx.miss();
-            const part = document.getElementById(`p${mistakes}`);
+            const part = document.getElementById(`p${Math.min(mistakes, 6)}`);
             if (part) part.classList.add("is-visible");
-            document.getElementById("mascot").innerText = mascotStages[mistakes] || mascotStages[mascotStages.length-1];
-            document.getElementById("progressCaption").innerText = mistakes >= maxMistakes ? "Oyun bitti!" : "Dikkatli ol, can azalıyor!";
-            renderLives();
-
-            if (mistakes === maxMistakes) endGame(false);
+            document.getElementById("progressCaption").innerText = "Dikkatli ol, hata yapma!";
+            if (mistakes >= maxMistakes) {
+                endGame(false);
+            }
         }
         if (btn) btn.disabled = true;
         updateHUD();
@@ -711,8 +848,7 @@ body {
     }
 
     // ---------- Oyun bitişi ----------
-    function endGame(isWin, timedOut) {
-        clearInterval(timerInterval);
+    function endGame(isWin) {
         const modal = document.getElementById("modal");
         const title = document.getElementById("modalTitle");
         const msg = document.getElementById("modalMsg");
@@ -720,7 +856,7 @@ body {
 
         if (isWin) {
             streak++;
-            score += 25 + timeLeft;
+            score += 25;
             emoji.innerText = "🎉";
             title.innerText = "Harikasın!";
             title.style.color = "var(--sky-dark)";
@@ -728,8 +864,8 @@ body {
             sfx.win();
         } else {
             streak = 0;
-            emoji.innerText = timedOut ? "⏰" : "😿";
-            title.innerText = timedOut ? "Süre Doldu!" : "Bu Sefer Olmadı!";
+            emoji.innerText = "😿";
+            title.innerText = "Bu Sefer Olmadı!";
             title.style.color = "var(--red-dark)";
             msg.innerText = `Doğru kelime: "${word}" idi.`;
             sfx.lose();
