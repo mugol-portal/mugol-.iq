@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nexus Flow — Işık Labirenti</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700;800&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Varsayılan Tema: Ametist (Amethyst) */
+            --bg-color: #0b0614;
+            --bg-color-2: #160a29;
+            --card-color: #1e0e36;
+            --cell-color: #11051f;
+            --text-color: #fdf4ff;
+            --text-muted: #8d7cae;
+            --accent-green: #00e5a0;
+            --accent-yellow: #ffcf4d;
+            --accent-orange: #ff7a45;
+            --accent-red: #ff4d7e;
+            --accent-blue: #5b6bff;
+            --accent-purple: #b967ff;
+            --ambient-gradient-1: rgba(185, 103, 255, 0.15);
+            --ambient-gradient-2: rgba(0, 229, 160, 0.1);
+        }
+
+        /* Tema 2: Siber Yeşil (Cyber Green) */
+        body.theme-cyber {
+            --bg-color: #030a0d;
+            --bg-color-2: #05161a;
+            --card-color: #09252c;
+            --cell-color: #020e12;
+            --text-color: #e6f9ff;
+            --text-muted: #6b8c96;
+            --accent-green: #39ff14;
+            --accent-yellow: #fefe33;
+            --accent-orange: #ff9900;
+            --accent-red: #ff0055;
+            --accent-blue: #00e5ff;
+            --accent-purple: #9d00ff;
+            --ambient-gradient-1: rgba(0, 229, 255, 0.15);
+            --ambient-gradient-2: rgba(57, 255, 20, 0.1);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image:
+                radial-gradient(circle at 15% 10%, var(--ambient-gradient-1) 0%, transparent 45%),
+                radial-gradient(circle at 85% 90%, var(--ambient-gradient-2) 0%, transparent 45%),
+                radial-gradient(circle at top, var(--bg-color-2) 0%, var(--bg-color) 100%);
+            color: var(--text-color);
+            font-family: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+            overflow: hidden;
+            transition: background 0.3s ease;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 440px;
+            padding: 16px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Üst Navigasyon */
+        .nav-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .header {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 14px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .btn-icon {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-color);
+            padding: 0;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s, background 0.2s, border-color 0.2s;
+            width: 40px;
+            height: 40px;
+            backdrop-filter: blur(4px);
+        }
+
+        .btn-icon:hover {
+            border-color: var(--accent-purple);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-icon:active {
+            transform: scale(0.92);
+        }
+
+        .level-select-trigger {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-color);
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: 'Sora', sans-serif;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s, border-color 0.2s;
+        }
+        .level-select-trigger:hover {
+            border-color: var(--accent-purple);
+        }
+        .level-select-trigger:active {
+            transform: scale(0.95);
+        }
+
+        .level-info {
+            text-align: center;
+            width: 100%;
+        }
+
+        .difficulty {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            color: var(--accent-purple);
+            margin-bottom: 2px;
+            font-weight: 800;
+            font-family: 'Sora', sans-serif;
+        }
+
+        .level-title {
+            font-size: 24px;
+            font-weight: 800;
+            margin: 0;
+            font-family: 'Sora', sans-serif;
+            background: linear-gradient(135deg, var(--text-color) 0%, var(--text-muted) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* İstatistik Çubuğu */
+        .stats-row {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            font-weight: 800;
+            font-family: 'Sora', sans-serif;
+            color: var(--text-muted);
+            justify-content: center;
+            margin-top: 6px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stat-val {
+            color: var(--text-color);
+        }
+
+        /* Oyun Alanı Kutusu */
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 24px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 24px 60px -15px rgba(0, 0, 0, 0.8), 0 0 40px -15px rgba(185, 103, 255, 0.15);
+            box-sizing: border-box;
+            backdrop-filter: blur(12px);
+        }
+
+        canvas {
+            display: block;
+            touch-action: none;
+            width: 100%;
+            height: 100%;
+            border-radius: 16px;
+        }
+
+        /* Kontrol Paneli */
+        .controls-bar {
+            display: flex;
+            width: 100%;
+            gap: 12px;
+            margin-top: 16px;
+            box-sizing: border-box;
+        }
+
+        .btn-control {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-color);
+            padding: 14px;
+            border-radius: 16px;
+            font-family: 'Sora', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+            backdrop-filter: blur(8px);
+        }
+
+        .btn-control:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-control:active {
+            transform: scale(0.96);
+        }
+
+        /* Ampul Butonu */
+        .btn-control.btn-hint {
+            background: linear-gradient(135deg, rgba(255, 207, 77, 0.08), rgba(255, 122, 69, 0.08));
+            border-color: rgba(255, 150, 50, 0.2);
+            color: var(--accent-yellow);
+        }
+
+        .btn-control.btn-hint:hover {
+            background: linear-gradient(135deg, rgba(255, 207, 77, 0.15), rgba(255, 122, 69, 0.15));
+            border-color: var(--accent-orange);
+            box-shadow: 0 0 15px rgba(255, 150, 50, 0.15);
+        }
+
+        .hint-text-badge {
+            background: var(--accent-orange);
+            color: #12061e;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 1px 6px;
+            border-radius: 10px;
+            margin-left: 2px;
+        }
+
+        /* Modallar */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(11, 6, 20, 0.94);
+            backdrop-filter: blur(12px);
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: var(--card-color);
+            padding: 32px;
+            border-radius: 28px;
+            text-align: center;
+            max-width: 330px;
+            width: 85%;
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.7), 0 0 50px -15px var(--accent-purple);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-title {
+            font-size: 26px;
+            font-weight: 900;
+            font-family: 'Sora', sans-serif;
+            color: var(--accent-green);
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        .stars-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .star-svg {
+            width: 40px;
+            height: 40px;
+            fill: #443261;
+            transition: fill 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.3s;
+        }
+
+        .star-svg.active {
+            fill: var(--accent-yellow);
+            transform: scale(1.15);
+            filter: drop-shadow(0 0 8px rgba(255, 207, 77, 0.6));
+        }
+
+        .modal-text {
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .modal-btn {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-blue));
+            color: #030d09;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: 800;
+            font-family: 'Sora', sans-serif;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: transform 0.1s, filter 0.2s;
+            width: 100%;
+            box-shadow: 0 4px 18px rgba(0, 229, 160, 0.3);
+        }
+
+        .modal-btn:active {
+            transform: scale(0.97);
+            filter: brightness(0.9);
+        }
+
+        /* Seviye Seçim Ekranı */
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .level-grid::-webkit-scrollbar {
+            width: 4px;
+        }
+        .level-grid::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 2px;
+        }
+
+        .level-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: var(--text-color);
+            aspect-ratio: 1;
+            border-radius: 14px;
+            font-weight: 700;
+            font-family: 'Sora', sans-serif;
+            font-size: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s, border 0.2s, transform 0.1s;
+            position: relative;
+        }
+
+        .level-item.completed {
+            border-color: var(--accent-green);
+            background: rgba(0, 229, 160, 0.08);
+            color: var(--accent-green);
+        }
+
+        .level-item.current {
+            border-color: var(--accent-purple);
+            background: rgba(185, 103, 255, 0.12);
+            color: var(--accent-purple);
+            box-shadow: 0 0 10px rgba(185, 103, 255, 0.3);
+        }
+
+        .level-item:active {
+            transform: scale(0.9);
+        }
+
+        .level-stars {
+            display: flex;
+            gap: 1px;
+            margin-top: 4px;
+        }
+        .level-stars span {
+            font-size: 8px;
+            color: #554870;
+        }
+        .level-stars span.active {
+            color: var(--accent-yellow);
+        }
+
+        .close-modal {
+            margin-top: 16px;
+            background: transparent;
+            border: 1px solid var(--text-muted);
+            color: var(--text-muted);
+            padding: 11px;
+            border-radius: 12px;
+            width: 100%;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .close-modal:hover {
+            color: var(--text-color);
+            border-color: var(--text-color);
+        }
+
+        .reset-progress-btn {
+            background: none;
+            border: none;
+            color: var(--accent-red);
+            font-size: 11px;
+            font-weight: 700;
+            margin-top: 14px;
+            cursor: pointer;
+            text-decoration: underline;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .reset-progress-btn:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <!-- Üst Gezinme Çubuğu -->
+        <div class="nav-bar">
+            <!-- Geri Gitme Tuşu -->
+            <button class="btn-icon" id="back-btn" title="Geri Dön">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+            </button>
+            <button class="level-select-trigger" id="levels-btn">Bölümler</button>
+            <!-- Tema Değiştirici -->
+            <button class="btn-icon" id="theme-btn" title="Tema Değiştir">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Bölüm Bilgileri -->
+        <div class="header">
+            <div class="level-info">
+                <div class="difficulty" id="level-diff">KOLAY</div>
+                <div class="level-title" id="level-display">Bölüm 1</div>
+                
+                <div class="stats-row">
+                    <div class="stat-item">Hamle: <span id="moves-val" class="stat-val">0</span></div>
+                    <div class="stat-item">En İyi: <span id="best-val" class="stat-val">-</span></div>
+                    <div class="stat-item">Hedef: <span id="target-val" class="stat-val">5</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Oyun Alanı -->
+        <div class="canvas-container">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+
+        <!-- Kontrol Paneli -->
+        <div class="controls-bar">
+            <!-- Sıfırlama Butonu -->
+            <button class="btn-control" id="reset-btn" title="Bölümü Sıfırla">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                    <path d="M16 3h5v5"/>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                    <path d="M8 21H3v-5"/>
+                </svg>
+                Yeniden Başlat
+            </button>
+            
+            <!-- Ampul Butonu -->
+            <button class="btn-control btn-hint" id="hint-btn" title="İpucu Al">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+                    <path d="M9 18h6"/>
+                    <path d="M10 22h4"/>
+                </svg>
+                İpucu <span class="hint-text-badge" id="hint-count">3</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Başarı Modalı -->
+    <div class="modal" id="victory-modal">
+        <div class="modal-content">
+            <div class="modal-title">Işık Bağlandı!</div>
+            
+            <div class="stars-container" id="victory-stars">
+                <svg class="star-svg" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                <svg class="star-svg" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                <svg class="star-svg" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            </div>
+
+            <div class="modal-text" id="victory-text">Bölümü başarıyla tamamladın. Sıradaki bölüme geçmeye hazır mısın?</div>
+            <button class="modal-btn" id="modal-next-btn">Sonraki Bölüm</button>
+        </div>
+    </div>
+
+    <!-- Seviye Seçim Modalı -->
+    <div class="modal" id="levels-modal">
+        <div class="modal-content" style="max-width: 360px;">
+            <div class="modal-title" style="color: var(--text-color);">Bölüm Seçimi</div>
+            <div class="level-grid" id="levels-grid"></div>
+            <button class="close-modal" id="close-levels-btn">Kapat</button>
+            <button class="reset-progress-btn" id="reset-progress-btn">İlerlemeyi Sıfırla</button>
+        </div>
+    </div>
+
+    <!-- Seviye Veritabanı Dosyası (Güncellenmiş Dosya Yolu) -->
+    <script src="level/levels.js"></script>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const boardSize = 5;
+        const logicalSize = 500;
+        const padding = 16;
+        const gap = 10;
+        const cellSize = (logicalSize - 2 * padding - (boardSize - 1) * gap) / boardSize;
+
+        const colorMap = {
+            green: 'var(--accent-green)',
+            yellow: 'var(--accent-yellow)',
+            orange: 'var(--accent-orange)',
+            red: 'var(--accent-red)',
+            blue: 'var(--accent-blue)'
+        };
+
+        // Oyun Durumu
+        let currentLevelIndex = 0;
+        let completedLevels = JSON.parse(localStorage.getItem('flow_completed_levels')) || [];
+        let paths = { green: [], yellow: [], orange: [], red: [], blue: [] };
+        let isDragging = false;
+        let activeColor = null;
+        let hintsLeft = 3;
+
+        // Hamle ve Noktalar
+        let movesCount = 0;
+        let bestScores = JSON.parse(localStorage.getItem('flow_best_scores')) || {};
+        let drawnColorsThisLevel = new Set();
+        let endpoints = [];
+
+        // Haptik Titreşim
+        function triggerHaptic(duration) {
+            if (navigator.vibrate) {
+                navigator.vibrate(duration);
+            }
+        }
+
+        // Geri Dönüş Butonu
+        document.getElementById('back-btn').addEventListener('click', () => {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                alert("Geri dönülecek önceki sayfa bulunamadı!");
+            }
+        });
+
+        // Tema Yönetimi
+        const themeBtn = document.getElementById('theme-btn');
+        let currentTheme = localStorage.getItem('flow_theme') || 'amethyst';
+        if (currentTheme === 'cyber') {
+            document.body.classList.add('theme-cyber');
+        }
+
+        themeBtn.addEventListener('click', () => {
+            if (document.body.classList.contains('theme-cyber')) {
+                document.body.classList.remove('theme-cyber');
+                localStorage.setItem('flow_theme', 'amethyst');
+            } else {
+                document.body.classList.add('theme-cyber');
+                localStorage.setItem('flow_theme', 'cyber');
+            }
+            draw();
+        });
+
+        // Ses Motoru
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        function playPopSound() {
+            initAudio();
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(450, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(850, audioCtx.currentTime + 0.08);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.08);
+        }
+        function playWinSound() {
+            initAudio();
+            if (!audioCtx) return;
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.08);
+                gain.gain.setValueAtTime(0, audioCtx.currentTime + i * 0.08);
+                gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + i * 0.08 + 0.04);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.08 + 0.25);
+                osc.start(audioCtx.currentTime + i * 0.08);
+                osc.stop(audioCtx.currentTime + i * 0.08 + 0.25);
+            });
+        }
+
+        // Parçacık Sınıfı
+        let particles = [];
+        class Particle {
+            constructor() {
+                this.x = logicalSize / 2;
+                this.y = logicalSize / 2;
+                this.vx = (Math.random() - 0.5) * 14;
+                this.vy = (Math.random() - 0.5) * 14 - 4;
+                this.color = getThemeColor(Object.keys(colorMap)[Math.floor(Math.random() * 5)]);
+                this.radius = Math.random() * 6 + 3;
+                this.alpha = 1;
+                this.gravity = 0.25;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += this.gravity;
+                this.alpha -= 0.015;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function triggerConfetti() {
+            particles = [];
+            for (let i = 0; i < 90; i++) {
+                particles.push(new Particle());
+            }
+            animateConfetti();
+        }
+
+        function animateConfetti() {
+            if (particles.length === 0) return;
+            drawGameBoard();
+            particles.forEach((p, index) => {
+                p.update();
+                p.draw();
+                if (p.alpha <= 0) particles.splice(index, 1);
+            });
+            requestAnimationFrame(animateConfetti);
+        }
+
+        function getThemeColor(colorKey) {
+            const cssVar = colorMap[colorKey];
+            return getComputedStyle(document.body).getPropertyValue(cssVar.replace('var(', '').replace(')', '')).trim() || '#ffffff';
+        }
+
+        // Seviye Yükleme
+        function loadLevel(index) {
+            currentLevelIndex = index;
+            const levelData = levels[currentLevelIndex];
+            endpoints = levelData.endpoints;
+            
+            paths = { green: [], yellow: [], orange: [], red: [], blue: [] };
+            isDragging = false;
+            activeColor = null;
+            movesCount = 0;
+            drawnColorsThisLevel.clear();
+
+            document.getElementById('level-display').innerText = `Bölüm ${currentLevelIndex + 1}`;
+            document.getElementById('level-diff').innerText = levelData.difficulty;
+            
+            const targetScore = Object.keys(paths).length;
+            document.getElementById('target-val').innerText = targetScore;
+            document.getElementById('moves-val').innerText = '0';
+            
+            const bestScore = bestScores[currentLevelIndex];
+            document.getElementById('best-val').innerText = bestScore ? bestScore : '-';
+
+            const diffEl = document.getElementById('level-diff');
+            diffEl.removeAttribute('style');
+            if (levelData.difficulty === "KOLAY") {
+                diffEl.style.color = "var(--accent-green)";
+            } else if (levelData.difficulty === "ORTA") {
+                diffEl.style.color = "var(--accent-yellow)";
+            } else if (levelData.difficulty === "ZOR") {
+                diffEl.style.color = "var(--accent-red)";
+            } else {
+                diffEl.style.color = "var(--accent-purple)";
+            }
+
+            draw();
+        }
+
+        function draw() {
+            if (particles.length > 0) return; 
+            drawGameBoard();
+        }
+
+        function drawGameBoard() {
+            ctx.clearRect(0, 0, logicalSize, logicalSize);
+            drawGrid();
+            drawPaths();
+            drawDots();
+        }
+
+        function drawGrid() {
+            for (let r = 0; r < boardSize; r++) {
+                for (let c = 0; c < boardSize; c++) {
+                    const x = padding + c * (cellSize + gap);
+                    const y = padding + r * (cellSize + gap);
+                    ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--cell-color').trim() || '#11051f';
+                    ctx.beginPath();
+                    ctx.roundRect(x, y, cellSize, cellSize, 12);
+                    ctx.fill();
+                }
+            }
+        }
+
+        function drawPaths() {
+            for (const color of Object.keys(paths)) {
+                const path = paths[color];
+                if (path.length < 1) continue;
+
+                const colorVal = getThemeColor(color);
+
+                // Neon Glow
+                ctx.save();
+                ctx.shadowColor = colorVal;
+                ctx.shadowBlur = 12;
+                ctx.strokeStyle = colorVal;
+                ctx.lineWidth = cellSize * 0.35;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                ctx.beginPath();
+                for (let i = 0; i < path.length; i++) {
+                    const cell = path[i];
+                    const cx = padding + cell.c * (cellSize + gap) + cellSize / 2;
+                    const cy = padding + cell.r * (cellSize + gap) + cellSize / 2;
+                    if (i === 0) {
+                        ctx.moveTo(cx, cy);
+                    } else {
+                        ctx.lineTo(cx, cy);
+                    }
+                }
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        let pulseTime = 0;
+        function animatePulse() {
+            pulseTime += 0.05;
+            if (particles.length === 0) {
+                draw();
+            }
+            requestAnimationFrame(animatePulse);
+        }
+
+        function drawDots() {
+            for (const ep of endpoints) {
+                const cx = padding + ep.c * (cellSize + gap) + cellSize / 2;
+                const cy = padding + ep.r * (cellSize + gap) + cellSize / 2;
+                const colorVal = getThemeColor(ep.color);
+                
+                const isConnected = isColorConnected(ep.color);
+                
+                let sizeModifier = 1;
+                if (!isConnected) {
+                    sizeModifier = 1 + Math.sin(pulseTime) * 0.06;
+                }
+
+                ctx.save();
+                ctx.shadowColor = colorVal;
+                ctx.shadowBlur = isConnected ? 12 : 20;
+                ctx.fillStyle = colorVal;
+                ctx.beginPath();
+                ctx.arc(cx, cy, (cellSize * 0.36) * sizeModifier, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function getGridPos(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (clientX - rect.left) * (logicalSize / rect.width);
+            const y = (clientY - rect.top) * (logicalSize / rect.height);
+            const col = Math.floor((x - padding) / (cellSize + gap));
+            const row = Math.floor((y - padding) / (cellSize + gap));
+
+            if (row >= 0 && row < boardSize && col >= 0 && col < boardSize) {
+                return { r: row, c: col };
+            }
+            return null;
+        }
+
+        function getEndpoint(r, c) {
+            return endpoints.find(ep => ep.r === r && ep.c === c);
+        }
+
+        function isColorConnected(color) {
+            const path = paths[color];
+            if (path.length < 2) return false;
+            const first = path[0];
+            const last = path[path.length - 1];
+            const eps = endpoints.filter(ep => ep.color === color);
+
+            const check1 = (first.r === eps[0].r && first.c === eps[0].c && last.r === eps[1].r && last.c === eps[1].c);
+            const check2 = (first.r === eps[1].r && first.c === eps[1].c && last.r === eps[0].r && last.c === eps[0].c);
+            return check1 || check2;
+        }
+
+        // Etkileşimler
+        function handleStart(clientX, clientY) {
+            if (particles.length > 0) return;
+            const pos = getGridPos(clientX, clientY);
+            if (!pos) return;
+            const { r, c } = pos;
+
+            const ep = getEndpoint(r, c);
+            if (ep) {
+                activeColor = ep.color;
+                paths[activeColor] = [{ r, c }];
+                isDragging = true;
+                
+                if (!drawnColorsThisLevel.has(activeColor)) {
+                    drawnColorsThisLevel.add(activeColor);
+                    movesCount++;
+                    document.getElementById('moves-val').innerText = movesCount;
+                }
+                
+                triggerHaptic(12);
+                draw();
+                return;
+            }
+
+            for (const color of Object.keys(paths)) {
+                const path = paths[color];
+                const idx = path.findIndex(p => p.r === r && p.c === c);
+                if (idx !== -1) {
+                    paths[color] = path.slice(0, idx + 1);
+                    activeColor = color;
+                    isDragging = true;
+                    draw();
+                    return;
+                }
+            }
+        }
+
+        function handleMove(clientX, clientY) {
+            if (!isDragging || !activeColor) return;
+            const pos = getGridPos(clientX, clientY);
+            if (!pos) return;
+
+            const { r, c } = pos;
+            const path = paths[activeColor];
+            const last = path[path.length - 1];
+
+            if (r === last.r && c === last.c) return;
+
+            const isAdjacent = Math.abs(r - last.r) + Math.abs(c - last.c) === 1;
+            if (!isAdjacent) return;
+
+            const otherEp = getEndpoint(r, c);
+            if (otherEp && otherEp.color !== activeColor) return;
+
+            if (path.length > 1) {
+                const prev = path[path.length - 2];
+                if (r === prev.r && c === prev.c) {
+                    path.pop();
+                    draw();
+                    return;
+                }
+            }
+
+            const selfIdx = path.findIndex(p => p.r === r && p.c === c);
+            if (selfIdx !== -1) {
+                paths[activeColor] = path.slice(0, selfIdx + 1);
+                draw();
+                return;
+            }
+
+            if (otherEp && otherEp.color === activeColor) {
+                path.push({ r, c });
+                isDragging = false;
+                activeColor = null;
+                playPopSound();
+                triggerHaptic([20, 30]);
+                draw();
+                checkWin();
+                return;
+            }
+
+            for (const col of Object.keys(paths)) {
+                if (col === activeColor) continue;
+                const otherPath = paths[col];
+                const otherIdx = otherPath.findIndex(p => p.r === r && p.c === c);
+                if (otherIdx !== -1) {
+                    otherPath.splice(otherIdx);
+                }
+            }
+
+            path.push({ r, c });
+            draw();
+            checkWin();
+        }
+
+        function handleEnd() {
+            isDragging = false;
+            activeColor = null;
+        }
+
+        // Kazanma Durumu
+        function checkWin() {
+            const allConnected = Object.keys(paths).every(isColorConnected);
+
+            if (allConnected) {
+                playWinSound();
+                triggerHaptic([50, 40, 50]);
+                triggerConfetti();
+
+                const optimalMoves = Object.keys(paths).length;
+                let starsEarned = 1;
+                if (movesCount <= optimalMoves) {
+                    starsEarned = 3;
+                } else if (movesCount <= optimalMoves + 2) {
+                    starsEarned = 2;
+                }
+
+                const previousBest = bestScores[currentLevelIndex];
+                if (!previousBest || movesCount < previousBest) {
+                    bestScores[currentLevelIndex] = movesCount;
+                    localStorage.setItem('flow_best_scores', JSON.stringify(bestScores));
+                }
+
+                const existingRecord = completedLevels.find(item => item.index === currentLevelIndex);
+                if (existingRecord) {
+                    if (starsEarned > existingRecord.stars) {
+                        existingRecord.stars = starsEarned;
+                    }
+                } else {
+                    completedLevels.push({ index: currentLevelIndex, stars: starsEarned });
+                }
+                localStorage.setItem('flow_completed_levels', JSON.stringify(completedLevels));
+
+                setTimeout(() => {
+                    const starSvgs = document.querySelectorAll('#victory-stars .star-svg');
+                    starSvgs.forEach((svg, i) => {
+                        if (i < starsEarned) {
+                            svg.classList.add('active');
+                        } else {
+                            svg.classList.remove('active');
+                        }
+                    });
+
+                    if (currentLevelIndex === levels.length - 1) {
+                        document.getElementById('victory-text').innerText = `Harika! Oyundaki tüm bölümleri ${starsEarned} Yıldız ile tamamlamayı başardın.`;
+                        document.getElementById('modal-next-btn').innerText = "Bölüm Listesine Dön";
+                    } else {
+                        document.getElementById('victory-text').innerText = `Bölümü ${starsEarned} Yıldız ve ${movesCount} hamle ile başarıyla tamamladın!`;
+                        document.getElementById('modal-next-btn').innerText = "Sonraki Bölüm";
+                    }
+                    document.getElementById('victory-modal').style.display = 'flex';
+                }, 800);
+            }
+        }
+
+        // İpucu
+        function useHint() {
+            if (hintsLeft <= 0) return;
+            const unconnected = Object.keys(paths).filter(color => !isColorConnected(color));
+            if (unconnected.length === 0) return;
+
+            const targetColor = unconnected[0];
+            const activeLevelSolution = levels[currentLevelIndex].solution;
+            paths[targetColor] = JSON.parse(JSON.stringify(activeLevelSolution[targetColor]));
+
+            if (!drawnColorsThisLevel.has(targetColor)) {
+                drawnColorsThisLevel.add(targetColor);
+                movesCount++;
+                document.getElementById('moves-val').innerText = movesCount;
+            }
+
+            hintsLeft--;
+            document.getElementById('hint-count').innerText = hintsLeft;
+            playPopSound();
+            draw();
+            checkWin();
+        }
+
+        // Seviye Seçim Modalı
+        function openLevelsModal() {
+            const grid = document.getElementById('levels-grid');
+            grid.innerHTML = '';
+            
+            levels.forEach((lvl, index) => {
+                const btn = document.createElement('div');
+                btn.className = 'level-item';
+                
+                const progressRecord = completedLevels.find(item => item.index === index);
+                const hasStars = progressRecord ? progressRecord.stars : 0;
+
+                if (progressRecord) {
+                    btn.classList.add('completed');
+                }
+
+                if (index === currentLevelIndex) {
+                    btn.classList.add('current');
+                }
+
+                const numSpan = document.createElement('span');
+                numSpan.innerText = index + 1;
+                btn.appendChild(numSpan);
+
+                const starsDiv = document.createElement('div');
+                starsDiv.className = 'level-stars';
+                for (let s = 1; s <= 3; s++) {
+                    const starSpan = document.createElement('span');
+                    starSpan.innerHTML = '★';
+                    if (s <= hasStars) {
+                        starSpan.className = 'active';
+                    }
+                    starsDiv.appendChild(starSpan);
+                }
+                btn.appendChild(starsDiv);
+
+                btn.addEventListener('click', () => {
+                    loadLevel(index);
+                    document.getElementById('levels-modal').style.display = 'none';
+                });
+                grid.appendChild(btn);
+            });
+
+            document.getElementById('levels-modal').style.display = 'flex';
+        }
+
+        document.getElementById('reset-progress-btn').addEventListener('click', () => {
+            if (confirm("Tüm oyun ilerlemeniz silinecek. Emin misiniz?")) {
+                completedLevels = [];
+                bestScores = {};
+                localStorage.removeItem('flow_completed_levels');
+                localStorage.removeItem('flow_best_scores');
+                openLevelsModal();
+                loadLevel(0);
+            }
+        });
+
+        // Mouse & Touch dinleyicileri
+        canvas.addEventListener('mousedown', e => handleStart(e.clientX, e.clientY));
+        canvas.addEventListener('mousemove', e => handleMove(e.clientX, e.clientY));
+        window.addEventListener('mouseup', handleEnd);
+
+        canvas.addEventListener('touchstart', e => {
+            if (e.touches.length > 0) handleStart(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: true });
+        canvas.addEventListener('touchmove', e => {
+            if (e.touches.length > 0) handleMove(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: true });
+        window.addEventListener('touchend', handleEnd);
+
+        // Kontrol ve Menü Butonları
+        document.getElementById('reset-btn').addEventListener('click', () => loadLevel(currentLevelIndex));
+        document.getElementById('hint-btn').addEventListener('click', useHint);
+        document.getElementById('levels-btn').addEventListener('click', openLevelsModal);
+        document.getElementById('close-levels-btn').addEventListener('click', () => {
+            document.getElementById('levels-modal').style.display = 'none';
+        });
+
+        document.getElementById('modal-next-btn').addEventListener('click', () => {
+            document.getElementById('victory-modal').style.display = 'none';
+            if (currentLevelIndex < levels.length - 1) {
+                loadLevel(currentLevelIndex + 1);
+            } else {
+                openLevelsModal();
+            }
+        });
+
+        // Çözünürlük ve Boyutlandırma
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.width * dpr;
+            ctx.scale(dpr * (rect.width / logicalSize), dpr * (rect.width / logicalSize));
+            draw();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // Başlat
+        loadLevel(0);
+        animatePulse();
+        setTimeout(resizeCanvas, 100);
+    </script>
+</body>
+</html>
