@@ -36,6 +36,10 @@
             --card-shadow: 0 10px 24px rgba(15, 58, 92, 0.18);
             --glow: 0 0 0 2px var(--line-strong), 0 20px 50px rgba(15, 58, 92, 0.18);
             --header-bg: rgba(245, 251, 255, 0.85);
+            --btn-bg: #0f8fdb;
+            --btn-bg-hover: #0a75b8;
+            --btn-text: #ffffff;
+            --preview-bg: #ffe9c7;
         }
 
         html.theme-dark {
@@ -53,6 +57,10 @@
             --text-faint: #8aa8c2;
             --card-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
             --header-bg: rgba(15, 36, 54, 0.85);
+            --btn-bg: #1893e8;
+            --btn-bg-hover: #4fb3f5;
+            --btn-text: #06182a;
+            --preview-bg: #3a2f1a;
         }
 
 
@@ -150,7 +158,7 @@
             display: flex; align-items: center; justify-content: center;
             transition: 0.2s;
         }
-        .circle-btn:hover { background: var(--accent); border-color: var(--accent); }
+        .circle-btn:hover { background: var(--btn-bg); border-color: var(--btn-bg); color: var(--btn-text); }
 
         /* --- HAMBURGER MENÜ --- */
         .menu-overlay {
@@ -229,16 +237,16 @@
         .hero-title { font-size: 1.95rem; font-weight: 900; margin-bottom: 8px; color: var(--text-bright); letter-spacing: -0.4px; }
         .hero-desc { color: var(--text-dark); font-size: 0.98rem; font-weight: 600; margin-bottom: 22px; max-width: 450px; line-height: 1.45; }
         .hero-play {
-            background: var(--accent); color: var(--text-bright); padding: 13px 26px; border-radius: 13px;
+            background: var(--btn-bg); color: var(--btn-text); padding: 13px 26px; border-radius: 13px;
             text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 9px;
             transition: 0.2s; font-family: 'Nunito', sans-serif; font-size: 0.92rem;
         }
-        .hero-play:hover { background: #38bdf8; }
+        .hero-play:hover { background: var(--btn-bg-hover); }
 
         .hero-badge {
             position: absolute; right: 28px; bottom: 28px; width: 76px; height: 76px;
             border-radius: 20px; display: flex; align-items: center; justify-content: center;
-            background: var(--surface-soft); border: 1px solid var(--line);
+            background: var(--preview-bg); border: 1px solid var(--line);
             font-size: 2.4rem;
         }
 
@@ -303,12 +311,12 @@
         /* Rastgele Oyun butonu */
         .surprise-btn {
             display: flex; align-items: center; gap: 8px;
-            background: var(--surface-soft); color: var(--text-bright);
-            border: 2px solid var(--line-strong); padding: 12px 18px; border-radius: 14px; font-weight: 800;
+            background: var(--btn-bg); color: var(--btn-text);
+            border: 2px solid var(--btn-bg); padding: 12px 18px; border-radius: 14px; font-weight: 800;
             font-size: 0.88rem; cursor: pointer; transition: 0.2s; white-space: nowrap;
         }
-        .surprise-btn:hover { border-color: var(--accent); }
-        .surprise-btn i { color: var(--cyan); }
+        .surprise-btn:hover { background: var(--btn-bg-hover); border-color: var(--btn-bg-hover); }
+        .surprise-btn i { color: var(--btn-text); }
         .toolbar-row { display: flex; gap: 10px; margin-bottom: 20px; }
         .toolbar-row .search-bar { margin-bottom: 0; flex: 1; }
 
@@ -329,7 +337,7 @@
             cursor: pointer; transition: 0.2s; border: 2px solid var(--line-strong);
             white-space: nowrap;
         }
-        .mode-chip.active { background: var(--accent); color: var(--text-bright); border-color: var(--accent); }
+        .mode-chip.active { background: var(--btn-bg); color: var(--btn-text); border-color: var(--btn-bg); }
 
         /* Oyun Grid — sade, düz kartlar */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
@@ -344,7 +352,7 @@
 
         .card-preview {
             height: 128px; display: flex; align-items: center; justify-content: center;
-            font-size: 3.4rem; background: var(--surface-soft); position: relative;
+            font-size: 3.4rem; background: var(--preview-bg); position: relative;
         }
         .card-body { padding: 16px; text-align: center; }
         .card-cat { font-size: 0.7rem; font-weight: 900; color: var(--accent); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.6px; font-family: 'Nunito', sans-serif; }
@@ -357,10 +365,10 @@
 
         .fav-heart {
             position: absolute; top: 12px; right: 12px; width: 30px; height: 30px;
-            background: rgba(15, 58, 92, 0.25); border-radius: 9px; display: flex; align-items: center; justify-content: center;
-            color: var(--text-bright); transition: 0.2s; z-index: 2;
+            background: rgba(15, 58, 92, 0.55); border-radius: 9px; display: flex; align-items: center; justify-content: center;
+            color: #ffffff; transition: 0.2s; z-index: 2;
         }
-        .fav-heart.active { color: var(--coral); }
+        .fav-heart.active { color: var(--coral); background: rgba(15, 58, 92, 0.7); }
 
         /* En çok oynanan rozeti */
         .card-top-tag {
@@ -422,7 +430,7 @@
             cursor: pointer; transition: 0.2s; border: 2px solid var(--line);
             white-space: nowrap; letter-spacing: 0.3px;
         }
-        .cat-chip.active { background: var(--cyan); color: var(--text-bright); border-color: var(--cyan); }
+        .cat-chip.active { background: var(--cyan); color: #06322c; border-color: var(--cyan); }
         .cat-chip .count { font-size: 0.7rem; opacity: 0.75; margin-left: 4px; }
 
         /* --- Son Oynananlar --- */
@@ -511,7 +519,7 @@
             background: var(--surface-soft); color: var(--text-bright); font-weight: 800;
             cursor: pointer; transition: 0.2s;
         }
-        .font-size-btn.active { background: var(--accent); border-color: var(--accent); }
+        .font-size-btn.active { background: var(--btn-bg); color: var(--btn-text); border-color: var(--btn-bg); }
         .settings-action {
             width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
             padding: 14px; border-radius: 14px; border: 1px solid var(--line);
@@ -537,7 +545,7 @@
             transition: 0.3s;
         }
         .scroll-top-btn.show { opacity: 1; visibility: visible; transform: translateY(0); }
-        .scroll-top-btn:hover { background: var(--accent); border-color: var(--accent); }
+        .scroll-top-btn:hover { background: var(--btn-bg); border-color: var(--btn-bg); color: var(--btn-text); }
 
         /* PWA Yükleme Şeridi */
         .install-banner {
@@ -558,7 +566,7 @@
         .install-banner-title { font-weight: 800; font-size: 0.9rem; }
         .install-banner-sub { font-size: 0.75rem; color: var(--text-soft); font-weight: 700; }
         .install-banner-btn {
-            background: var(--accent); color: var(--text-bright); border: none; padding: 9px 14px;
+            background: var(--btn-bg); color: var(--btn-text); border: none; padding: 9px 14px;
             border-radius: 10px; font-weight: 800; font-size: 0.82rem; cursor: pointer; white-space: nowrap;
         }
         .install-banner-close {
@@ -569,7 +577,7 @@
 <body>
 
     <div class="animated-bg">
-        <div class="synapse-grid"></div>
+        <div class="synapse-grid" style="display:none;"></div>
         <div class="blob b1"></div>
         <div class="blob b2"></div>
         <div class="blob b3"></div>
@@ -693,12 +701,6 @@
                     <button class="search-clear" id="searchClearBtn" onclick="clearSearch()"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <button class="surprise-btn" onclick="surpriseMe()"><i class="fa-solid fa-shuffle"></i> Beni Şaşırt</button>
-            </div>
-
-            <!-- SON OYNANANLAR -->
-            <div class="recent-section" id="recentSection" style="display:none;">
-                <div class="section-title"><i class="fa-solid fa-clock-rotate-left"></i> Son Oynananlar</div>
-                <div class="recent-row" id="recentRow"></div>
             </div>
 
             <!-- BAŞARIMLAR -->
@@ -1016,6 +1018,61 @@
                 url: 'https://mugol-portal.github.io/mugol-.iq/yapboz-oyunu.html',
                 desc: 'Parçaları doğru yerlerine yerleştirerek resmi tamamla.',
                 isNew: true
+            },
+            {
+                id: 'sos',
+                title: 'SOS',
+                cat: 'STRATEJİ',
+                mode: 'challenge',
+                icon: '❌',
+                color: '#ff8fa8',
+                url: 'https://mugol-portal.github.io/mugol-.iq/sos.html',
+                desc: 'Harfleri sırayla yerleştir, S-O-S dizilerini oluşturarak rakibini geç.',
+                isNew: true
+            },
+            {
+                id: 'mayin-tarlasi',
+                title: 'Mayın Tarlası',
+                cat: 'ZEKA',
+                mode: 'focus',
+                icon: '💣',
+                color: '#ffe7a0',
+                url: 'https://mugol-portal.github.io/mugol-.iq/mayin-tarlasi.html',
+                desc: 'Mayınları tahmin et, güvenli kareleri açarak tahtayı temizle.',
+                isNew: true
+            },
+            {
+                id: 'tugla-kirici',
+                title: 'Tuğla Kırıcı',
+                cat: 'ZEKA',
+                mode: 'focus',
+                icon: '🧱',
+                color: '#ff8fa8',
+                url: 'https://mugol-portal.github.io/mugol-.iq/tugla-kirici.html',
+                desc: 'Topu sektir, tüm tuğlaları kırarak seviyeyi tamamla.',
+                isNew: true
+            },
+            {
+                id: 'kizma-birader',
+                title: 'Kızma Birader',
+                cat: 'STRATEJİ',
+                mode: 'challenge',
+                icon: '🎲',
+                color: '#9ef2e4',
+                url: 'https://mugol-portal.github.io/mugol-.iq/kizma-birader.html',
+                desc: 'Zar at, piyonlarını yuvaya ulaştır, rakiplerini eve gönderme.',
+                isNew: true
+            },
+            {
+                id: 'masa-hokeyi',
+                title: 'Masa Hokeyi',
+                cat: 'STRATEJİ',
+                mode: 'challenge',
+                icon: '🏒',
+                color: '#7dd3fc',
+                url: 'https://mugol-portal.github.io/mugol-.iq/masa-hokeyi.html',
+                desc: 'Pucku hızlı vuruşlarla rakip kaleye gönder, önce sen skor yap.',
+                isNew: true
             }
             // Yeni oyunlar buraya aynı formatta eklenebilir
         ];
@@ -1029,7 +1086,6 @@
             loadTheme();
             renderGames(gamesDB);
             renderCategories();
-            renderRecent();
             renderAchievements();
             updateFavCount();
             updateTotalPlaysCount();
