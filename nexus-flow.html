@@ -23,6 +23,7 @@
             --accent-purple: #b967ff;
             --ambient-gradient-1: rgba(185, 103, 255, 0.15);
             --ambient-gradient-2: rgba(0, 229, 160, 0.1);
+            --ambient-gradient-3: rgba(91, 107, 255, 0.08);
         }
 
         /* Tema 2: Siber Yeşil (Cyber Green) */
@@ -41,6 +42,7 @@
             --accent-purple: #9d00ff;
             --ambient-gradient-1: rgba(0, 229, 255, 0.15);
             --ambient-gradient-2: rgba(57, 255, 20, 0.1);
+            --ambient-gradient-3: rgba(157, 0, 255, 0.08);
         }
 
         body {
@@ -48,6 +50,7 @@
             background-image:
                 radial-gradient(circle at 15% 10%, var(--ambient-gradient-1) 0%, transparent 45%),
                 radial-gradient(circle at 85% 90%, var(--ambient-gradient-2) 0%, transparent 45%),
+                radial-gradient(circle at 90% 15%, var(--ambient-gradient-3) 0%, transparent 40%),
                 radial-gradient(circle at top, var(--bg-color-2) 0%, var(--bg-color) 100%);
             color: var(--text-color);
             font-family: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -61,7 +64,25 @@
             -webkit-user-select: none;
             touch-action: none;
             overflow: hidden;
-            transition: background 0.3s ease;
+            position: relative;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        /* İnce yıldız tozu dokusu */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background-image:
+                radial-gradient(1.5px 1.5px at 10% 20%, rgba(255,255,255,0.35) 50%, transparent 100%),
+                radial-gradient(1px 1px at 30% 70%, rgba(255,255,255,0.25) 50%, transparent 100%),
+                radial-gradient(1.5px 1.5px at 70% 15%, rgba(255,255,255,0.3) 50%, transparent 100%),
+                radial-gradient(1px 1px at 85% 55%, rgba(255,255,255,0.2) 50%, transparent 100%),
+                radial-gradient(1.5px 1.5px at 50% 85%, rgba(255,255,255,0.25) 50%, transparent 100%),
+                radial-gradient(1px 1px at 20% 45%, rgba(255,255,255,0.2) 50%, transparent 100%);
+            opacity: 0.6;
         }
 
         .game-container {
@@ -73,6 +94,7 @@
             flex-direction: column;
             align-items: center;
             position: relative;
+            z-index: 1;
         }
 
         /* Üst Navigasyon */
@@ -90,13 +112,28 @@
             flex-direction: column;
             align-items: center;
             margin-bottom: 16px;
-            background: rgba(255, 255, 255, 0.02);
-            padding: 14px 16px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(8px);
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.01));
+            padding: 16px 18px;
+            border-radius: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(10px);
             box-sizing: border-box;
             position: relative;
+            box-shadow: 0 12px 30px -14px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            top: -60%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140%;
+            height: 120%;
+            background: radial-gradient(ellipse at center, var(--ambient-gradient-1) 0%, transparent 70%);
+            pointer-events: none;
+            opacity: 0.8;
         }
 
         .btn-icon {
@@ -109,7 +146,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.1s, background 0.2s, border-color 0.2s;
+            transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, border-color 0.2s, box-shadow 0.2s;
             width: 40px;
             height: 40px;
             backdrop-filter: blur(4px);
@@ -117,27 +154,30 @@
 
         .btn-icon:hover {
             border-color: var(--accent-purple);
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.09);
+            box-shadow: 0 0 14px -2px var(--accent-purple);
         }
 
         .btn-icon:active {
-            transform: scale(0.92);
+            transform: scale(0.9);
         }
 
         .level-select-trigger {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015));
+            border: 1px solid rgba(255, 255, 255, 0.09);
             color: var(--text-color);
-            padding: 8px 24px;
+            padding: 9px 26px;
             border-radius: 20px;
-            font-size: 14px;
+            font-size: 13.5px;
             font-weight: 700;
             font-family: 'Sora', sans-serif;
+            letter-spacing: 0.3px;
             cursor: pointer;
-            transition: background 0.2s, transform 0.1s, border-color 0.2s;
+            transition: background 0.2s, transform 0.15s, border-color 0.2s, box-shadow 0.2s;
         }
         .level-select-trigger:hover {
             border-color: var(--accent-purple);
+            box-shadow: 0 0 16px -4px var(--accent-purple);
         }
         .level-select-trigger:active {
             transform: scale(0.95);
@@ -146,23 +186,27 @@
         .level-info {
             text-align: center;
             width: 100%;
+            position: relative;
         }
 
         .difficulty {
             font-size: 10px;
             text-transform: uppercase;
-            letter-spacing: 2.5px;
+            letter-spacing: 3px;
             color: var(--accent-purple);
-            margin-bottom: 2px;
+            margin-bottom: 4px;
             font-weight: 800;
             font-family: 'Sora', sans-serif;
+            text-shadow: 0 0 12px currentColor;
+            transition: color 0.3s ease;
         }
 
         .level-title {
-            font-size: 24px;
+            font-size: 25px;
             font-weight: 800;
             margin: 0;
             font-family: 'Sora', sans-serif;
+            letter-spacing: -0.3px;
             background: linear-gradient(135deg, var(--text-color) 0%, var(--text-muted) 100%);
             -webkit-background-clip: text;
             background-clip: text;
@@ -172,23 +216,28 @@
         /* İstatistik Çubuğu */
         .stats-row {
             display: flex;
-            gap: 16px;
-            font-size: 12px;
-            font-weight: 800;
+            gap: 10px;
+            font-size: 11.5px;
+            font-weight: 700;
             font-family: 'Sora', sans-serif;
             color: var(--text-muted);
             justify-content: center;
-            margin-top: 6px;
+            margin-top: 12px;
         }
 
         .stat-item {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 5px 12px;
+            border-radius: 12px;
         }
 
         .stat-val {
             color: var(--text-color);
+            font-weight: 800;
         }
 
         /* Oyun Alanı Kutusu */
@@ -196,13 +245,14 @@
             position: relative;
             width: 100%;
             aspect-ratio: 1;
-            border-radius: 24px;
-            padding: 8px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            box-shadow: 0 24px 60px -15px rgba(0, 0, 0, 0.8), 0 0 40px -15px rgba(185, 103, 255, 0.15);
+            border-radius: 26px;
+            padding: 9px;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.005));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 28px 70px -18px rgba(0, 0, 0, 0.85), 0 0 50px -14px var(--ambient-gradient-1), inset 0 1px 0 rgba(255, 255, 255, 0.06);
             box-sizing: border-box;
-            backdrop-filter: blur(12px);
+            backdrop-filter: blur(14px);
+            transition: box-shadow 0.4s ease;
         }
 
         canvas {
@@ -210,7 +260,7 @@
             touch-action: none;
             width: 100%;
             height: 100%;
-            border-radius: 16px;
+            border-radius: 18px;
         }
 
         /* Kontrol Paneli */
@@ -227,23 +277,25 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            gap: 9px;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.01));
+            border: 1px solid rgba(255, 255, 255, 0.09);
             color: var(--text-color);
-            padding: 14px;
-            border-radius: 16px;
+            padding: 15px;
+            border-radius: 17px;
             font-family: 'Sora', sans-serif;
             font-size: 14px;
             font-weight: 700;
             cursor: pointer;
-            transition: transform 0.1s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+            transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, border-color 0.2s, box-shadow 0.2s;
             backdrop-filter: blur(8px);
+            box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.5);
         }
 
         .btn-control:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.09);
+            border-color: rgba(255, 255, 255, 0.22);
+            transform: translateY(-1px);
         }
 
         .btn-control:active {
@@ -252,15 +304,15 @@
 
         /* Ampul Butonu */
         .btn-control.btn-hint {
-            background: linear-gradient(135deg, rgba(255, 207, 77, 0.08), rgba(255, 122, 69, 0.08));
-            border-color: rgba(255, 150, 50, 0.2);
+            background: linear-gradient(135deg, rgba(255, 207, 77, 0.1), rgba(255, 122, 69, 0.1));
+            border-color: rgba(255, 150, 50, 0.25);
             color: var(--accent-yellow);
         }
 
         .btn-control.btn-hint:hover {
-            background: linear-gradient(135deg, rgba(255, 207, 77, 0.15), rgba(255, 122, 69, 0.15));
+            background: linear-gradient(135deg, rgba(255, 207, 77, 0.18), rgba(255, 122, 69, 0.18));
             border-color: var(--accent-orange);
-            box-shadow: 0 0 15px rgba(255, 150, 50, 0.15);
+            box-shadow: 0 0 18px -3px rgba(255, 150, 50, 0.35);
         }
 
         .hint-text-badge {
@@ -268,9 +320,10 @@
             color: #12061e;
             font-size: 10px;
             font-weight: 800;
-            padding: 1px 6px;
+            padding: 2px 7px;
             border-radius: 10px;
             margin-left: 2px;
+            box-shadow: 0 0 10px -1px var(--accent-orange);
         }
 
         /* Modallar */
@@ -281,23 +334,29 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(11, 6, 20, 0.94);
-            backdrop-filter: blur(12px);
+            background: rgba(8, 4, 15, 0.92);
+            backdrop-filter: blur(14px);
             align-items: center;
             justify-content: center;
             z-index: 100;
+            animation: fadeIn 0.25s ease;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
         }
 
         .modal-content {
-            background: var(--card-color);
-            padding: 32px;
+            background: linear-gradient(165deg, var(--card-color) 0%, var(--bg-color-2) 100%);
+            padding: 34px 30px;
             border-radius: 28px;
             text-align: center;
             max-width: 330px;
             width: 85%;
-            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.7), 0 0 50px -15px var(--accent-purple);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 40px 80px -15px rgba(0, 0, 0, 0.75), 0 0 60px -15px var(--accent-purple), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         @keyframes popIn {
@@ -306,54 +365,61 @@
         }
 
         .modal-title {
-            font-size: 26px;
+            font-size: 27px;
             font-weight: 900;
             font-family: 'Sora', sans-serif;
             color: var(--accent-green);
             margin-top: 0;
             margin-bottom: 8px;
+            text-shadow: 0 0 20px rgba(0, 229, 160, 0.35);
+            letter-spacing: -0.3px;
         }
 
         .stars-container {
             display: flex;
             justify-content: center;
-            gap: 10px;
-            margin: 16px 0;
+            gap: 12px;
+            margin: 18px 0;
         }
 
         .star-svg {
-            width: 40px;
-            height: 40px;
+            width: 42px;
+            height: 42px;
             fill: #443261;
-            transition: fill 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.3s;
+            transition: fill 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .star-svg.active {
             fill: var(--accent-yellow);
-            transform: scale(1.15);
-            filter: drop-shadow(0 0 8px rgba(255, 207, 77, 0.6));
+            transform: scale(1.18) rotate(-4deg);
+            filter: drop-shadow(0 0 10px rgba(255, 207, 77, 0.7));
         }
 
         .modal-text {
             color: var(--text-muted);
-            margin-bottom: 24px;
+            margin-bottom: 26px;
             font-size: 14px;
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
         .modal-btn {
             background: linear-gradient(135deg, var(--accent-green), var(--accent-blue));
             color: #030d09;
             border: none;
-            padding: 14px 28px;
+            padding: 15px 28px;
             font-size: 16px;
             font-weight: 800;
             font-family: 'Sora', sans-serif;
+            letter-spacing: 0.2px;
             border-radius: 16px;
             cursor: pointer;
-            transition: transform 0.1s, filter 0.2s;
+            transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s, box-shadow 0.2s;
             width: 100%;
-            box-shadow: 0 4px 18px rgba(0, 229, 160, 0.3);
+            box-shadow: 0 6px 22px -4px rgba(0, 229, 160, 0.4);
+        }
+
+        .modal-btn:hover {
+            box-shadow: 0 8px 26px -4px rgba(0, 229, 160, 0.55);
         }
 
         .modal-btn:active {
@@ -381,8 +447,8 @@
         }
 
         .level-item {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.005));
+            border: 1px solid rgba(255, 255, 255, 0.07);
             color: var(--text-color);
             aspect-ratio: 1;
             border-radius: 14px;
@@ -394,21 +460,26 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: background 0.2s, border 0.2s, transform 0.1s;
+            transition: background 0.2s, border 0.2s, transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
             position: relative;
+        }
+
+        .level-item:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
         }
 
         .level-item.completed {
             border-color: var(--accent-green);
-            background: rgba(0, 229, 160, 0.08);
+            background: rgba(0, 229, 160, 0.09);
             color: var(--accent-green);
         }
 
         .level-item.current {
             border-color: var(--accent-purple);
-            background: rgba(185, 103, 255, 0.12);
+            background: rgba(185, 103, 255, 0.14);
             color: var(--accent-purple);
-            box-shadow: 0 0 10px rgba(185, 103, 255, 0.3);
+            box-shadow: 0 0 14px -2px rgba(185, 103, 255, 0.5);
         }
 
         .level-item:active {
@@ -740,7 +811,7 @@
             document.getElementById('level-display').innerText = `Bölüm ${currentLevelIndex + 1}`;
             document.getElementById('level-diff').innerText = levelData.difficulty;
             
-            const targetScore = Object.keys(paths).length;
+            const targetScore = [...new Set(endpoints.map(ep => ep.color))].length;
             document.getElementById('target-val').innerText = targetScore;
             document.getElementById('moves-val').innerText = '0';
             
@@ -774,17 +845,61 @@
             drawDots();
         }
 
+        let cachedCellColor = null;
+        let cachedCellGradient = null;
+        function getCellStyles() {
+            const liveColor = getComputedStyle(document.body).getPropertyValue('--cell-color').trim() || '#11051f';
+            if (liveColor !== cachedCellColor || !cachedCellGradient) {
+                cachedCellColor = liveColor;
+                const grad = ctx.createLinearGradient(0, 0, 0, cellSize);
+                grad.addColorStop(0, 'rgba(255,255,255,0.05)');
+                grad.addColorStop(0.5, 'rgba(255,255,255,0)');
+                cachedCellGradient = grad;
+            }
+            return { cellColor: cachedCellColor, cellGradient: cachedCellGradient };
+        }
+
         function drawGrid() {
+            const { cellColor, cellGradient } = getCellStyles();
+            ctx.save();
+            ctx.fillStyle = cellColor;
+            ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+            ctx.lineWidth = 1;
             for (let r = 0; r < boardSize; r++) {
                 for (let c = 0; c < boardSize; c++) {
                     const x = padding + c * (cellSize + gap);
                     const y = padding + r * (cellSize + gap);
-                    ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--cell-color').trim() || '#11051f';
+
                     ctx.beginPath();
                     ctx.roundRect(x, y, cellSize, cellSize, 12);
+                    ctx.fillStyle = cellColor;
                     ctx.fill();
+
+                    // İnce üst parlaklık (cam hissi) - önceden hesaplanmış gradyan, konuma taşınarak
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.fillStyle = cellGradient;
+                    ctx.fill();
+                    ctx.restore();
+
+                    ctx.stroke();
                 }
             }
+            ctx.restore();
+        }
+
+        let cachedThemeColors = {};
+        let cachedThemeKey = null;
+        function getThemeColorCached(colorKey) {
+            const themeKey = document.body.classList.contains('theme-cyber') ? 'cyber' : 'amethyst';
+            if (themeKey !== cachedThemeKey) {
+                cachedThemeColors = {};
+                cachedThemeKey = themeKey;
+            }
+            if (!cachedThemeColors[colorKey]) {
+                cachedThemeColors[colorKey] = getThemeColor(colorKey);
+            }
+            return cachedThemeColors[colorKey];
         }
 
         function drawPaths() {
@@ -792,16 +907,7 @@
                 const path = paths[color];
                 if (path.length < 1) continue;
 
-                const colorVal = getThemeColor(color);
-
-                // Neon Glow
-                ctx.save();
-                ctx.shadowColor = colorVal;
-                ctx.shadowBlur = 12;
-                ctx.strokeStyle = colorVal;
-                ctx.lineWidth = cellSize * 0.35;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
+                const colorVal = getThemeColorCached(color);
 
                 ctx.beginPath();
                 for (let i = 0; i < path.length; i++) {
@@ -814,6 +920,25 @@
                         ctx.lineTo(cx, cy);
                     }
                 }
+
+                // Tek katman: neon parlama + ana çizgi (shadowBlur en pahalı işlem,
+                // bu yüzden tek seferde uygulanıyor - performans için kritik)
+                ctx.save();
+                ctx.shadowColor = colorVal;
+                ctx.shadowBlur = 14;
+                ctx.strokeStyle = colorVal;
+                ctx.lineWidth = cellSize * 0.35;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+                ctx.restore();
+
+                // İç parlak çekirdek: gölgesiz (ucuz), aynı path'i tekrar kullanır
+                ctx.save();
+                ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+                ctx.lineWidth = cellSize * 0.1;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
                 ctx.stroke();
                 ctx.restore();
             }
@@ -828,11 +953,26 @@
             requestAnimationFrame(animatePulse);
         }
 
+        let cachedCoreGradRadius = null;
+        let cachedCoreGrad = null;
+        function getCoreGradient(radius) {
+            // Radius pulse ile ufak değişir (~%6); yakın değerlerde yeniden kullan
+            if (cachedCoreGrad && Math.abs(radius - cachedCoreGradRadius) < 0.5) {
+                return cachedCoreGrad;
+            }
+            const g = ctx.createRadialGradient(-radius * 0.25, -radius * 0.25, 0, 0, 0, radius * 0.6);
+            g.addColorStop(0, 'rgba(255,255,255,0.85)');
+            g.addColorStop(1, 'rgba(255,255,255,0)');
+            cachedCoreGrad = g;
+            cachedCoreGradRadius = radius;
+            return g;
+        }
+
         function drawDots() {
             for (const ep of endpoints) {
                 const cx = padding + ep.c * (cellSize + gap) + cellSize / 2;
                 const cy = padding + ep.r * (cellSize + gap) + cellSize / 2;
-                const colorVal = getThemeColor(ep.color);
+                const colorVal = getThemeColorCached(ep.color);
                 
                 const isConnected = isColorConnected(ep.color);
                 
@@ -841,12 +981,31 @@
                     sizeModifier = 1 + Math.sin(pulseTime) * 0.06;
                 }
 
+                const radius = (cellSize * 0.36) * sizeModifier;
+
+                // Dış parlama halkası (bağlanmamışsa daha canlı)
                 ctx.save();
                 ctx.shadowColor = colorVal;
-                ctx.shadowBlur = isConnected ? 12 : 20;
+                ctx.shadowBlur = isConnected ? 10 : 18;
                 ctx.fillStyle = colorVal;
                 ctx.beginPath();
-                ctx.arc(cx, cy, (cellSize * 0.36) * sizeModifier, 0, 2 * Math.PI);
+                ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.restore();
+
+                // İnce dış halka çerçevesi (gölgesiz, ucuz)
+                ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius * 0.92, 0, 2 * Math.PI);
+                ctx.stroke();
+
+                // Parlak iç çekirdek (önbellekli gradyan, konuma taşınarak)
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.fillStyle = getCoreGradient(radius);
+                ctx.beginPath();
+                ctx.arc(0, 0, radius * 0.6, 0, 2 * Math.PI);
                 ctx.fill();
                 ctx.restore();
             }
@@ -983,14 +1142,15 @@
 
         // Kazanma Durumu
         function checkWin() {
-            const allConnected = Object.keys(paths).every(isColorConnected);
+            const activeColors = [...new Set(endpoints.map(ep => ep.color))];
+            const allConnected = activeColors.length > 0 && activeColors.every(isColorConnected);
 
             if (allConnected) {
                 playWinSound();
                 triggerHaptic([50, 40, 50]);
                 triggerConfetti();
 
-                const optimalMoves = Object.keys(paths).length;
+                const optimalMoves = activeColors.length;
                 let starsEarned = 1;
                 if (movesCount <= optimalMoves) {
                     starsEarned = 3;
