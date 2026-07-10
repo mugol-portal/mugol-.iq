@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Air Hockey Pro</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #020205; display: flex;
+            justify-content: center; align-items: center;
+            overflow: hidden; font-family: 'Courier New', Courier, monospace;
+            touch-action: none; user-select: none; overscroll-behavior: none; 
+        }
+
+        #gameContainer {
+            position: relative; width: 100vw; max-width: 600px; 
+            height: 100vh; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 0 50px rgba(0,0,0,1);
+        }
+
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* Sağ Üst Ayarlar Butonu */
+        #settingsBtn {
+            position: absolute; top: 20px; right: 20px; z-index: 20;
+            background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white; font-size: 24px; width: 45px; height: 45px;
+            border-radius: 50%; cursor: pointer; display: flex; 
+            justify-content: center; align-items: center;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5); backdrop-filter: blur(5px);
+        }
+
+        /* Cam Efektli (Glassmorphism) Arkaplan Örtüsü */
+        #overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center; z-index: 30;
+        }
+
+        /* Menü Kutusu */
+        .menu-panel {
+            background: rgba(15, 15, 25, 0.85); border-radius: 25px;
+            padding: 30px 20px; width: 90%; max-width: 350px;
+            text-align: center; border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.05);
+            display: none; flex-direction: column; align-items: center;
+        }
+
+        .menu-panel h1 {
+            color: #fff; text-shadow: 0 0 10px #d900ff, 0 0 20px #00ffff;
+            font-size: 32px; margin-top: 0; margin-bottom: 25px; text-transform: uppercase;
+        }
+
+        .menu-panel h3 { color: #ccc; font-size: 20px; margin-top: 0; margin-bottom: 20px; }
+
+        .btn {
+            background: rgba(0, 0, 0, 0.5); color: white; border: 2px solid #00ffff;
+            padding: 12px 10px; font-size: 16px; font-weight: bold; font-family: inherit; 
+            margin: 8px; border-radius: 30px; cursor: pointer; width: 100%;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3); transition: 0.3s;
+        }
+        .btn:hover { background: #00ffff; color: #000; box-shadow: 0 0 20px #00ffff; }
+        
+        .btn-purple { border-color: #d900ff; box-shadow: 0 0 10px rgba(217, 0, 255, 0.3); }
+        .btn-purple:hover { background: #d900ff; color: #000; box-shadow: 0 0 20px #d900ff;}
+        
+        .btn-yellow { border-color: #ffcc00; box-shadow: 0 0 10px rgba(255, 204, 0, 0.3); }
+        .btn-yellow:hover { background: #ffcc00; color: #000; box-shadow: 0 0 20px #ffcc00;}
+
+        .btn-red { border-color: #ff3333; box-shadow: 0 0 10px rgba(255, 51, 51, 0.3); margin-top: 15px;}
+        .btn-red:hover { background: #ff3333; color: #000; box-shadow: 0 0 20px #ff3333;}
+
+        /* Önceki Sayfaya Dön Tuşu */
+        .btn-gray { border-color: #888; box-shadow: 0 0 10px rgba(136, 136, 136, 0.3); width: 85%; margin-top: 15px;}
+        .btn-gray:hover { background: #888; color: #000; box-shadow: 0 0 20px #888; }
+
+        /* Tema Butonları */
+        .btn-theme1 { border-color: #d900ff; color: #d900ff; }
+        .btn-theme1:hover { background: #d900ff; color: #000;}
+        .btn-theme2 { border-color: #ffffff; color: #ffffff; }
+        .btn-theme2:hover { background: #ffffff; color: #000;}
+        .btn-theme3 { border-color: #ff8c00; color: #ff8c00; }
+        .btn-theme3:hover { background: #ff8c00; color: #000;}
+    </style>
+</head>
+<body>
+
+<div id="gameContainer">
+    <button id="settingsBtn" onclick="openSettings()">⚙️</button>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="overlay">
+        
+        <!-- Ana Menü -->
+        <div id="mainMenu" class="menu-panel" style="display: flex;">
+            <h1 id="mainTitle">NEON HOCKEY</h1>
+            <button id="resumeBtn" class="btn btn-yellow" style="display:none;" onclick="resumeGame()">▶ DEVAM ET</button>
+            <button class="btn" onclick="showPanel('difficultyMenu')">👤 1 OYUNCU (Yapay Zeka)</button>
+            <button class="btn btn-purple" onclick="startGame(true)">👥 2 OYUNCU (Karşılıklı)</button>
+            <button class="btn btn-yellow" onclick="showPanel('themeMenu')">🎨 TEMALAR</button>
+            <button class="btn btn-red" onclick="exitGame()">🚪 OYUNDAN ÇIK</button>
+        </div>
+
+        <!-- Zorluk Menüsü -->
+        <div id="difficultyMenu" class="menu-panel">
+            <h3>ZORLUK SEÇİN</h3>
+            <button class="btn" onclick="startGame(false, 'easy')">🟩 KOLAY</button>
+            <button class="btn" style="border-color: #00ff88; color:#00ff88;" onclick="startGame(false, 'medium')">🟨 ORTA</button>
+            <button class="btn" style="border-color: #ff0055; color:#ff0055;" onclick="startGame(false, 'hard')">🟥 ZOR</button>
+            <button class="btn btn-gray" onclick="showPanel('mainMenu')">ÖNCEKİ SAYFAYA DÖN</button>
+        </div>
+
+        <!-- Tema Menüsü -->
+        <div id="themeMenu" class="menu-panel">
+            <h3>TEMA SEÇİN</h3>
+            <button class="btn btn-theme1" onclick="setTheme('dark')">🌌 KLASİK (SİYAH)</button>
+            <button class="btn btn-theme2" onclick="setTheme('light')">☁️ BEYAZ MASA</button>
+            <button class="btn btn-theme3" onclick="setTheme('wood')">🪵 TAHTA MASA</button>
+            <button class="btn btn-gray" onclick="showPanel('mainMenu')">ÖNCEKİ SAYFAYA DÖN</button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const overlay = document.getElementById('overlay');
+    const mainTitle = document.getElementById('mainTitle');
+    const resumeBtn = document.getElementById('resumeBtn');
+
+    const panels = {
+        mainMenu: document.getElementById('mainMenu'),
+        difficultyMenu: document.getElementById('difficultyMenu'),
+        themeMenu: document.getElementById('themeMenu')
+    };
+
+    // Temalar Veritabanı
+    const themes = {
+        dark: { 
+            top: '#d900ff', bottom: '#00ffff', puck: '#ffffff', 
+            lines: 'rgba(255, 255, 255, 0.08)', score: 'rgba(255, 255, 255, 0.1)', trail: 'rgba(255, 255, 255, 0.15)', name: 'NEON HOCKEY' 
+        },
+        light: { 
+            top: '#ff0055', bottom: '#0055ff', puck: '#222222', 
+            lines: 'rgba(0, 0, 0, 0.15)', score: 'rgba(0, 0, 0, 0.1)', trail: 'rgba(0, 0, 0, 0.15)', name: 'BEYAZ HOCKEY' 
+        },
+        wood: { 
+            top: '#ff2222', bottom: '#2288ff', puck: '#ffffff', 
+            lines: 'rgba(60, 30, 0, 0.4)', score: 'rgba(60, 30, 0, 0.2)', trail: 'rgba(255, 255, 255, 0.2)', name: 'TAHTA HOCKEY' 
+        }
+    };
+
+    let currentTheme = 'dark';
+    let t = themes[currentTheme];
+    
+    let isPlaying = false; let gameStarted = false; let isTwoPlayer = false;
+    let scoreTop = 0; let scoreBottom = 0; const maxScore = 7; 
+    let goalWidth = 160; const margin = 20; const cornerRadius = 40; 
+    let particles = [];
+
+    let puck = { x: 0, y: 0, r: 15, vx: 0, vy: 0, trail: [] };
+    let pBottom = { x: 0, y: 0, r: 35, color: t.bottom };
+    let pTop = { x: 0, y: 0, r: 35, color: t.top, speed: 5 }; 
+
+    // --- MENÜ KONTROLLERİ VE ÇIKIŞ ---
+    function openSettings() {
+        isPlaying = false; overlay.style.display = "flex"; showPanel('mainMenu');
+        if(gameStarted && scoreTop < maxScore && scoreBottom < maxScore) { resumeBtn.style.display = "block"; } 
+        else { resumeBtn.style.display = "none"; }
+    }
+
+    function resumeGame() { overlay.style.display = "none"; isPlaying = true; }
+    function showPanel(panelName) { Object.values(panels).forEach(p => p.style.display = 'none'); panels[panelName].style.display = 'flex'; }
+
+    function setTheme(themeKey) {
+        currentTheme = themeKey; t = themes[currentTheme];
+        pTop.color = t.top; pBottom.color = t.bottom;
+        mainTitle.innerText = t.name; mainTitle.style.textShadow = `0 0 10px ${t.top}, 0 0 20px ${t.bottom}`;
+    }
+
+    function startGame(twoPlayer, difficulty = 'medium') {
+        isTwoPlayer = twoPlayer; scoreTop = 0; scoreBottom = 0;
+        if (!twoPlayer) {
+            if (difficulty === 'easy') pTop.speed = 3.5;
+            else if (difficulty === 'medium') pTop.speed = 6;
+            else if (difficulty === 'hard') pTop.speed = 10;
+        }
+        overlay.style.display = "none"; gameStarted = true;
+        resetPositions(); isPlaying = true;
+    }
+
+    // Oyundan Çıkma Fonksiyonu
+    function exitGame() {
+        if (confirm("Oyundan çıkmak istediğinize emin misiniz?")) {
+            // Önce tarayıcıda geri gitmeyi dener
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                // Geri gidilecek sayfa yoksa sekmeyi kapatmayı dener
+                window.close();
+                // Tarayıcı kapatmayı engellerse kara ekran gösterir
+                document.body.innerHTML = `
+                    <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:#000; color:#fff; font-family:sans-serif;">
+                        <h1>Oyundan Çıkıldı.</h1>
+                        <p>Bu sekmeyi güvenle kapatabilirsiniz.</p>
+                    </div>`;
+            }
+        }
+    }
+
+    // --- FİZİK VE EKRAN ---
+    function resizeCanvas() {
+        let container = document.getElementById('gameContainer');
+        canvas.width = container.clientWidth; canvas.height = container.clientHeight;
+        goalWidth = canvas.width * 0.45; 
+        if(!gameStarted) resetPositions();
+    }
+    window.addEventListener('resize', resizeCanvas);
+    
+    function resetPositions() {
+        puck.x = canvas.width / 2; puck.y = canvas.height / 2;
+        puck.vx = 0; puck.vy = 0; puck.trail = [];
+        pBottom.x = canvas.width / 2; pBottom.y = canvas.height - 100;
+        pTop.x = canvas.width / 2; pTop.y = 100;
+    }
+
+    function handleInput(e) {
+        if (!isPlaying) return;
+        e.preventDefault(); 
+        let rect = canvas.getBoundingClientRect();
+        let touches = e.touches ? e.touches : [{ clientX: e.clientX, clientY: e.clientY }];
+
+        for (let i = 0; i < touches.length; i++) {
+            let touchX = touches[i].clientX - rect.left;
+            let touchY = touches[i].clientY - rect.top;
+
+            let minX = margin + pBottom.r; let maxX = canvas.width - margin - pBottom.r;
+
+            if (touchY > canvas.height / 2) {
+                pBottom.x = Math.max(minX, Math.min(maxX, touchX));
+                pBottom.y = Math.max(canvas.height / 2 + pBottom.r, Math.min(canvas.height - margin - pBottom.r, touchY));
+            } else if (isTwoPlayer && touchY < canvas.height / 2) {
+                pTop.x = Math.max(minX, Math.min(maxX, touchX));
+                pTop.y = Math.max(margin + pTop.r, Math.min(canvas.height / 2 - pTop.r, touchY));
+            }
+        }
+    }
+    canvas.addEventListener('mousemove', handleInput);
+    canvas.addEventListener('touchmove', handleInput, {passive: false});
+    canvas.addEventListener('touchstart', handleInput, {passive: false});
+
+    function createParticles(x, y, color) {
+        for(let i=0; i<8; i++) particles.push({ x: x, y: y, vx: (Math.random() - 0.5) * 10, vy: (Math.random() - 0.5) * 10, life: 1, color: color });
+    }
+
+    function resolveCollision(paddle, puckObj) {
+        let dx = puckObj.x - paddle.x; let dy = puckObj.y - paddle.y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < paddle.r + puckObj.r) {
+            if(dist === 0) { dx = 1; dy = 0; dist = 1; } 
+            let angle = Math.atan2(dy, dx);
+            let speed = Math.sqrt(puckObj.vx * puckObj.vx + puckObj.vy * puckObj.vy);
+            let newSpeed = Math.min(speed + 5, 22); 
+            if (newSpeed < 8) newSpeed = 8;
+
+            puckObj.vx = Math.cos(angle) * newSpeed; puckObj.vy = Math.sin(angle) * newSpeed;
+            puckObj.x = paddle.x + Math.cos(angle) * (paddle.r + puckObj.r + 1);
+            puckObj.y = paddle.y + Math.sin(angle) * (paddle.r + puckObj.r + 1);
+            createParticles(puckObj.x, puckObj.y, paddle.color); 
+        }
+    }
+
+    function update() {
+        if (!isPlaying) return;
+        if (isNaN(puck.x) || isNaN(puck.y)) resetPositions();
+
+        puck.trail.push({x: puck.x, y: puck.y});
+        if (puck.trail.length > 10) puck.trail.shift();
+
+        puck.x += puck.vx; puck.y += puck.vy;
+        puck.vx *= 0.985; puck.vy *= 0.985;
+
+        if (puck.x - puck.r < margin) { puck.x = margin + puck.r; puck.vx = Math.abs(puck.vx); } 
+        else if (puck.x + puck.r > canvas.width - margin) { puck.x = canvas.width - margin - puck.r; puck.vx = -Math.abs(puck.vx); }
+
+        if (puck.y - puck.r < margin) {
+            if (puck.x > canvas.width/2 - goalWidth/2 && puck.x < canvas.width/2 + goalWidth/2) {
+                scoreBottom++; checkWin(); resetPositions();
+            } else { puck.y = margin + puck.r; puck.vy = Math.abs(puck.vy); }
+        } 
+        else if (puck.y + puck.r > canvas.height - margin) {
+            if (puck.x > canvas.width/2 - goalWidth/2 && puck.x < canvas.width/2 + goalWidth/2) {
+                scoreTop++; checkWin(); resetPositions();
+            } else { puck.y = canvas.height - margin - puck.r; puck.vy = -Math.abs(puck.vy); }
+        }
+
+        if (!isTwoPlayer) {
+            let targetX = canvas.width / 2; let targetY = 120;
+            if (puck.y < canvas.height / 2 + 30) { targetX = puck.x; targetY = puck.y - 20; }
+            let dxAI = targetX - pTop.x; let dyAI = targetY - pTop.y;
+            let distAI = Math.sqrt(dxAI*dxAI + dyAI*dyAI);
+            if (distAI > 5) { pTop.x += (dxAI / distAI) * pTop.speed; pTop.y += (dyAI / distAI) * pTop.speed; }
+            pTop.x = Math.max(margin + pTop.r, Math.min(canvas.width - margin - pTop.r, pTop.x));
+            pTop.y = Math.max(margin + pTop.r, Math.min(canvas.height / 2 - pTop.r, pTop.y));
+        }
+
+        resolveCollision(pBottom, puck); resolveCollision(pTop, puck);
+
+        for(let i = particles.length - 1; i >= 0; i--) {
+            particles[i].x += particles[i].vx; particles[i].y += particles[i].vy;
+            particles[i].life -= 0.05;
+            if(particles[i].life <= 0) particles.splice(i, 1);
+        }
+    }
+
+    function checkWin() {
+        if (scoreTop >= maxScore || scoreBottom >= maxScore) {
+            isPlaying = false; gameStarted = false;
+            let winnerColor = scoreTop >= maxScore ? t.top : t.bottom;
+            let winnerText = scoreTop >= maxScore ? "ÜST OYUNCU KAZANDI!" : "ALT OYUNCU KAZANDI!";
+            mainTitle.innerText = winnerText; mainTitle.style.textShadow = `0 0 20px ${winnerColor}`;
+            overlay.style.display = "flex"; showPanel('mainMenu'); resumeBtn.style.display = "none";
+        }
+    }
+
+    // --- ÇİZİM ---
+    function drawTableBackground() {
+        if (currentTheme === 'dark') {
+            ctx.fillStyle = '#0a0a1a'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        } else if (currentTheme === 'light') {
+            ctx.fillStyle = '#eef2f5'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        } else if (currentTheme === 'wood') {
+            ctx.fillStyle = '#c18a53'; ctx.fillRect(0, 0, canvas.width, canvas.height); 
+            
+            let grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
+            grad.addColorStop(0, "rgba(50, 20, 0, 0.25)");
+            grad.addColorStop(0.2, "rgba(50, 20, 0, 0.0)");
+            grad.addColorStop(0.8, "rgba(50, 20, 0, 0.0)");
+            grad.addColorStop(1, "rgba(50, 20, 0, 0.25)");
+            ctx.fillStyle = grad; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.strokeStyle = "rgba(80, 40, 0, 0.12)"; ctx.lineWidth = 2;
+            for(let i=0; i<canvas.width; i+=45) {
+                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+            }
+        }
+    }
+
+    function drawNeonCircle(x, y, r, color, isPuck = false) {
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+        
+        if (currentTheme === 'dark') { ctx.shadowBlur = 15; ctx.shadowColor = color; } 
+        else { ctx.shadowBlur = 5; ctx.shadowColor = "rgba(0,0,0,0.3)"; }
+
+        if (isPuck) { 
+            ctx.fillStyle = color; ctx.fill(); 
+        } else {
+            ctx.lineWidth = 6; ctx.strokeStyle = color; ctx.stroke();
+            ctx.beginPath(); ctx.arc(x, y, r * 0.4, 0, Math.PI * 2);
+            ctx.fillStyle = color; ctx.fill();
+        }
+        ctx.shadowBlur = 0;
+    }
+
+    function drawBorders() {
+        let cx = canvas.width / 2; let cy = canvas.height / 2; let gw = goalWidth / 2;
+        ctx.lineWidth = 8; ctx.lineCap = "round"; ctx.lineJoin = "round";
+
+        ctx.beginPath(); ctx.moveTo(cx - gw, margin); ctx.lineTo(margin + cornerRadius, margin);
+        ctx.arcTo(margin, margin, margin, margin + cornerRadius, cornerRadius); ctx.lineTo(margin, cy); 
+        ctx.moveTo(cx + gw, margin); ctx.lineTo(canvas.width - margin - cornerRadius, margin);
+        ctx.arcTo(canvas.width - margin, margin, canvas.width - margin, margin + cornerRadius, cornerRadius); ctx.lineTo(canvas.width - margin, cy); 
+        ctx.strokeStyle = t.top; if(currentTheme === 'dark') { ctx.shadowBlur = 15; ctx.shadowColor = t.top; } ctx.stroke();
+
+        ctx.beginPath(); ctx.moveTo(cx - gw, margin); ctx.lineTo(cx + gw, margin);
+        ctx.setLineDash([15, 10]); ctx.lineWidth = 4; ctx.stroke(); ctx.setLineDash([]); 
+        
+        ctx.lineWidth = 8;
+        ctx.beginPath(); ctx.moveTo(cx - gw, canvas.height - margin); ctx.lineTo(margin + cornerRadius, canvas.height - margin);
+        ctx.arcTo(margin, canvas.height - margin, margin, canvas.height - margin - cornerRadius, cornerRadius); ctx.lineTo(margin, cy); 
+        ctx.moveTo(cx + gw, canvas.height - margin); ctx.lineTo(canvas.width - margin - cornerRadius, canvas.height - margin);
+        ctx.arcTo(canvas.width - margin, canvas.height - margin, canvas.width - margin, canvas.height - margin - cornerRadius, cornerRadius); ctx.lineTo(canvas.width - margin, cy); 
+        ctx.strokeStyle = t.bottom; if(currentTheme === 'dark') { ctx.shadowBlur = 15; ctx.shadowColor = t.bottom; } ctx.stroke();
+
+        ctx.beginPath(); ctx.moveTo(cx - gw, canvas.height - margin); ctx.lineTo(cx + gw, canvas.height - margin);
+        ctx.setLineDash([15, 10]); ctx.lineWidth = 4; ctx.stroke(); ctx.setLineDash([]); 
+        
+        ctx.shadowBlur = 0;
+    }
+
+    function draw() {
+        drawTableBackground();
+
+        ctx.strokeStyle = t.lines; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(margin, canvas.height / 2); ctx.lineTo(canvas.width - margin, canvas.height / 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(canvas.width / 2, canvas.height / 2, 80, 0, Math.PI * 2); ctx.stroke();
+
+        ctx.fillStyle = t.score; ctx.font = "bold 120px Arial"; ctx.textAlign = "center";
+        ctx.fillText(scoreTop, canvas.width/2, canvas.height/2 - 50);
+        ctx.fillText(scoreBottom, canvas.width/2, canvas.height/2 + 140);
+
+        drawBorders(); 
+
+        particles.forEach(p => {
+            ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+            ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1;
+        });
+
+        ctx.beginPath();
+        for (let i = 0; i < puck.trail.length; i++) ctx.lineTo(puck.trail[i].x, puck.trail[i].y);
+        ctx.strokeStyle = t.trail; ctx.lineWidth = puck.r; ctx.lineCap = 'round'; ctx.stroke();
+
+        drawNeonCircle(pTop.x, pTop.y, pTop.r, pTop.color);
+        drawNeonCircle(pBottom.x, pBottom.y, pBottom.r, pBottom.color);
+        drawNeonCircle(puck.x, puck.y, puck.r, t.puck, true);
+    }
+
+    function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
+
+    resizeCanvas(); setTheme('dark'); gameLoop();
+
+</script>
+</body>
+</html>
