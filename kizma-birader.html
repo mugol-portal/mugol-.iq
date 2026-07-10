@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ludo Master Pro</title>
+    <style>
+        :root {
+            --bg-body: #1e272e;
+            --board-bg: #fff;
+            --red: #ff4757;
+            --green: #2ed573;
+            --yellow: #ffa502;
+            --blue: #1e90ff;
+            --border: #2f3542;
+            --shadow: rgba(0,0,0,0.3);
+        }
+
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle at 50% 0%, #2d3846 0%, #1e272e 60%, #151b20 100%);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            color: white;
+        }
+
+        /* --- GİRİŞ MENÜSÜ --- */
+        #menu-overlay {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        .menu-title {
+            font-size: 4rem; font-weight: 900; 
+            background: linear-gradient(45deg, var(--red), var(--yellow), var(--green), var(--blue));
+            -webkit-background-clip: text; color: transparent;
+            margin-bottom: 20px; text-transform: uppercase; letter-spacing: 5px;
+        }
+        .menu-btn {
+            padding: 15px 40px; font-size: 1.2rem; font-weight: bold;
+            border: none; border-radius: 50px; cursor: pointer;
+            width: 80%; max-width: 300px; transition: all 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            background: white; color: #333;
+        }
+        .menu-btn:active { transform: scale(0.95); }
+        .menu-btn.primary { background: linear-gradient(135deg, var(--blue), #0984e3); color: white; }
+        .menu-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.5); }
+        .menu-btn.exit-btn {
+            background: transparent; color: #ff6b6b; border: 2px solid #ff6b6b;
+            margin-top: 15px; box-shadow: none; font-weight: 600;
+        }
+        .menu-btn.exit-btn:hover { background: rgba(255,107,107,0.15); }
+        .menu-subtitle {
+            color: #a4b0be; font-size: 0.95rem; margin-top: -15px; margin-bottom: 10px;
+            letter-spacing: 2px; text-transform: uppercase;
+        }
+
+        /* --- ÜST BAR (OYUN İÇİ) --- */
+        .top-bar {
+            position: absolute; top: 0; left: 0; width: 100%;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 4px; z-index: 500; box-sizing: border-box;
+        }
+        .icon-btn {
+            display: flex; align-items: center; gap: 6px;
+            background: #2f3542; color: #dfe4ea; border: none;
+            padding: 10px 16px; border-radius: 50px; cursor: pointer;
+            font-size: 0.95rem; font-weight: bold; font-family: inherit;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+            transition: all 0.2s;
+        }
+        .icon-btn:active { transform: scale(0.93); }
+        .icon-btn:hover { background: #3d4454; }
+        .icon-btn svg { width: 18px; height: 18px; }
+
+        .game-shell {
+            position: relative;
+            display: flex; flex-direction: column; align-items: center;
+            width: 96vmin; max-width: 650px;
+        }
+        .game-topbar-space { height: 54px; width: 100%; }
+
+        /* --- OYUN ALANI --- */
+        .game-wrapper {
+            position: relative;
+            width: 96vmin; height: 96vmin;
+            max-width: 650px; max-height: 650px;
+            background: var(--board-bg);
+            border-radius: 18px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.05);
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            grid-template-rows: repeat(15, 1fr);
+            border: 4px solid #333;
+            overflow: hidden;
+        }
+
+        /* --- HÜCRE YAPISI --- */
+        .cell {
+            border: 1px solid rgba(0,0,0,0.08);
+            position: relative;
+            display: flex; 
+            justify-content: center; align-items: center;
+        }
+        
+        /* Renkli Yollar */
+        .c-red { background-color: var(--red); }
+        .c-green { background-color: var(--green); }
+        .c-yellow { background-color: var(--yellow); }
+        .c-blue { background-color: var(--blue); }
+        
+        /* Güvenli Bölge (Yıldız) */
+        .safe-zone::before {
+            content: "★"; font-size: 2vmin; color: rgba(0,0,0,0.2);
+            position: absolute;
+        }
+
+        /* --- EVLER (BASES) --- */
+        .base {
+            grid-column: span 6; grid-row: span 6;
+            padding: 15%; border: 3px solid #333;
+        }
+        .base-inner {
+            width: 100%; height: 100%; background: white; border-radius: 20%;
+            display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+            padding: 10%; gap: 10%;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.1);
+        }
+        .base-spot {
+            background: rgba(0,0,0,0.05); border-radius: 50%;
+            border: 1px dashed rgba(0,0,0,0.2);
+            position: relative; display: flex; justify-content: center; align-items: center;
+        }
+        .base.red { background: var(--red); grid-area: 1 / 1 / 7 / 7; }
+        .base.green { background: var(--green); grid-area: 1 / 10 / 7 / 16; }
+        .base.blue { background: var(--blue); grid-area: 10 / 1 / 16 / 7; }
+        .base.yellow { background: var(--yellow); grid-area: 10 / 10 / 16 / 16; }
+
+        /* --- ORTA ALAN (HOME) --- */
+        .home-center {
+            grid-area: 7 / 7 / 10 / 10;
+            background: conic-gradient(
+                var(--green) 0deg 90deg, var(--yellow) 90deg 180deg, 
+                var(--blue) 180deg 270deg, var(--red) 270deg 360deg
+            );
+            border: 3px solid #333;
+            position: relative;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .home-center::after {
+            content: "🏆"; font-size: 4vmin;
+            filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+        }
+
+        /* --- PİYONLAR --- */
+        .pawn {
+            width: 80%; height: 80%;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.8);
+            box-shadow: 2px 4px 6px rgba(0,0,0,0.4), inset -2px -2px 5px rgba(0,0,0,0.2);
+            z-index: 100; cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+        .pawn.red { background: radial-gradient(circle at 30% 30%, #ff6b6b, #c0392b); }
+        .pawn.green { background: radial-gradient(circle at 30% 30%, #55efc4, #00b894); }
+        .pawn.yellow { background: radial-gradient(circle at 30% 30%, #ffeaa7, #fdcb6e); }
+        .pawn.blue { background: radial-gradient(circle at 30% 30%, #74b9ff, #0984e3); }
+
+        .pawn.active {
+            animation: bounce 0.6s infinite alternate;
+            border: 3px solid #fff; box-shadow: 0 0 15px gold;
+        }
+        @keyframes bounce { from {transform: scale(0.9);} to {transform: scale(1.15);} }
+
+        /* Çoklu piyon yerleşimi */
+        .cell.multiple { display: grid; grid-template-columns: 1fr 1fr; padding: 2px; }
+        .cell.multiple .pawn { width: 100%; height: 100%; border-width: 1px; }
+
+        /* --- KONTROL PANELİ --- */
+        .controls {
+            margin-top: 16px; width: 96vmin; max-width: 650px;
+            background: linear-gradient(180deg, #343b48, #2a303c);
+            padding: 12px 22px;
+            border-radius: 16px; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        .player-card {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 1.2rem; font-weight: bold;
+            color: #dfe4ea;
+        }
+        .turn-avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: #57606f; border: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        /* --- 3D ZAR --- */
+        .dice-wrap { perspective: 600px; width: 60px; height: 60px; cursor: pointer; }
+        .dice {
+            width: 100%; height: 100%; position: relative;
+            transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1.2);
+        }
+        .face {
+            position: absolute; width: 60px; height: 60px;
+            background: white; border-radius: 12px;
+            border: 2px solid #ccc;
+            display: grid; padding: 6px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+        /* Noktalar */
+        .dot { background: #333; border-radius: 50%; width: 10px; height: 10px; place-self: center; }
+        
+        /* Yüzler */
+        .f1 { transform: rotateY(0deg) translateZ(30px); display: flex; justify-content: center; align-items: center; }
+        .f2 { transform: rotateY(90deg) translateZ(30px); grid-template-areas: "a ." ". b"; }
+        .f3 { transform: rotateY(180deg) translateZ(30px); grid-template-areas: "a . ." ". b ." ". . c"; }
+        .f4 { transform: rotateY(-90deg) translateZ(30px); grid-template-areas: "a . b" ". . ." "c . d"; }
+        .f5 { transform: rotateX(90deg) translateZ(30px); grid-template-areas: "a . b" ". c ." "d . e"; }
+        .f6 { transform: rotateX(-90deg) translateZ(30px); grid-template-areas: "a . b" "c . d" "e . f"; }
+
+        .rolling { animation: rollAnim 0.4s linear infinite; }
+        @keyframes rollAnim { 0% {transform: rotateX(0) rotateY(0);} 100% {transform: rotateX(360deg) rotateY(360deg);} }
+
+        /* --- KAZANMA EKRANI --- */
+        #win-screen {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.9); z-index: 3000;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
+        #win-screen h1 { font-size: 3rem; color: gold; text-shadow: 0 0 20px orange; margin-bottom: 20px; }
+        #win-screen { gap: 14px; }
+        .confetti { position: absolute; width: 10px; height: 10px; background: red; animation: fall linear forwards; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); } }
+
+    </style>
+</head>
+<body>
+
+    <!-- GİRİŞ EKRANI -->
+    <div id="menu-overlay">
+        <div class="menu-title">LUDO PRO</div>
+        <div class="menu-subtitle">Kızma Birader</div>
+        <button class="menu-btn primary" onclick="initGame(1)">🤖 1 Oyuncu (vs Bot)</button>
+        <button class="menu-btn" onclick="initGame(2)">👥 2 Oyuncu</button>
+        <button class="menu-btn" onclick="initGame(3)">👥 3 Oyuncu</button>
+        <button class="menu-btn" onclick="initGame(4)">👥 4 Oyuncu</button>
+        <button class="menu-btn exit-btn" onclick="goHome()">🚪 Çıkış</button>
+    </div>
+
+    <!-- OYUN İÇİ ÜST BAR -->
+    <div class="game-shell">
+        <div class="top-bar">
+            <button class="icon-btn" onclick="goHome()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                Ana Sayfa
+            </button>
+            <button class="icon-btn" onclick="showMenu()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                Menü
+            </button>
+        </div>
+        <div class="game-topbar-space"></div>
+
+        <!-- OYUN ALANI -->
+        <div class="game-wrapper" id="board">
+            <!-- JS ile oluşturulacak -->
+        </div>
+
+        <!-- ALT PANEL -->
+        <div class="controls">
+            <div class="player-card">
+                <div class="turn-avatar" id="turn-avatar"></div>
+                <span id="turn-text">Oyun Başlıyor...</span>
+            </div>
+
+            <div class="dice-wrap" onclick="playerRoll()">
+                <div class="dice" id="dice">
+                    <div class="face f1"><div class="dot"></div></div>
+                    <div class="face f2" style="grid-template-areas:'a .' '. b'"><div class="dot" style="grid-area:a"></div><div class="dot" style="grid-area:b"></div></div>
+                    <div class="face f3" style="grid-template-areas:'a . .' '. b .' '. . c'"><div class="dot" style="grid-area:a"></div><div class="dot" style="grid-area:b"></div><div class="dot" style="grid-area:c"></div></div>
+                    <div class="face f4" style="grid-template-areas:'a . b' '. . .' 'c . d'"><div class="dot" style="grid-area:a"></div><div class="dot" style="grid-area:b"></div><div class="dot" style="grid-area:c"></div><div class="dot" style="grid-area:d"></div></div>
+                    <div class="face f5" style="grid-template-areas:'a . b' '. c .' 'd . e'"><div class="dot" style="grid-area:a"></div><div class="dot" style="grid-area:b"></div><div class="dot" style="grid-area:c"></div><div class="dot" style="grid-area:d"></div><div class="dot" style="grid-area:e"></div></div>
+                    <div class="face f6" style="grid-template-areas:'a . b' 'c . d' 'e . f'"><div class="dot" style="grid-area:a"></div><div class="dot" style="grid-area:b"></div><div class="dot" style="grid-area:c"></div><div class="dot" style="grid-area:d"></div><div class="dot" style="grid-area:e"></div><div class="dot" style="grid-area:f"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KAZANMA EKRANI -->
+    <div id="win-screen">
+        <h1 id="winner-name">KIRMIZI KAZANDI!</h1>
+        <button class="menu-btn" onclick="location.reload()">TEKRAR OYNA</button>
+        <button class="menu-btn exit-btn" onclick="goHome()">🚪 Ana Sayfaya Dön</button>
+    </div>
+
+    <script>
+        // --- AYARLAR & SABİTLER ---
+        const board = document.getElementById('board');
+        const diceEl = document.getElementById('dice');
+        const statusText = document.getElementById('turn-text');
+        const avatar = document.getElementById('turn-avatar');
+        
+        const colors = ['red', 'green', 'yellow', 'blue'];
+        const colorNames = { red: 'Kırmızı', green: 'Yeşil', yellow: 'Sarı', blue: 'Mavi' };
+        const colorHex = { red: '#ff4757', green: '#2ed573', yellow: '#ffa502', blue: '#1e90ff' };
+
+        // 52 Karelik Ana Yol Koordinatları (0=Kırmızı Çıkış, Saat Yönü)
+        const mainPath = [
+            {r:7,c:2}, {r:7,c:3}, {r:7,c:4}, {r:7,c:5}, {r:7,c:6}, {r:6,c:7}, {r:5,c:7}, {r:4,c:7}, {r:3,c:7}, {r:2,c:7}, {r:1,c:7}, {r:1,c:8}, {r:1,c:9}, 
+            {r:2,c:9}, {r:3,c:9}, {r:4,c:9}, {r:5,c:9}, {r:6,c:9}, {r:7,c:10}, {r:7,c:11}, {r:7,c:12}, {r:7,c:13}, {r:7,c:14}, {r:7,c:15}, {r:8,c:15}, {r:9,c:15}, 
+            {r:9,c:14}, {r:9,c:13}, {r:9,c:12}, {r:9,c:11}, {r:9,c:10}, {r:10,c:9}, {r:11,c:9}, {r:12,c:9}, {r:13,c:9}, {r:14,c:9}, {r:15,c:9}, {r:15,c:8}, {r:15,c:7}, 
+            {r:14,c:7}, {r:13,c:7}, {r:12,c:7}, {r:11,c:7}, {r:10,c:7}, {r:9,c:6}, {r:9,c:5}, {r:9,c:4}, {r:9,c:3}, {r:9,c:2}, {r:9,c:1}, {r:8,c:1}, {r:7,c:1}
+        ];
+
+        // Başlangıç Offsetleri
+        const offsets = { red: 0, green: 13, yellow: 26, blue: 39 };
+
+        // Eve Giriş Koordinatları
+        const homePaths = {
+            red:    [{r:8,c:2}, {r:8,c:3}, {r:8,c:4}, {r:8,c:5}, {r:8,c:6}, {r:8,c:8}],
+            green:  [{r:2,c:8}, {r:3,c:8}, {r:4,c:8}, {r:5,c:8}, {r:6,c:8}, {r:8,c:8}],
+            yellow: [{r:8,c:14}, {r:8,c:13}, {r:8,c:12}, {r:8,c:11}, {r:8,c:10}, {r:8,c:8}],
+            blue:   [{r:14,c:8}, {r:13,c:8}, {r:12,c:8}, {r:11,c:8}, {r:10,c:8}, {r:8,c:8}]
+        };
+
+        // Güvenli Noktalar (Global Index)
+        const safeSpots = [0, 8, 13, 21, 26, 34, 39, 47];
+
+        let players = [];
+        let isBot = {};
+        let turn = 0;
+        let diceVal = 1;
+        let gameState = 'IDLE'; // IDLE, ROLLING, MOVING
+        let pawns = {}; // { red: [obj, obj...], ... }
+
+        // --- ÇIKIŞ / MENÜ NAVİGASYONU ---
+        function goHome() {
+            window.location.href = 'https://mugol-portal.github.io/mugol-.iq/';
+        }
+
+        function showMenu() {
+            document.getElementById('menu-overlay').style.display = 'flex';
+        }
+
+        // --- KURULUM ---
+        function createBoard() {
+            board.innerHTML = '';
+            
+            // 1. Evler
+            colors.forEach(c => {
+                let base = document.createElement('div');
+                base.className = `base ${c}`;
+                base.innerHTML = `<div class="base-inner">${[0,1,2,3].map(i => `<div class="base-spot" id="base-${c}-${i}"></div>`).join('')}</div>`;
+                board.appendChild(base);
+            });
+
+            // 2. Orta
+            let center = document.createElement('div');
+            center.className = 'home-center';
+            board.appendChild(center);
+
+            // 3. Yol
+            mainPath.forEach((coord, i) => {
+                let cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.id = `path-${i}`;
+                cell.style.gridRow = coord.r;
+                cell.style.gridColumn = coord.c;
+
+                // Renklendirme
+                if(i===0) cell.classList.add('c-red', 'safe-zone');
+                if(i===13) cell.classList.add('c-green', 'safe-zone');
+                if(i===26) cell.classList.add('c-yellow', 'safe-zone');
+                if(i===39) cell.classList.add('c-blue', 'safe-zone');
+                if(safeSpots.includes(i) && !cell.classList.contains('safe-zone')) cell.classList.add('safe-zone');
+
+                board.appendChild(cell);
+            });
+
+            // 4. Ev Yolları
+            colors.forEach(c => {
+                homePaths[c].forEach((coord, i) => {
+                    if(i<5) { // Sonuncusu merkez
+                        let cell = document.createElement('div');
+                        cell.className = `cell c-${c}`;
+                        cell.id = `home-${c}-${i}`;
+                        cell.style.gridRow = coord.r;
+                        cell.style.gridColumn = coord.c;
+                        board.appendChild(cell);
+                    }
+                });
+            });
+        }
+
+        function initGame(count) {
+            document.getElementById('menu-overlay').style.display = 'none';
+            createBoard();
+
+            if (count === 1) {
+                players = ['red', 'green', 'yellow', 'blue'];
+                isBot = { red: false, green: true, yellow: true, blue: true };
+            } else if (count === 2) {
+                players = ['red', 'yellow'];
+                isBot = { red: false, yellow: false };
+            } else if (count === 3) {
+                players = ['red', 'green', 'yellow'];
+                isBot = { red: false, green: false, yellow: false };
+            } else {
+                players = ['red', 'green', 'yellow', 'blue'];
+                isBot = { red:false, green:false, yellow:false, blue:false };
+            }
+
+            players.forEach(c => {
+                pawns[c] = [];
+                for(let i=0; i<4; i++) {
+                    let p = document.createElement('div');
+                    p.className = `pawn ${c}`;
+                    p.onclick = () => handleInput(c, i);
+                    pawns[c].push({ 
+                        id: i, color: c, step: -1, el: p, finished: false 
+                    });
+                    document.getElementById(`base-${c}-${i}`).appendChild(p);
+                }
+            });
+
+            updateUI();
+        }
+
+        // --- OYUN DÖNGÜSÜ ---
+        function playerRoll() {
+            let c = players[turn];
+            if(isBot[c] || gameState !== 'IDLE') return;
+            rollDice();
+        }
+
+        function rollDice() {
+            gameState = 'ROLLING';
+            diceEl.classList.add('rolling');
+            
+            setTimeout(() => {
+                diceEl.classList.remove('rolling');
+                diceVal = Math.floor(Math.random() * 6) + 1;
+                //diceVal = 6; // Hile :)
+                
+                // Zar Döndürme
+                const rotations = {
+                    1: 'rotateX(0) rotateY(0)', 2: 'rotateY(-90deg)', 3: 'rotateY(-180deg)',
+                    4: 'rotateY(90deg)', 5: 'rotateX(-90deg)', 6: 'rotateX(90deg)'
+                };
+                diceEl.style.transform = rotations[diceVal];
+
+                checkMoves();
+            }, 600);
+        }
+
+        function checkMoves() {
+            let c = players[turn];
+            let options = pawns[c].filter(p => canMove(p, diceVal));
+
+            if(options.length > 0) {
+                gameState = 'MOVING';
+                
+                if(isBot[c]) {
+                    setTimeout(() => botAI(options), 800);
+                } else {
+                    // İnsan için parlat
+                    options.forEach(p => p.el.classList.add('active'));
+                }
+            } else {
+                setTimeout(nextTurn, 1000);
+            }
+        }
+
+        function botAI(options) {
+            // Basit Zeka:
+            // 1. Kırabiliyorsan kır.
+            // 2. 6 attıysan ve evde piyon varsa çık.
+            // 3. Güvenli bölgeye kaçabiliyorsan kaç.
+            // 4. Rastgele.
+
+            let bestMove = options[0];
+            
+            // Simülasyon
+            for(let p of options) {
+                // Evden çıkma önceliği
+                if(p.step === -1 && diceVal === 6) {
+                    bestMove = p;
+                    break;
+                }
+                // (Buraya kırma mantığı eklenebilir, şimdilik rastgele seçelim daha doğal dursun)
+            }
+            // Biraz daha rastgelelik
+            bestMove = options[Math.floor(Math.random() * options.length)];
+            
+            movePawnStepByStep(bestMove);
+        }
+
+        function handleInput(c, id) {
+            if(gameState !== 'MOVING' || players[turn] !== c || isBot[c]) return;
+            let p = pawns[c][id];
+            if(p.el.classList.contains('active')) {
+                // Parlamayı kaldır
+                pawns[c].forEach(x => x.el.classList.remove('active'));
+                movePawnStepByStep(p);
+            }
+        }
+
+        function canMove(p, roll) {
+            if(p.finished) return false;
+            if(p.step === -1) return roll === 6; // Evden çıkış
+            if(p.step + roll > 56) return false; // 50 + 6 (home path)
+            return true;
+        }
+
+        // --- HAREKET MANTIĞI (ADIM ADIM) ---
+        async function movePawnStepByStep(p) {
+            gameState = 'ANIMATING';
+            
+            if(p.step === -1) {
+                // Evden çıkış tek hamle
+                p.step = 0;
+                placePawn(p);
+                await wait(300);
+            } else {
+                // Adım adım yürü
+                for(let i=0; i < diceVal; i++) {
+                    p.step++;
+                    placePawn(p);
+                    // "Tak" sesi efekti buraya konabilir
+                    await wait(200); // Adım hızı
+                }
+            }
+
+            // Kırma ve Bitiş Kontrolü
+            let extraTurn = (diceVal === 6);
+            
+            if(p.step === 56) {
+                p.finished = true;
+                p.el.style.display = 'none'; // Kaybol
+                if(checkWin(p.color)) return; // Oyun bitti
+                extraTurn = true; // Hedefe giren tekrar atar
+            } else if(p.step < 51) {
+                // Ana yolda kırma kontrolü
+                let enemy = findEnemyAt(p.color, p.step);
+                if(enemy) {
+                    console.log("KIRMA!");
+                    // Düşmanı eve gönder (Animasyonsuz hızlıca)
+                    enemy.step = -1;
+                    document.getElementById(`base-${enemy.color}-${enemy.id}`).appendChild(enemy.el);
+                    extraTurn = true; // Kıran tekrar atar
+                }
+            }
+
+            if(extraTurn) {
+                gameState = 'IDLE';
+                statusText.innerText = `${colorNames[players[turn]]} tekrar atıyor!`;
+                if(isBot[players[turn]]) setTimeout(rollDice, 1000);
+            } else {
+                nextTurn();
+            }
+        }
+
+        function placePawn(p) {
+            let targetId;
+            if(p.step < 51) {
+                // Ana yol: Global index hesapla
+                let globalIdx = (p.step + offsets[p.color]) % 52;
+                targetId = `path-${globalIdx}`;
+            } else {
+                // Ev yolu: 51 -> index 0
+                let homeIdx = p.step - 51;
+                if(homeIdx === 5) {
+                    // Merkez (Görsel olarak gizlemiştik ama DOM'da tutabiliriz)
+                    p.finished = true;
+                    return;
+                }
+                targetId = `home-${p.color}-${homeIdx}`;
+            }
+
+            let cell = document.getElementById(targetId);
+            if(cell) {
+                cell.appendChild(p.el);
+                organizeCell(cell);
+            }
+        }
+
+        function findEnemyAt(myColor, myStep) {
+            // Global indexim
+            let myGlobal = (myStep + offsets[myColor]) % 52;
+            if(safeSpots.includes(myGlobal)) return null; // Güvenli bölgede yenmez
+
+            for(let c of players) {
+                if(c === myColor) continue;
+                for(let p of pawns[c]) {
+                    if(!p.finished && p.step !== -1 && p.step < 51) {
+                        let enemyGlobal = (p.step + offsets[c]) % 52;
+                        if(enemyGlobal === myGlobal) return p;
+                    }
+                }
+            }
+            return null;
+        }
+
+        function organizeCell(cell) {
+            let kids = cell.querySelectorAll('.pawn');
+            if(kids.length > 1) cell.classList.add('multiple');
+            else cell.classList.remove('multiple');
+        }
+
+        function checkWin(c) {
+            if(pawns[c].every(p => p.finished)) {
+                showWinScreen(c);
+                return true;
+            }
+            return false;
+        }
+
+        function nextTurn() {
+            turn = (turn + 1) % players.length;
+            gameState = 'IDLE';
+            updateUI();
+            
+            if(isBot[players[turn]]) {
+                setTimeout(rollDice, 1000);
+            }
+        }
+
+        function updateUI() {
+            let c = players[turn];
+            statusText.innerText = `Sıra: ${colorNames[c]}`;
+            statusText.style.color = colorHex[c];
+            avatar.style.background = colorHex[c];
+            avatar.style.boxShadow = `0 0 15px ${colorHex[c]}`;
+            diceEl.style.boxShadow = `0 0 20px ${colorHex[c]}60`;
+        }
+
+        function showWinScreen(c) {
+            const screen = document.getElementById('win-screen');
+            document.getElementById('winner-name').innerText = `${colorNames[c]} KAZANDI!`;
+            screen.style.display = 'flex';
+            
+            // Konfeti
+            for(let i=0; i<50; i++) {
+                let conf = document.createElement('div');
+                conf.className = 'confetti';
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                conf.style.backgroundColor = ['red','blue','green','yellow','gold'][Math.floor(Math.random()*5)];
+                screen.appendChild(conf);
+            }
+        }
+
+        const wait = (ms) => new Promise(res => setTimeout(res, ms));
+
+    </script>
+</body>
+</html>
