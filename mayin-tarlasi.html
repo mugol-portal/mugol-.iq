@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mayın Tarlası Pro - Yeşil</title>
+    <style>
+        :root {
+            --primary-green: #27ae60;
+            --hover-green: #2ecc71;
+            --bg-color: #f0f3f1;
+            --card-bg: #ffffff;
+            --hidden-cell: #2ecc71;
+            --revealed-cell: #ecf0f1;
+            --danger: #e74c3c;
+            --text-dark: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+            color: var(--text-dark);
+        }
+
+        /* Üst Bar */
+        .top-bar {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            justify-content: flex-start;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .back-btn {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        /* Zorluk Seçimi */
+        .difficulty-picker {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .diff-btn {
+            padding: 6px 12px;
+            border: 2px solid var(--primary-green);
+            background: transparent;
+            color: var(--primary-green);
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .diff-btn.active {
+            background: var(--primary-green);
+            color: white;
+        }
+
+        /* Oyun Alanı */
+        .game-container {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 95vw;
+        }
+
+        .stats-bar {
+            display: flex;
+            width: 100%;
+            justify-content: space-around;
+            margin-bottom: 15px;
+            background: #f9fbf9;
+            padding: 10px;
+            border-radius: 15px;
+        }
+
+        .stat-item { text-align: center; }
+        .stat-label { font-size: 0.7rem; color: #7f8c8d; font-weight: bold; }
+        .stat-value { font-size: 1.2rem; font-weight: 800; color: var(--primary-green); display: block; }
+
+        /* Izgara */
+        #grid-wrapper {
+            overflow: auto;
+            max-width: 100%;
+            padding: 5px;
+        }
+
+        #grid {
+            display: grid;
+            gap: 4px;
+            background: #ecf0f1;
+            padding: 8px;
+            border-radius: 12px;
+        }
+
+        .cell {
+            width: 30px;
+            height: 30px;
+            background-color: var(--hidden-cell);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.15s;
+            box-shadow: 0 3px 0 #219150;
+            color: white;
+        }
+
+        .cell.revealed {
+            background-color: var(--revealed-cell);
+            box-shadow: none;
+            cursor: default;
+            color: #34495e;
+        }
+
+        .cell.flagged {
+            background-color: #f1c40f !important;
+            box-shadow: 0 3px 0 #c29d0b;
+        }
+
+        .cell.mine { background-color: var(--danger) !important; box-shadow: none; }
+
+        /* Sayı Renkleri */
+        .n1 { color: #2980b9; } .n2 { color: #27ae60; } .n3 { color: #e67e22; } .n4 { color: #8e44ad; }
+
+        /* Kontroller */
+        .bottom-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .flag-toggle-btn {
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: 2px solid #ddd;
+            background: white;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .flag-toggle-btn.active {
+            border-color: #f1c40f;
+            background: #fef9e7;
+        }
+
+        .reset-btn {
+            background: var(--primary-green);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(39,174,96,0.3);
+        }
+
+        #best-score { color: #f39c12; font-weight: bold; }
+
+        /* ── Oyun Sonu Modali ── */
+        .end-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .end-modal-overlay.active { display: flex; }
+        .end-modal-box {
+            background: #fff;
+            border-radius: 22px;
+            padding: 32px 24px 24px;
+            width: 90%;
+            max-width: 340px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+        }
+        .end-modal-emoji { font-size: 3rem; line-height: 1; }
+        .end-modal-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            text-align: center;
+        }
+        .end-modal-sub {
+            font-size: 1rem;
+            color: #7f8c8d;
+            text-align: center;
+            margin-top: -6px;
+        }
+        .end-modal-btn {
+            border: none;
+            background: var(--primary-green);
+            color: white;
+            padding: 12px 32px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(39,174,96,0.3);
+            transition: 0.2s;
+        }
+        .end-modal-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        /* ── AdSense Reklam Kutusu ── */
+        .mg-ad-box {
+            position: relative;
+            width: 100%;
+            background: #f8faf9;
+            border: 1px solid #e2ede6;
+            border-radius: 14px;
+            padding: 26px 10px 10px;
+            overflow: visible;
+            box-sizing: border-box;
+            min-height: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mg-ad-box ins.adsbygoogle {
+            display: block !important;
+            width: 300px !important;
+            height: 250px !important;
+        }
+        .mg-ad-label {
+            position: absolute;
+            top: 7px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.58rem;
+            font-weight: 700;
+            color: #adb5bd;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: #f8faf9;
+            padding: 2px 10px;
+            border-radius: 20px;
+            border: 1px solid #dce8df;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .mg-ad-page {
+            width: 90%;
+            max-width: 600px;
+            margin: 24px auto 32px;
+        }
+    </style>
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1880946354382681" crossorigin="anonymous"></script>
+</head>
+<body>
+
+    <div class="top-bar">
+        <button class="back-btn" onclick="history.back()">← Geri Dön</button>
+    </div>
+
+    <div class="difficulty-picker">
+        <button class="diff-btn active" onclick="changeDifficulty('easy', this)">Kolay</button>
+        <button class="diff-btn" onclick="changeDifficulty('medium', this)">Orta</button>
+        <button class="diff-btn" onclick="changeDifficulty('hard', this)">Uzman</button>
+    </div>
+
+    <div class="game-container">
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-label">🚩 KALAN</span>
+                <span id="mine-count" class="stat-value">10</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">⏱️ SÜRE</span>
+                <span id="timer" class="stat-value">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">🏆 REKOR</span>
+                <span id="best-score" class="stat-value">-</span>
+            </div>
+        </div>
+
+        <div id="grid-wrapper">
+            <div id="grid"></div>
+        </div>
+
+        <div class="bottom-controls">
+            <button id="flag-mode" class="flag-toggle-btn" onclick="toggleFlagMode()">
+                📍 Mod: Aç
+            </button>
+            <button class="reset-btn" onclick="initGame()">Yeniden Başlat</button>
+        </div>
+    </div>
+
+    <!-- ── Oyun Sonu Modali ── -->
+    <div id="end-modal" class="end-modal-overlay">
+        <div class="end-modal-box">
+            <div class="end-modal-emoji" id="end-modal-emoji"></div>
+            <div class="end-modal-title" id="end-modal-title"></div>
+            <div class="end-modal-sub"  id="end-modal-sub"></div>
+            <button class="end-modal-btn" onclick="closeEndModal()">Yeniden Oyna</button>
+
+            <!-- ── ADSENSE REKLAM 1 — Oyun Sonu ── -->
+            <div class="mg-ad-box" aria-label="Reklam" role="complementary">
+                <span class="mg-ad-label">Reklam</span>
+                <ins class="adsbygoogle"
+                     style="display:block;width:300px;height:250px;"
+                     data-ad-client="ca-pub-1880946354382681"
+                     data-ad-slot="1689789138"
+                     data-ad-format="rectangle"></ins>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── ADSENSE REKLAM 2 — Sayfa Altı ── -->
+    <div class="mg-ad-box mg-ad-page" aria-label="Reklam" role="complementary">
+        <span class="mg-ad-label">Reklam</span>
+        <ins class="adsbygoogle"
+             style="display:block;width:300px;height:250px;"
+             data-ad-client="ca-pub-1880946354382681"
+             data-ad-slot="1689789138"
+             data-ad-format="rectangle"></ins>
+    </div>
+
+    <script>
+        let configs = {
+            easy: { r: 10, c: 10, m: 10 },
+            medium: { r: 15, c: 15, m: 35 },
+            hard: { r: 20, c: 20, m: 75 }
+        };
+
+        let currentDiff = 'easy';
+        let rows, cols, minesTotal;
+        let board = [], minesLeft, revealedCount, gameActive, timer, timerInterval, firstClick;
+        let isFlagMode = false;
+
+        function changeDifficulty(level, btn) {
+            currentDiff = level;
+            document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            initGame();
+        }
+
+        function initGame() {
+            rows = configs[currentDiff].r;
+            cols = configs[currentDiff].c;
+            minesTotal = configs[currentDiff].m;
+            
+            board = [];
+            revealedCount = 0;
+            gameActive = true;
+            firstClick = true;
+            minesLeft = minesTotal;
+            timer = 0;
+            clearInterval(timerInterval);
+            
+            document.getElementById('timer').textContent = "0";
+            document.getElementById('mine-count').textContent = minesLeft;
+            updateBestScoreDisplay();
+            
+            const grid = document.getElementById('grid');
+            grid.style.gridTemplateColumns = `repeat(${cols}, 30px)`;
+            grid.innerHTML = '';
+
+            for (let r = 0; r < rows; r++) {
+                board[r] = [];
+                for (let c = 0; c < cols; c++) {
+                    const cellEl = document.createElement('div');
+                    cellEl.className = 'cell';
+                    cellEl.onmousedown = (e) => handleInteraction(r, c, e);
+                    cellEl.oncontextmenu = (e) => e.preventDefault();
+                    
+                    grid.appendChild(cellEl);
+                    board[r][c] = { mine: false, revealed: false, flagged: false, count: 0, el: cellEl };
+                }
+            }
+        }
+
+        function handleInteraction(r, c, e) {
+            if (!gameActive) return;
+            // Sağ tık veya Bayrak Modu aktifken sol tık
+            if (e.button === 2 || isFlagMode) {
+                handleRightClick(r, c);
+            } else {
+                handleLeftClick(r, c);
+            }
+        }
+
+        function toggleFlagMode() {
+            isFlagMode = !isFlagMode;
+            const btn = document.getElementById('flag-mode');
+            btn.classList.toggle('active');
+            btn.textContent = isFlagMode ? "📍 Mod: Bayrak" : "📍 Mod: Aç";
+        }
+
+        function handleLeftClick(r, c) {
+            const cell = board[r][c];
+            if (cell.revealed || cell.flagged) return;
+
+            if (firstClick) {
+                firstClick = false;
+                placeMines(r, c);
+                startTimer();
+            }
+
+            if (cell.mine) {
+                gameOver(false);
+                return;
+            }
+
+            reveal(r, c);
+            if (revealedCount === (rows * cols) - minesTotal) gameOver(true);
+        }
+
+        function handleRightClick(r, c) {
+            const cell = board[r][c];
+            if (cell.revealed) return;
+
+            cell.flagged = !cell.flagged;
+            cell.el.classList.toggle('flagged');
+            cell.el.textContent = cell.flagged ? '🚩' : '';
+            minesLeft += cell.flagged ? -1 : 1;
+            document.getElementById('mine-count').textContent = Math.max(0, minesLeft);
+        }
+
+        function placeMines(exR, exC) {
+            let placed = 0;
+            while (placed < minesTotal) {
+                let r = Math.floor(Math.random() * rows);
+                let c = Math.floor(Math.random() * cols);
+                if (!board[r][c].mine && (Math.abs(r-exR) > 1 || Math.abs(c-exC) > 1)) {
+                    board[r][c].mine = true;
+                    placed++;
+                }
+            }
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (!board[r][c].mine) board[r][c].count = countNeighbors(r, c);
+                }
+            }
+        }
+
+        function countNeighbors(r, c) {
+            let count = 0;
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    let nr = r+dr, nc = c+dc;
+                    if (nr>=0 && nr<rows && nc>=0 && nc<cols && board[nr][nc].mine) count++;
+                }
+            }
+            return count;
+        }
+
+        function reveal(r, c) {
+            const cell = board[r][c];
+            if (cell.revealed || cell.flagged) return;
+
+            cell.revealed = true;
+            cell.el.classList.add('revealed');
+            revealedCount++;
+
+            if (cell.count > 0) {
+                cell.el.textContent = cell.count;
+                cell.el.classList.add('n' + (cell.count > 4 ? 4 : cell.count));
+            } else {
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        let nr = r+dr, nc = c+dc;
+                        if (nr>=0 && nr<rows && nc>=0 && nc<cols) reveal(nr, nc);
+                    }
+                }
+            }
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timer++;
+                document.getElementById('timer').textContent = timer;
+            }, 1000);
+        }
+
+        function gameOver(win) {
+            gameActive = false;
+            clearInterval(timerInterval);
+            board.forEach(row => row.forEach(cell => {
+                if (cell.mine) {
+                    cell.el.classList.add('revealed', 'mine');
+                    cell.el.textContent = '💣';
+                }
+            }));
+
+            if (win) {
+                saveBestScore(timer);
+                document.getElementById('end-modal-emoji').textContent = '🏆';
+                document.getElementById('end-modal-title').textContent = 'Tebrikler, Kazandın!';
+                document.getElementById('end-modal-sub').textContent   = 'Süre: ' + timer + ' saniye';
+            } else {
+                document.getElementById('end-modal-emoji').textContent = '💥';
+                document.getElementById('end-modal-title').textContent = 'Mayına Bastın!';
+                document.getElementById('end-modal-sub').textContent   = 'Tekrar dene, yapabilirsin!';
+            }
+            document.getElementById('end-modal').classList.add('active');
+            setTimeout(mgPushAds, 300);
+        }
+
+        function closeEndModal() {
+            document.getElementById('end-modal').classList.remove('active');
+            initGame();
+        }
+
+        function mgPushAds() {
+            document.querySelectorAll('ins.adsbygoogle').forEach(function(ins) {
+                if (!ins.getAttribute('data-adsbygoogle-status')) {
+                    try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+                }
+            });
+        }
+
+        initGame();
+        setTimeout(mgPushAds, 800);
+
+        function saveBestScore(score) {
+            let key = 'best_' + currentDiff;
+            let currentBest = localStorage.getItem(key);
+            if (!currentBest || score < currentBest) {
+                localStorage.setItem(key, score);
+                updateBestScoreDisplay();
+            }
+        }
+
+        function updateBestScoreDisplay() {
+            let best = localStorage.getItem('best_' + currentDiff);
+            document.getElementById('best-score').textContent = best ? best + "s" : "-";
+        }
+
+    </script>
+</body>
+</html>
