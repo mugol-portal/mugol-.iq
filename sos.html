@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOS Pro - Modern</title>
+    <style>
+        :root {
+            --p1-color: #ff4757;
+            --p2-color: #2f3542;
+            --p1-color-soft: #ff475722;
+            --p2-color-soft: #2f354222;
+            --accent-color: #ffa502;
+            --accent-2: #7c5cff;
+            --bg-color: #f1f2f6;
+            --card-bg: #ffffff;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: radial-gradient(circle at 15% 0%, #eef1ff 0%, #f1f2f6 45%, #f1f2f6 100%);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #2f3542;
+            min-height: 100vh;
+        }
+
+        /* Üst Menü ve Geri Tuşu */
+        .top-bar {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            justify-content: flex-start;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .back-btn {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .back-btn:hover {
+            background-color: #f8f9fa;
+            transform: translateX(-3px);
+        }
+
+        h1 {
+            margin: 0 0 4px;
+            font-size: 2.6rem;
+            letter-spacing: -1px;
+            color: #2f3542;
+            background: linear-gradient(135deg, #2f3542 0%, var(--accent-2) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            margin: 0 0 16px;
+            font-size: 0.85rem;
+            color: #8a8f9a;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* Skor Tablosu */
+        .game-container {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 22px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 90%;
+            max-width: 480px;
+        }
+
+        .mode-bar {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 18px;
+            background: #f1f2f6;
+            padding: 5px;
+            border-radius: 12px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 10px 8px;
+            border-radius: 9px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.25s;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: var(--accent-2);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+        }
+
+        .sub-options {
+            display: none;
+            width: 100%;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .sub-options.show { display: flex; }
+
+        .chip {
+            border: 2px solid #e9ecef;
+            background: white;
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #6b7280;
+        }
+
+        .chip.active {
+            border-color: var(--accent-2);
+            color: var(--accent-2);
+            background: #f4f1ff;
+        }
+
+        .score-board {
+            display: flex;
+            width: 100%;
+            justify-content: space-around;
+            margin-bottom: 18px;
+            gap: 10px;
+        }
+
+        .score-box {
+            text-align: center;
+            padding: 10px 16px;
+            border-radius: 14px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            flex: 1;
+            position: relative;
+        }
+
+        .score-box.active {
+            transform: scale(1.06);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        }
+
+        .score-box span {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .score-box div.score-val {
+            font-size: 1.9rem;
+            font-weight: 800;
+        }
+
+        .p1-box { color: var(--p1-color); border: 2px solid var(--p1-color-soft); }
+        .p2-box { color: var(--p2-color); border: 2px solid var(--p2-color-soft); }
+
+        .thinking-dot {
+            display: none;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--p2-color);
+            animation: blink 1s infinite;
+        }
+        .thinking-dot.show { display: inline-block; }
+        @keyframes blink {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+
+        /* Seçim ve Kontroller */
+        .controls {
+            margin-bottom: 18px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .letter-toggle {
+            display: flex;
+            background: #eee;
+            padding: 5px;
+            border-radius: 10px;
+        }
+
+        .letter-toggle button {
+            border: none;
+            padding: 9px 22px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            background: transparent;
+            font-size: 1rem;
+        }
+
+        .letter-toggle button.active {
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            color: #1a73e8;
+        }
+
+        /* Oyun Tahtası */
+        #board {
+            display: grid;
+            gap: 6px;
+            background-color: #f1f2f6;
+            padding: 6px;
+            border-radius: 14px;
+            width: 100%;
+        }
+
+        .cell {
+            aspect-ratio: 1/1;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.15s;
+            user-select: none;
+            border: 1px solid #eee;
+        }
+
+        .cell:hover:not(.taken) {
+            background-color: #eef2ff;
+            transform: scale(0.95);
+        }
+
+        .cell.taken {
+            cursor: default;
+            color: #2f3542;
+            animation: pop 0.2s ease-out;
+        }
+
+        .cell.taken.letter-S { color: var(--p1-color); }
+        .cell.taken.letter-O { color: var(--accent-2); }
+
+        @keyframes pop {
+            0% { transform: scale(0.6); opacity: 0.4; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .sos-highlight {
+            background-color: var(--accent-color) !important;
+            color: white !important;
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        .reset-btn {
+            margin-top: 20px;
+            border: none;
+            background: linear-gradient(135deg, #2f3542, #454e5e);
+            color: white;
+            padding: 11px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .reset-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .turn-text {
+            margin-top: 16px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ── Oyun Sonu Modali ── */
+        .end-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .end-modal-overlay.active { display: flex; }
+        .end-modal-box {
+            background: #fff;
+            border-radius: 20px;
+            padding: 32px 24px 24px;
+            width: 90%;
+            max-width: 340px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        .end-modal-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #2f3542;
+            text-align: center;
+            white-space: pre-line;
+        }
+        .end-modal-btn {
+            border: none;
+            background: #2f3542;
+            color: white;
+            padding: 11px 32px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .end-modal-btn:hover { opacity: 0.88; transform: translateY(-2px); }
+
+        /* ── AdSense Reklam Kutusu ── */
+        .mg-ad-box {
+            position: relative;
+            width: 100%;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 14px;
+            padding: 26px 10px 10px;
+            margin-top: 8px;
+            overflow: visible;
+            box-sizing: border-box;
+            min-height: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mg-ad-box ins.adsbygoogle {
+            display: block !important;
+            width: 300px !important;
+            height: 250px !important;
+        }
+        .mg-ad-label {
+            position: absolute;
+            top: 7px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.58rem;
+            font-weight: 700;
+            color: #adb5bd;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: #f8f9fa;
+            padding: 2px 10px;
+            border-radius: 20px;
+            border: 1px solid #dee2e6;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 1;
+        }
+        /* Sayfa altı reklam */
+        .mg-ad-page {
+            width: 90%;
+            max-width: 450px;
+            margin: 24px auto 32px;
+        }
+    </style>
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1880946354382681" crossorigin="anonymous"></script>
+</head>
+<body>
+
+    <div class="top-bar">
+        <button class="back-btn" onclick="history.back()">
+            ← Geri Dön
+        </button>
+    </div>
+
+    <h1>SOS</h1>
+    <div class="subtitle">Klasik Kağıt Oyunu · Modern Versiyon</div>
+
+    <div class="game-container">
+
+        <!-- Mod Seçimi -->
+        <div class="mode-bar">
+            <button id="modeBtnPvp" class="mode-btn active" onclick="setMode('pvp')">👥 2 Oyuncu</button>
+            <button id="modeBtnAi" class="mode-btn" onclick="setMode('ai')">🤖 Yapay Zeka</button>
+        </div>
+
+        <!-- AI Zorluk Seçimi -->
+        <div id="aiOptions" class="sub-options">
+            <button class="chip active" data-diff="easy" onclick="setDifficulty('easy')">Kolay</button>
+            <button class="chip" data-diff="medium" onclick="setDifficulty('medium')">Orta</button>
+            <button class="chip" data-diff="hard" onclick="setDifficulty('hard')">Zor</button>
+        </div>
+
+        <!-- Tahta Boyutu Seçimi -->
+        <div class="sub-options show" id="sizeOptions">
+            <button class="chip" data-size="5" onclick="setSize(5)">5×5</button>
+            <button class="chip active" data-size="7" onclick="setSize(7)">7×7</button>
+            <button class="chip" data-size="9" onclick="setSize(9)">9×9</button>
+        </div>
+
+        <div class="score-board">
+            <div id="box1" class="score-box p1-box active">
+                <span>Oyuncu 1</span>
+                <div id="score1" class="score-val">0</div>
+            </div>
+            <div id="box2" class="score-box p2-box">
+                <span id="p2-label">Oyuncu 2</span> <span id="thinkingDot" class="thinking-dot"></span>
+                <div id="score2" class="score-val">0</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="letter-toggle">
+                <button id="btnS" class="active" onclick="setLetter('S')">S</button>
+                <button id="btnO" onclick="setLetter('O')">O</button>
+            </div>
+        </div>
+
+        <div id="board"></div>
+
+        <div id="turn-display" class="turn-text" style="color: var(--p1-color);">Sıra: Oyuncu 1</div>
+
+        <button class="reset-btn" onclick="resetGame()">Yeni Oyun</button>
+    </div>
+
+    <!-- ── Oyun Sonu Modali ── -->
+    <div id="end-modal" class="end-modal-overlay">
+        <div class="end-modal-box">
+            <div class="end-modal-title" id="end-modal-text"></div>
+            <button class="end-modal-btn" onclick="closeEndModal()">Yeni Oyun</button>
+
+            <!-- ── ADSENSE REKLAM 1 — Oyun Sonu Modali ── -->
+            <div class="mg-ad-box" aria-label="Reklam" role="complementary">
+                <span class="mg-ad-label">Reklam</span>
+                <ins class="adsbygoogle"
+                     style="display:block;width:300px;height:250px;"
+                     data-ad-client="ca-pub-1880946354382681"
+                     data-ad-slot="1689789138"
+                     data-ad-format="rectangle"></ins>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── ADSENSE REKLAM 2 — Sayfa Altı ── -->
+    <div class="mg-ad-box mg-ad-page" aria-label="Reklam" role="complementary">
+        <span class="mg-ad-label">Reklam</span>
+        <ins class="adsbygoogle"
+             style="display:block;width:300px;height:250px;"
+             data-ad-client="ca-pub-1880946354382681"
+             data-ad-slot="1689789138"
+             data-ad-format="rectangle"></ins>
+    </div>
+
+    <script>
+        // ── Oyun Durumu ──
+        let size = 7;
+        let board = Array(size).fill().map(() => Array(size).fill(''));
+        let currentPlayer = 1;
+        let scores = { 1: 0, 2: 0 };
+        let currentLetter = 'S';
+        let gameMode = 'pvp';       // 'pvp' | 'ai'
+        let aiDifficulty = 'easy';  // 'easy' | 'medium' | 'hard'
+        let gameOver = false;
+        let aiThinking = false;
+
+        const boardElement = document.getElementById('board');
+
+        // ── Mod / Ayar Fonksiyonları ──
+        function setMode(mode) {
+            gameMode = mode;
+            document.getElementById('modeBtnPvp').classList.toggle('active', mode === 'pvp');
+            document.getElementById('modeBtnAi').classList.toggle('active', mode === 'ai');
+            document.getElementById('aiOptions').classList.toggle('show', mode === 'ai');
+            document.getElementById('p2-label').textContent = mode === 'ai' ? 'Yapay Zeka' : 'Oyuncu 2';
+            resetGame();
+        }
+
+        function setDifficulty(diff) {
+            aiDifficulty = diff;
+            document.querySelectorAll('#aiOptions .chip').forEach(b => {
+                b.classList.toggle('active', b.dataset.diff === diff);
+            });
+            resetGame();
+        }
+
+        function setSize(n) {
+            size = n;
+            document.querySelectorAll('#sizeOptions .chip').forEach(b => {
+                b.classList.toggle('active', parseInt(b.dataset.size) === n);
+            });
+            boardElement.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+            const cellFont = size >= 9 ? '1rem' : (size >= 7 ? '1.3rem' : '1.6rem');
+            boardElement.style.setProperty('--cell-font', cellFont);
+            resetGame();
+        }
+
+        function initBoard() {
+            boardElement.innerHTML = '';
+            boardElement.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+            const cellFont = size >= 9 ? '1rem' : (size >= 7 ? '1.3rem' : '1.6rem');
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.style.fontSize = cellFont;
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.onclick = () => handleCellClick(r, c, cell);
+                    boardElement.appendChild(cell);
+                }
+            }
+        }
+
+        function setLetter(l) {
+            currentLetter = l;
+            document.getElementById('btnS').classList.toggle('active', l === 'S');
+            document.getElementById('btnO').classList.toggle('active', l === 'O');
+        }
+
+        function handleCellClick(r, c, cell) {
+            if (gameOver || aiThinking) return;
+            if (gameMode === 'ai' && currentPlayer === 2) return; // AI'nin sırasında tıklama engellenir
+            makeMove(r, c, currentLetter);
+        }
+
+        function getCellEl(r, c) {
+            return boardElement.children[r * size + c];
+        }
+
+        function makeMove(r, c, letter) {
+            if (board[r][c] !== '') return false;
+
+            board[r][c] = letter;
+            const cell = getCellEl(r, c);
+            cell.textContent = letter;
+            cell.classList.add('taken', 'letter-' + letter);
+
+            let foundSOS = checkSOS(r, c);
+
+            if (foundSOS > 0) {
+                scores[currentPlayer] += foundSOS;
+                updateUI();
+                if (isBoardFull()) {
+                    endGame();
+                    return true;
+                }
+                // Puan yapan oyuncu tekrar oynar (klasik SOS kuralı)
+            } else {
+                if (isBoardFull()) {
+                    endGame();
+                    return true;
+                }
+                currentPlayer = currentPlayer === 1 ? 2 : 1;
+                updateUI();
+            }
+
+            // Sıradaki oyuncu AI ise, hamlesini tetikle
+            if (gameMode === 'ai' && currentPlayer === 2 && !gameOver) {
+                triggerAiMove();
+            }
+
+            return true;
+        }
+
+        function checkSOS(r, c) {
+            let count = 0;
+            const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+
+            if (board[r][c] === 'O') {
+                directions.forEach(([dr, dc]) => {
+                    if (isS(r-dr, c-dc) && isS(r+dr, c+dc)) {
+                        count++;
+                        highlightSOS(r-dr, c-dc, r, c, r+dr, c+dc);
+                    }
+                });
+            } else {
+                const sDirs = [[0,1], [0,-1], [1,0], [-1,0], [1,1], [-1,-1], [1,-1], [-1,1]];
+                sDirs.forEach(([dr, dc]) => {
+                    if (isO(r+dr, c+dc) && isS(r+2*dr, c+2*dc)) {
+                        count++;
+                        highlightSOS(r, c, r+dr, c+dc, r+2*dr, c+2*dc);
+                    }
+                });
+            }
+            return count;
+        }
+
+        function isS(r, c) { return r>=0 && r<size && c>=0 && c<size && board[r][c] === 'S'; }
+        function isO(r, c) { return r>=0 && r<size && c>=0 && c<size && board[r][c] === 'O'; }
+
+        function highlightSOS(r1, c1, r2, c2, r3, c3) {
+            [ [r1,c1], [r2,c2], [r3,c3] ].forEach(([r, c]) => {
+                getCellEl(r, c).classList.add('sos-highlight');
+            });
+        }
+
+        function updateUI() {
+            document.getElementById('score1').textContent = scores[1];
+            document.getElementById('score2').textContent = scores[2];
+
+            const turnText = document.getElementById('turn-display');
+            const box1 = document.getElementById('box1');
+            const box2 = document.getElementById('box2');
+
+            if(currentPlayer === 1) {
+                turnText.textContent = "Sıra: Oyuncu 1";
+                turnText.style.color = "var(--p1-color)";
+                box1.classList.add('active');
+                box2.classList.remove('active');
+            } else {
+                turnText.textContent = gameMode === 'ai' ? "Sıra: Yapay Zeka" : "Sıra: Oyuncu 2";
+                turnText.style.color = "var(--p2-color)";
+                box2.classList.add('active');
+                box1.classList.remove('active');
+            }
+        }
+
+        function isBoardFull() {
+            return board.every(row => row.every(cell => cell !== ''));
+        }
+
+        function endGame() {
+            gameOver = true;
+            let result = "";
+            const p2name = gameMode === 'ai' ? 'Yapay Zeka' : 'Oyuncu 2';
+            if (scores[1] > scores[2]) result = "🏆 Oyuncu 1 Kazandı!";
+            else if (scores[2] > scores[1]) result = `🏆 ${p2name} Kazandı!`;
+            else result = "🤝 Berabere!";
+
+            document.getElementById('end-modal-text').textContent = "Oyun Bitti!\n" + result;
+            document.getElementById('end-modal').classList.add('active');
+            setTimeout(mgPushAds, 300);
+        }
+
+        function closeEndModal() {
+            document.getElementById('end-modal').classList.remove('active');
+            resetGame();
+        }
+
+        function resetGame() {
+            gameOver = false;
+            aiThinking = false;
+            board = Array(size).fill().map(() => Array(size).fill(''));
+            scores = { 1: 0, 2: 0 };
+            currentPlayer = 1;
+            setLetter('S');
+            initBoard();
+            updateUI();
+            document.getElementById('thinkingDot').classList.remove('show');
+        }
+
+        // ══════════════════════════════
+        //   YAPAY ZEKA MANTIĞI
+        // ══════════════════════════════
+
+        function getEmptyCells() {
+            const empties = [];
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    if (board[r][c] === '') empties.push([r, c]);
+                }
+            }
+            return empties;
+        }
+
+        // Belirli bir hücreye belirli bir harf konulursa kaç SOS oluşur (tahtayı değiştirmeden hesaplar)
+        function countSOSIfPlaced(r, c, letter) {
+            let count = 0;
+            const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+            if (letter === 'O') {
+                directions.forEach(([dr, dc]) => {
+                    if (isS(r-dr, c-dc) && isS(r+dr, c+dc)) count++;
+                });
+            } else {
+                const sDirs = [[0,1], [0,-1], [1,0], [-1,0], [1,1], [-1,-1], [1,-1], [-1,1]];
+                sDirs.forEach(([dr, dc]) => {
+                    if (isO(r+dr, c+dc) && isS(r+2*dr, c+2*dc)) count++;
+                });
+            }
+            return count;
+        }
+
+        // Bir hamle yapıldığında rakibe (bir sonraki hamlede) SOS fırsatı doğurur mu? (basit risk tahmini)
+        function createsOpponentOpportunity(r, c, letter) {
+            // Geçici olarak yerleştir
+            board[r][c] = letter;
+            let riskFound = false;
+            outer:
+            for (let rr = 0; rr < size; rr++) {
+                for (let cc = 0; cc < size; cc++) {
+                    if (board[rr][cc] === '') {
+                        if (countSOSIfPlaced(rr, cc, 'S') > 0 || countSOSIfPlaced(rr, cc, 'O') > 0) {
+                            riskFound = true;
+                            break outer;
+                        }
+                    }
+                }
+            }
+            board[r][c] = ''; // geri al
+            return riskFound;
+        }
+
+        function findBestAiMove() {
+            const empties = getEmptyCells();
+            if (empties.length === 0) return null;
+
+            // Her boş hücre için S ve O ile skor potansiyeli hesapla
+            let candidates = [];
+            for (const [r, c] of empties) {
+                for (const letter of ['S', 'O']) {
+                    const sosCount = countSOSIfPlaced(r, c, letter);
+                    candidates.push({ r, c, letter, sosCount });
+                }
+            }
+
+            // Kolay: çoğunlukla rastgele, bazen bariz SOS'u kaçırır
+            if (aiDifficulty === 'easy') {
+                // %40 ihtimalle tamamen rastgele oyna
+                if (Math.random() < 0.4) {
+                    const [r, c] = empties[Math.floor(Math.random() * empties.length)];
+                    const letter = Math.random() < 0.5 ? 'S' : 'O';
+                    return { r, c, letter };
+                }
+                // Aksi halde varsa basit bir SOS fırsatı yakala, yoksa rastgele
+                const winning = candidates.filter(m => m.sosCount > 0);
+                if (winning.length > 0) {
+                    return winning[Math.floor(Math.random() * winning.length)];
+                }
+                const [r, c] = empties[Math.floor(Math.random() * empties.length)];
+                const letter = Math.random() < 0.5 ? 'S' : 'O';
+                return { r, c, letter };
+            }
+
+            // Orta: her zaman en iyi SOS fırsatını yakalar, ama rakibe açık kapı bırakabilir
+            if (aiDifficulty === 'medium') {
+                const maxSOS = Math.max(...candidates.map(m => m.sosCount));
+                if (maxSOS > 0) {
+                    const best = candidates.filter(m => m.sosCount === maxSOS);
+                    return best[Math.floor(Math.random() * best.length)];
+                }
+                // SOS yoksa, rakibe fırsat vermeyecek güvenli hamlelerden rastgele seç
+                const safe = candidates.filter(m => !createsOpponentOpportunity(m.r, m.c, m.letter));
+                const pool = safe.length > 0 ? safe : candidates;
+                return pool[Math.floor(Math.random() * pool.length)];
+            }
+
+            // Zor: en iyi SOS'u yakalar; SOS yoksa güvenli VE stratejik en iyi hamleyi seçer
+            const maxSOS = Math.max(...candidates.map(m => m.sosCount));
+            if (maxSOS > 0) {
+                const best = candidates.filter(m => m.sosCount === maxSOS);
+                return best[Math.floor(Math.random() * best.length)];
+            }
+
+            // Güvenli hamleleri filtrele (rakibe SOS fırsatı vermeyenler)
+            const safeMoves = candidates.filter(m => !createsOpponentOpportunity(m.r, m.c, m.letter));
+            const pool = safeMoves.length > 0 ? safeMoves : candidates;
+
+            // Merkeze yakın hücreleri hafifçe tercih et (stratejik konumlanma)
+            const center = (size - 1) / 2;
+            pool.sort((a, b) => {
+                const da = Math.abs(a.r - center) + Math.abs(a.c - center);
+                const db = Math.abs(b.r - center) + Math.abs(b.c - center);
+                return da - db;
+            });
+            // En iyi birkaç seçenek arasından rastgele seç (öngörülebilirliği azalt)
+            const topN = pool.slice(0, Math.max(1, Math.ceil(pool.length * 0.3)));
+            return topN[Math.floor(Math.random() * topN.length)];
+        }
+
+        function triggerAiMove() {
+            aiThinking = true;
+            document.getElementById('thinkingDot').classList.add('show');
+            const delay = 500 + Math.random() * 500;
+            setTimeout(() => {
+                if (gameOver) {
+                    aiThinking = false;
+                    document.getElementById('thinkingDot').classList.remove('show');
+                    return;
+                }
+                const move = findBestAiMove();
+                aiThinking = false;
+                document.getElementById('thinkingDot').classList.remove('show');
+                if (move) {
+                    makeMove(move.r, move.c, move.letter);
+                }
+            }, delay);
+        }
+
+        function mgPushAds() {
+            document.querySelectorAll('ins.adsbygoogle').forEach(function(ins) {
+                if (!ins.getAttribute('data-adsbygoogle-status')) {
+                    try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+                }
+            });
+        }
+
+        initBoard();
+        setTimeout(mgPushAds, 800);
+    </script>
+</body>
+</html>
