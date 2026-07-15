@@ -1084,6 +1084,17 @@
                 url: 'https://mugol-portal.github.io/mugol.-gulmece/',
                 desc: 'Her gün yeni espriler ve bilmecelerle günü güldür.',
                 isNew: true
+            },
+            {
+                id: 'hanoi-kuleleri',
+                title: 'Hanoi Kuleleri',
+                cat: 'ZEKA',
+                mode: 'focus',
+                icon: '🗼',
+                color: '#7dd3fc',
+                url: 'hanoi-kuleleri.html',
+                desc: 'Diskleri sırayla taşı, en az hamlede tüm kuleyi diğer çubuğa aktar.',
+                isNew: true
             }
             // Yeni oyunlar buraya aynı formatta eklenebilir
         ];
@@ -1240,12 +1251,25 @@
             });
 
             // Yeni eklenen reklam kutularını Google AdSense'e bildir
-            document.querySelectorAll('.ad-slot ins.adsbygoogle:not([data-adsbygoogle-status])').forEach(() => {
+            document.querySelectorAll('.ad-slot ins.adsbygoogle:not([data-adsbygoogle-status])').forEach((ins) => {
                 try {
                     (window.adsbygoogle = window.adsbygoogle || []).push({});
                 } catch (e) {
                     /* AdSense yüklenemezse sessizce yok say */
                 }
+            });
+
+            // Reklam gerçekten dolmazsa (boş kalırsa) kutuyu görünmez yap
+            document.querySelectorAll('.ad-slot').forEach((slot) => {
+                const ins = slot.querySelector('ins.adsbygoogle');
+                if (!ins) return;
+                setTimeout(() => {
+                    const status = ins.getAttribute('data-adsbygoogle-status');
+                    const filled = ins.offsetHeight > 0 && ins.innerHTML.trim().length > 0;
+                    if (status !== 'done' || !filled) {
+                        slot.style.display = 'none';
+                    }
+                }, 2500);
             });
         }
 
