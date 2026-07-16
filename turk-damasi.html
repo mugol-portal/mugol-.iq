@@ -432,6 +432,7 @@
                 <label>🧠 AI Seviyesi:</label>
                 <select id="diff-select">
                     <option value="easy">Çırak (kolay)</option>
+                    <option value="medium">Kalfa (orta)</option>
                     <option value="hard" selected>Usta (derin arama)</option>
                 </select>
             </div>
@@ -997,6 +998,23 @@
                 });
                 rootMoves.sort((a,b) => b.score - a.score);
                 chosenMove = rootMoves[Math.random() < 0.35 ? Math.floor(Math.random()*Math.min(3, rootMoves.length)) : 0];
+            } else if(diff === 'medium') {
+                // Kalfa: sadece 1 hamle ileriyi (kendi hamlesinin sonucunu) değerlendirir,
+                // rakibin cevabını hesaba katmaz. Değerlendirmeye gürültü ekler ve
+                // sık sık en iyi olmayan makul bir hamleyi seçerek belirgin hatalar yapar.
+                let scored = rootMoves.map(m => {
+                    const nb = applyChainToBoard(board, m);
+                    const ev = evaluateBoard(nb) + (Math.random() - 0.5) * 40; // gürültü ekle
+                    return { m, ev };
+                });
+                scored.sort((a,b) => b.ev - a.ev);
+                // %55 ihtimalle en iyi 4 hamle arasından rastgele birini seçer (belirgin hatalar yapar)
+                if(Math.random() < 0.55 && scored.length > 1) {
+                    const pool = scored.slice(0, Math.min(4, scored.length));
+                    chosenMove = pool[Math.floor(Math.random()*pool.length)].m;
+                } else {
+                    chosenMove = scored[0].m;
+                }
             } else {
                 // Usta: alpha-beta minimax araması (hareket sayısına göre uyarlanmış derinlik)
                 const DEPTH = rootMoves.length > 12 ? 4 : (rootMoves.length > 6 ? 5 : 6);
