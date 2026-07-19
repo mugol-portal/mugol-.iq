@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Enerji Tüpleri: PRO v2</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #06070c;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            height: 100vh;
+            background:
+                radial-gradient(circle at 20% -10%, rgba(155, 89, 182, 0.18) 0%, transparent 45%),
+                radial-gradient(circle at 85% 10%, rgba(0, 210, 211, 0.14) 0%, transparent 40%),
+                radial-gradient(circle at 50% 100%, rgba(29, 209, 161, 0.10) 0%, transparent 50%),
+                radial-gradient(circle at top, #1a1c2e 0%, #0a0b12 60%, #06070c 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 0 60px rgba(0,0,0,0.9), inset 0 0 120px rgba(0,0,0,0.4);
+            overflow: hidden;
+            border-left: 1px solid rgba(255,255,255,0.06);
+            border-right: 1px solid rgba(255,255,255,0.06);
+        }
+
+        /* Yumuşak arka plan parçacıkları */
+        #gameContainer::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(1.5px 1.5px at 15% 25%, rgba(255,255,255,0.35), transparent),
+                radial-gradient(1.5px 1.5px at 75% 15%, rgba(255,255,255,0.25), transparent),
+                radial-gradient(1px 1px at 40% 60%, rgba(255,255,255,0.3), transparent),
+                radial-gradient(1.5px 1.5px at 90% 70%, rgba(255,255,255,0.2), transparent),
+                radial-gradient(1px 1px at 60% 85%, rgba(255,255,255,0.25), transparent),
+                radial-gradient(1.5px 1.5px at 25% 90%, rgba(255,255,255,0.2), transparent);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.6;
+        }
+
+        /* Üst Menü */
+        .top-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 15px 5px 15px;
+            box-sizing: border-box;
+            z-index: 10;
+            position: relative;
+        }
+
+        .action-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            color: #fff;
+            padding: 9px 16px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08);
+            letter-spacing: 0.3px;
+        }
+        .icon-btn:hover { background: rgba(255, 255, 255, 0.12); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12); }
+        .icon-btn:active { transform: scale(0.94); }
+        
+        .btn-undo { color: #feca57; border-color: rgba(254, 202, 87, 0.35); }
+        .btn-undo:hover { background: rgba(254, 202, 87, 0.12); box-shadow: 0 6px 16px rgba(254, 202, 87, 0.15), inset 0 1px 0 rgba(255,255,255,0.12); }
+        .btn-restart { color: #ff6b6b; border-color: rgba(255, 107, 107, 0.35); }
+        .btn-restart:hover { background: rgba(255, 107, 107, 0.12); box-shadow: 0 6px 16px rgba(255, 107, 107, 0.15), inset 0 1px 0 rgba(255,255,255,0.12); }
+        .btn-undo:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+
+        .header-text {
+            text-align: center;
+            margin-top: 14px;
+            margin-bottom: 22px;
+            position: relative;
+            z-index: 2;
+        }
+        .header-text h1 {
+            margin: 0;
+            font-weight: 900;
+            font-size: 27px;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #ffffff 0%, #b8c2e0 60%, #8a94b8 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 4px 20px rgba(0, 210, 211, 0.15);
+        }
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 10px;
+            color: #7a839e;
+            font-size: 13px;
+        }
+        .stats div {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 6px 14px;
+            border-radius: 12px;
+            backdrop-filter: blur(6px);
+        }
+        .stats span { color: #00d2d3; font-weight: 700; font-size: 15px; text-shadow: 0 0 12px rgba(0,210,211,0.4); }
+
+        /* Oyun Alanı */
+        #tubeContainer {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-content: flex-start;
+            gap: 18px;
+            padding: 10px 20px 30px 20px;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            overflow-y: auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .tube-wrapper {
+            position: relative;
+            padding-top: 40px; 
+        }
+
+        .tube {
+            width: 56px;
+            height: 202px;
+            border: 3px solid rgba(255, 255, 255, 0.16);
+            border-top: none;
+            border-radius: 0 0 30px 30px;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            padding-bottom: 6px;
+            box-sizing: border-box;
+            background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.09) 100%);
+            box-shadow:
+                inset 0 -14px 24px rgba(0,0,0,0.55),
+                inset 6px 0 12px rgba(255,255,255,0.03),
+                0 14px 24px rgba(0,0,0,0.35),
+                0 2px 0 rgba(255,255,255,0.03);
+            position: relative;
+            cursor: pointer;
+            transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .tube::after {
+            content: '';
+            position: absolute;
+            top: 6px; left: 5px;
+            width: 9px; height: 88%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.08) 60%, transparent 100%);
+            border-radius: 10px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* İkincil ince parlama - sağ kenar */
+        .tube::before {
+            content: '';
+            position: absolute;
+            top: 6px; right: 8px;
+            width: 3px; height: 80%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 70%);
+            border-radius: 10px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .tube:hover { border-color: rgba(255, 255, 255, 0.4); transform: translateY(-2px); }
+        .tube.selected {
+            border-color: #00d2d3;
+            box-shadow:
+                0 0 0 1px rgba(0, 210, 211, 0.3),
+                0 0 30px rgba(0, 210, 211, 0.35),
+                inset 0 -14px 24px rgba(0,0,0,0.5),
+                inset 0 0 16px rgba(0, 210, 211, 0.15);
+            transform: translateY(-8px);
+        }
+        
+        .tube.completed {
+            border-color: #1dd1a1;
+            box-shadow:
+                0 0 0 1px rgba(29, 209, 161, 0.35),
+                0 0 30px rgba(29, 209, 161, 0.55),
+                inset 0 -14px 24px rgba(0,0,0,0.4);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 1px rgba(29,209,161,0.3), 0 0 18px rgba(29,209,161,0.4), inset 0 -14px 24px rgba(0,0,0,0.4); }
+            50% { box-shadow: 0 0 0 1px rgba(29,209,161,0.4), 0 0 36px rgba(29,209,161,0.85), inset 0 -14px 24px rgba(0,0,0,0.4); }
+            100% { box-shadow: 0 0 0 1px rgba(29,209,161,0.3), 0 0 18px rgba(29,209,161,0.4), inset 0 -14px 24px rgba(0,0,0,0.4); }
+        }
+
+        /* Tüp tabanı - cam kalınlık hissi */
+        .tube-wrapper::after {
+            content: '';
+            position: absolute;
+            bottom: 3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 42px;
+            height: 10px;
+            background: radial-gradient(ellipse at center, rgba(255,255,255,0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Yanlış Hamle Titreme Efekti */
+        .tube.error-shake { animation: shakeAction 0.35s ease; border-color: #ff4757 !important; box-shadow: 0 0 0 1px rgba(255,71,87,0.4), 0 0 24px rgba(255, 71, 87, 0.6) !important; }
+        @keyframes shakeAction {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-7px) rotate(-3.5deg); }
+            75% { transform: translateX(7px) rotate(3.5deg); }
+        }
+
+        .ball {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            margin-top: 3px;
+            box-shadow:
+                inset -9px -9px 16px rgba(0,0,0,0.45),
+                inset 6px 6px 10px rgba(255,255,255,0.45),
+                0 3px 6px rgba(0,0,0,0.5),
+                0 0 14px var(--glow, transparent);
+            transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 2;
+            position: relative;
+        }
+
+        .tube.selected .ball:last-child {
+            transform: translateY(-46px) scale(1.08);
+            box-shadow:
+                inset -9px -9px 16px rgba(0,0,0,0.45),
+                inset 6px 6px 10px rgba(255,255,255,0.6),
+                0 18px 24px rgba(0,0,0,0.6);
+            z-index: 10;
+        }
+
+        /* Ekran Katmanları */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 40%, rgba(30, 33, 54, 0.95) 0%, rgba(6, 7, 12, 0.97) 100%);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 50; backdrop-filter: blur(10px);
+            opacity: 1; transition: opacity 0.4s ease;
+        }
+        .overlay.hidden { opacity: 0; pointer-events: none; }
+        
+        .overlay h2 {
+            font-weight: 900;
+            font-size: 44px;
+            margin-bottom: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .win-title {
+            color: #feca57;
+            text-shadow: 0 0 30px rgba(254, 202, 87, 0.7), 0 0 60px rgba(254, 202, 87, 0.3);
+            animation: winPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes winPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            60% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .overlay p {
+            color: #c8d6e5;
+            margin: 14px 0 40px 0;
+            font-size: 17px;
+            text-align: center;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 10px 22px;
+            border-radius: 16px;
+        }
+        
+        .btn-large {
+            background: linear-gradient(135deg, #1dd1a1, #10ac84);
+            color: #fff; border: none; padding: 18px 52px; border-radius: 30px;
+            font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 18px;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            box-shadow: 0 10px 24px rgba(29, 209, 161, 0.45), inset 0 1px 0 rgba(255,255,255,0.25);
+            transition: 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .btn-large:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(29, 209, 161, 0.5), inset 0 1px 0 rgba(255,255,255,0.25); }
+        .btn-large:active { transform: scale(0.95); box-shadow: 0 5px 10px rgba(29, 209, 161, 0.4); }
+
+        #confettiCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 40; }
+
+        /* Scrollbar inceltme */
+        #tubeContainer::-webkit-scrollbar { width: 4px; }
+        #tubeContainer::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+
+    </style>
+</head>
+<body>
+
+    <div id="gameContainer">
+        <canvas id="confettiCanvas"></canvas>
+
+        <!-- Üst Menü -->
+        <div class="top-bar">
+            <button class="icon-btn" onclick="goBack()">❮ Geri</button>
+            <div class="action-group">
+                <button class="icon-btn btn-undo" id="undoBtn" onclick="undoMove()">⟲ Geri Al</button>
+                <button class="icon-btn btn-restart" onclick="restartLevel()">↻ Yenile</button>
+            </div>
+        </div>
+
+        <div class="header-text">
+            <h1>ENERJİ TÜPLERİ</h1>
+            <div class="stats">
+                <div>Seviye: <span id="levelText">1</span></div>
+                <div>Hamle: <span id="moveText">0</span></div>
+            </div>
+        </div>
+
+        <div id="tubeContainer"></div>
+
+        <div id="winScreen" class="overlay hidden">
+            <h2 class="win-title">KUSURSUZ!</h2>
+            <p><span id="finalMoveText" style="color: #00d2d3; font-weight: bold;">0</span> hamlede çözdün.</p>
+            <button class="btn-large" onclick="nextLevel()">SONRAKİ SEVİYE ➔</button>
+        </div>
+    </div>
+
+    <script>
+        function goBack() {
+            if (window.history.length > 1) window.history.back();
+            else alert("Gidilecek önceki sayfa bulunamadı!");
+        }
+
+        const PALETTE = ["#ff4757", "#1e90ff", "#2ed573", "#ffa502", "#9b59b6", "#ff6b81", "#00d8d6", "#eccc68"];
+
+        let tubes = [];
+        let selectedTubeIndex = null;
+        let currentLevel = 1;
+        let moves = 0;
+        let moveHistory = []; 
+        let gameWon = false; // Oyun bittiğinde tıklamaları engeller
+
+        const tubeContainer = document.getElementById("tubeContainer");
+        const levelText = document.getElementById("levelText");
+        const moveText = document.getElementById("moveText");
+        const winScreen = document.getElementById("winScreen");
+        const finalMoveText = document.getElementById("finalMoveText");
+        const undoBtn = document.getElementById("undoBtn");
+
+        // Konfeti Sistemi
+        const canvas = document.getElementById("confettiCanvas");
+        const ctx = canvas.getContext("2d");
+        let particles = [];
+        
+        function resizeCanvas() {
+            canvas.width = document.getElementById("gameContainer").clientWidth;
+            canvas.height = document.getElementById("gameContainer").clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x; this.y = y; this.color = color;
+                this.size = Math.random() * 6 + 4;
+                this.speedX = Math.random() * 8 - 4;
+                this.speedY = Math.random() * -10 - 5;
+                this.gravity = 0.4;
+                this.life = 1;
+            }
+            update() {
+                this.speedY += this.gravity;
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.life -= 0.015;
+            }
+            draw() {
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function createExplosion(x, y, color, count = 30) {
+            for(let i=0; i<count; i++) particles.push(new Particle(x, y, color));
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for(let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if(particles[i].life <= 0) particles.splice(i, 1);
+            }
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        function initLevel() {
+            levelText.innerText = currentLevel;
+            moves = 0;
+            updateMoveText();
+            moveHistory = [];
+            updateUndoBtn();
+            selectedTubeIndex = null;
+            gameWon = false;
+            winScreen.classList.add("hidden");
+
+            let colorCount = Math.min(2 + Math.floor((currentLevel - 1) / 2), PALETTE.length); 
+            let emptyCount = 2; 
+
+            generatePuzzle(colorCount, emptyCount);
+            render();
+        }
+
+        function generatePuzzle(colorCount, emptyCount) {
+            tubes = [];
+            for (let i = 0; i < colorCount; i++) tubes.push([PALETTE[i], PALETTE[i], PALETTE[i], PALETTE[i]]);
+            for (let i = 0; i < emptyCount; i++) tubes.push([]);
+
+            let shuffleMoves = currentLevel * 25; 
+            for (let i = 0; i < shuffleMoves; i++) {
+                let from = Math.floor(Math.random() * tubes.length);
+                let to = Math.floor(Math.random() * tubes.length);
+
+                if (from !== to && tubes[from].length > 0 && tubes[to].length < 4) {
+                    tubes[to].push(tubes[from].pop());
+                }
+            }
+            if (checkWinCondition()) generatePuzzle(colorCount, emptyCount); 
+        }
+
+        function render() {
+            tubeContainer.innerHTML = "";
+            tubes.forEach((tubeContent, index) => {
+                
+                let wrapper = document.createElement("div");
+                wrapper.classList.add("tube-wrapper");
+
+                let tubeDiv = document.createElement("div");
+                tubeDiv.classList.add("tube");
+                
+                let isCompleted = tubeContent.length === 4 && tubeContent.every(val => val === tubeContent[0]);
+                if (isCompleted) tubeDiv.classList.add("completed");
+                else if (selectedTubeIndex === index) tubeDiv.classList.add("selected");
+
+                tubeDiv.onclick = (e) => handleTubeClick(index, e);
+
+                tubeContent.forEach(color => {
+                    let ball = document.createElement("div");
+                    ball.classList.add("ball");
+                    ball.style.background = `radial-gradient(circle at 15px 15px, ${lightenColor(color, 50)}, ${color} 70%, #000 100%)`;
+                    ball.style.setProperty('--glow', color + '55');
+                    tubeDiv.appendChild(ball);
+                });
+
+                wrapper.appendChild(tubeDiv);
+                tubeContainer.appendChild(wrapper);
+            });
+        }
+
+        function handleTubeClick(index, event) {
+            if(gameWon) return; // Oyun bittiyse tıklama iptal
+
+            let clickedTube = tubes[index];
+            let isCompleted = clickedTube.length === 4 && clickedTube.every(val => val === clickedTube[0]);
+            
+            // Eğer tamamlanmış bir tüpe tıklandıysa ve o tüp seçili değilse hata ver (titret)
+            if (isCompleted && selectedTubeIndex !== index) {
+                shakeTube(index);
+                return; 
+            }
+
+            if (selectedTubeIndex === null) {
+                if (clickedTube.length > 0) {
+                    selectedTubeIndex = index;
+                    render();
+                }
+            } 
+            else {
+                // Seçili olan tüpe tekrar tıklanırsa seçimi kaldır
+                if (selectedTubeIndex === index) {
+                    selectedTubeIndex = null;
+                    render();
+                    return;
+                }
+
+                let sourceTube = tubes[selectedTubeIndex];
+                let targetTube = tubes[index];
+
+                let topToMove = sourceTube[sourceTube.length - 1];
+                let targetTopBall = targetTube[targetTube.length - 1];
+
+                // Taşıma Kuralı: Hedef tüp dolmamış olmalı ( < 4 )
+                // VE (Hedef tüp boş olmalı YADA hedefteki en üst top ile gönderilen top aynı renk olmalı)
+                let isMoveValid = targetTube.length < 4 && (targetTube.length === 0 || targetTopBall === topToMove);
+
+                if (isMoveValid) {
+                    // Geçerli Hamle: Anında uygulanır (0 donma)
+                    moveHistory.push({ from: selectedTubeIndex, to: index });
+                    updateUndoBtn();
+                    
+                    targetTube.push(sourceTube.pop());
+                    selectedTubeIndex = null;
+                    moves++;
+                    updateMoveText();
+                    render();
+
+                    // Tamamlanan tüpte konfeti patlat
+                    if(targetTube.length === 4 && targetTube.every(v => v === targetTube[0])) {
+                        let rect = event.currentTarget.getBoundingClientRect();
+                        createExplosion(rect.left + rect.width/2, rect.top + 20, targetTube[0], 20);
+                    }
+
+                    // Kazanma Kontrolü
+                    if (checkWinCondition()) {
+                        gameWon = true;
+                        triggerWin();
+                    }
+                } 
+                else {
+                    // Geçersiz Hamle (Renkler farklı veya tüp dolu)
+                    shakeTube(index); // Tüpü kırmızı yakıp titret
+                    
+                    // Akıcılığı bozmamak için seçimi bu yeni tıkladığı tüpe kaydır (eğer boş değilse)
+                    if (clickedTube.length > 0) {
+                        selectedTubeIndex = index;
+                        render();
+                    }
+                }
+            }
+        }
+
+        // Kırmızı renkte titretme efekti fonksiyonu
+        function shakeTube(index) {
+            let tubeElements = document.querySelectorAll('.tube');
+            if(tubeElements[index]) {
+                tubeElements[index].classList.remove('error-shake');
+                // Tarayıcının animasyonu baştan oynatması için ufak bir reflow
+                void tubeElements[index].offsetWidth; 
+                tubeElements[index].classList.add('error-shake');
+            }
+        }
+
+        function undoMove() {
+            if(moveHistory.length === 0 || gameWon) return;
+            
+            let lastMove = moveHistory.pop();
+            let sourceTube = tubes[lastMove.to]; 
+            let originalTube = tubes[lastMove.from]; 
+
+            originalTube.push(sourceTube.pop());
+            
+            selectedTubeIndex = null;
+            moves--;
+            updateMoveText();
+            updateUndoBtn();
+            render();
+        }
+
+        function updateUndoBtn() {
+            undoBtn.disabled = moveHistory.length === 0;
+        }
+
+        function updateMoveText() {
+            moveText.innerText = moves;
+        }
+
+        function checkWinCondition() {
+            for (let tube of tubes) {
+                if (tube.length > 0 && tube.length < 4) return false;
+                if (tube.length === 4 && !tube.every(val => val === tube[0])) return false;
+            }
+            return true;
+        }
+
+        function triggerWin() {
+            finalMoveText.innerText = moves;
+            
+            for(let i=0; i<5; i++) {
+                setTimeout(() => {
+                    createExplosion(Math.random() * canvas.width, canvas.height/2 + Math.random()*100, PALETTE[Math.floor(Math.random()*PALETTE.length)], 40);
+                }, i * 200);
+            }
+
+            setTimeout(() => { winScreen.classList.remove("hidden"); }, 800);
+        }
+
+        function restartLevel() {
+            if(confirm("Tıkandın mı? Bölümü baştan başlatmak istiyor musun?")) {
+                initLevel();
+            }
+        }
+
+        function nextLevel() {
+            currentLevel++;
+            initLevel();
+        }
+
+        function lightenColor(color, percent) {
+            let num = parseInt(color.replace("#",""), 16),
+            amt = Math.round(2.55 * percent),
+            R = (num >> 16) + amt, B = (num >> 8 & 0x00FF) + amt, G = (num & 0x0000FF) + amt;
+            return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (B<255?B<1?0:B:255)*0x100 + (G<255?G<1?0:G:255)).toString(16).slice(1);
+        }
+
+        initLevel();
+
+    </script>
+</body>
+</html>
