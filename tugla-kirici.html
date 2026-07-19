@@ -457,7 +457,7 @@
         <h1 class="overlay-title">NEON STRIKER</h1>
         <p class="overlay-subtitle">ULTIMATE EDITION</p>
         <button class="btn" onclick="startGame()">BAŞLAT</button>
-        <button class="btn secondary" onclick="goBack()">ÇIKIŞ</button>
+        <button class="btn secondary" onclick="exitToPortal()">ÇIKIŞ</button>
 
         <!-- ── ADSENSE REKLAM 1 — Başlangıç Ekranı ── -->
         <div class="mg-ad-box" aria-label="Reklam" role="complementary">
@@ -546,6 +546,10 @@
         document.getElementById('gameOverScreen').style.display = 'none';
         document.getElementById('startScreen').style.display = 'flex';
         document.getElementById('back-btn').style.display = 'none';
+    }
+
+    function exitToPortal() {
+        window.location.href = "https://mugol-portal.github.io/mugol-.iq/";
     }
 
     /* ─── GAME START ─────────────────────── */
