@@ -322,6 +322,7 @@
             Bir taraf siyah, bir taraf beyaz. Oyuna başlamak veya çıkmak için aşağıdan seçim yapın.
         </p>
         <button class="full btn-primary" onclick="enterGame()">♟ OYUNA BAŞLA</button>
+        <button class="full btn-secondary" id="tutorial-open-btn" onclick="openTutorial()">📖 NASIL OYNANIR?</button>
         <button class="full btn-secondary" onclick="exitGame()">🚪 OYUNDAN ÇIK</button>
     </div>
 </div>
@@ -443,6 +444,56 @@
         <h2>♟ TERFİ!</h2>
         <p style="color:var(--text-sub);font-size:0.85rem;">Piyonu hangi taşa terfi ettirmek istersiniz?</p>
         <div class="promote-grid" id="promote-grid"></div>
+    </div>
+</div>
+
+<!-- TUTORIAL MODAL -->
+<div class="modal" id="tutorial-modal" style="z-index:5500;">
+    <div class="modal-box glass-panel" style="max-width:360px;">
+        <h2>📖 NASIL OYNANIR</h2>
+
+        <!-- Piece picker -->
+        <div id="tut-picker">
+            <p style="color:var(--text-sub);font-size:0.8rem;margin:6px 0 14px;">
+                Bir taşa dokun, tahtada nereye gidebileceğini sana göstereyim.
+            </p>
+            <div id="tut-piece-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;"></div>
+            <div style="border-top:1px solid rgba(226,176,74,0.2);margin:14px 0;"></div>
+            <p style="color:var(--text-sub);font-size:0.78rem;text-align:left;line-height:1.5;">
+                🎯 <b style="color:var(--accent)">Amaç:</b> Rakibin şahını (kralını) kaçacak yeri kalmayacak şekilde tehdit etmek — buna <b>şah mat</b> denir.<br><br>
+                🔄 <b style="color:var(--accent)">Sıra:</b> Beyaz her zaman ilk başlar, sonra sırayla oynanır.<br><br>
+                👆 <b style="color:var(--accent)">Oyunda:</b> Bir taşa dokun (sarı/açık nokta hareket edebileceği kareleri gösterir), sonra gitmesini istediğin kareye dokun.
+            </p>
+        </div>
+
+        <!-- Piece detail / demo board -->
+        <div id="tut-detail" style="display:none;">
+            <div style="display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:6px;">
+                <span id="tut-detail-icon" style="font-size:2rem;"></span>
+                <span id="tut-detail-name" style="font-family:'Cinzel',serif;color:var(--accent);font-size:1.1rem;letter-spacing:1px;"></span>
+            </div>
+
+            <!-- Adım göstergesi -->
+            <div id="tut-step-dots" style="display:flex;justify-content:center;gap:5px;margin-bottom:8px;"></div>
+
+            <p id="tut-detail-desc" style="color:var(--text-sub);font-size:0.78rem;margin-bottom:8px;min-height:44px;line-height:1.4;"></p>
+
+            <div style="display:flex;justify-content:center;margin-bottom:8px;">
+                <div class="board-frame" style="position:relative;">
+                    <div class="board" id="tut-board" style="width:264px;height:264px;max-width:264px;max-height:264px;"></div>
+                </div>
+            </div>
+
+            <p id="tut-instruction" style="color:var(--accent);font-size:0.75rem;margin-bottom:10px;font-weight:700;min-height:16px;"></p>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                <button class="full btn-secondary" style="margin-top:0;" onclick="tutRestartPiece()">↺ TEKRAR DENE</button>
+                <button class="full btn-primary" style="margin-top:0;" id="tut-next-btn" onclick="tutNextStep()" disabled>DEVAM ▸</button>
+            </div>
+            <button class="full btn-secondary" onclick="tutBackToPicker()">‹ TAŞ LİSTESİNE DÖN</button>
+        </div>
+
+        <button class="full btn-primary" onclick="toggleMenu('tutorial', false)">ANLADIM, KAPAT</button>
     </div>
 </div>
 
@@ -1282,6 +1333,259 @@ function backToHome() {
 }
 
 // window.onload=init;  -- init artık "OYUNA BAŞLA" butonuna basılınca çalışır
+
+// ============================================================
+// TUTORIAL / NASIL OYNANIR (yeni başlayanlar için)
+// ============================================================
+const TUT_PIECES = [
+    { key:'P', name:'PİYON', icon:PIECES.wP,
+      desc:'Düz ileri 1 kare gider (ilk hamlesinde 2 kare de olur). Çapraz ileri kareye SADECE rakip taş varsa alarak gidebilir. Asla geri gidemez!' },
+    { key:'N', name:'AT', icon:PIECES.wN,
+      desc:'"L" şeklinde hareket eder: 2 kare düz + 1 kare yana (veya tam tersi). Tek taş türüdür ki diğer taşların ÜZERİNDEN atlayabilir.' },
+    { key:'B', name:'FİL', icon:PIECES.wB,
+      desc:'Sadece çapraz yönde, istediği kadar kare ilerler. Önü kapanmadıkça durmaz. Her fil ömür boyu hep aynı renk karede kalır.' },
+    { key:'R', name:'KALE', icon:PIECES.wR,
+      desc:'Düz yatay veya dikey yönde, istediği kadar kare ilerler. Önü kesilene kadar durmaz. Rok (castling) hamlesinde şahla birlikte kullanılır.' },
+    { key:'Q', name:'VEZİR', icon:PIECES.wQ,
+      desc:'En güçlü taş! Kale + fil gibi hareket eder: düz veya çapraz, istediği kadar kare, her yönde gidebilir.' },
+    { key:'K', name:'ŞAH', icon:PIECES.wK,
+      desc:'Her yöne sadece 1 kare gider. En önemli taş — o tehdit altındayken kaçamazsa oyunu kaybedersin (şah mat).' }
+];
+
+function clipRay(r,c,dirs,blockers) {
+    const blockSet = new Set(blockers.map(b=>b.r+','+b.c));
+    const out = [];
+    dirs.forEach(([dr,dc])=>{
+        let nr=r+dr,nc=c+dc;
+        while(nr>=0&&nr<8&&nc>=0&&nc<8) {
+            out.push([nr,nc]);
+            if(blockSet.has(nr+','+nc)) break;
+            nr+=dr; nc+=dc;
+        }
+    });
+    return out;
+}
+
+// ============================================================
+// ADIM ADIM DERS SENARYOLARI
+// Her taş için: bir dizi "step". Her step kendi tahta durumunu
+// (ana taş konumu + rakip taşlar) ve o anda tıklanabilir hedef
+// kareleri tanımlar. Kullanıcı doğru kareye dokununca taş GERÇEKTEN
+// oraya kayar, sonra "DEVAM" ile bir sonraki step'e geçilir.
+// ============================================================
+const TUT_STEPS = {
+    P: [
+        { piece:{r:6,c:4}, blockers:[], targets:[[4,4]],
+          text:'Piyon ilk hamlesinde 2 kare ilerleyebilir. Önündeki yeşil kareye dokun.' },
+        { piece:{r:4,c:4}, blockers:[{r:3,c:5,c2:'b'}], targets:[[3,4]],
+          text:'İkinci hamlede artık sadece 1 kare gidebilir. Yine önündeki kareye dokun (bu kez rakip yandaki taşa dokunma, çünkü düz karede alma yapılmaz).' },
+        { piece:{r:3,c:4}, blockers:[{r:2,c:5,c2:'b'}], targets:[[2,5]], captures:[[2,5]],
+          text:'Şimdi çaprazında rakip taş var. Piyon düz gidemez ama çapraz kareyi ALARAK gidebilir. Kırmızı çerçeveli kareye dokun.' }
+    ],
+    N: [
+        { piece:{r:4,c:4}, blockers:[{r:6,c:3,c2:'b'}], targets:[[2,3],[3,2],[5,2],[6,3],[6,5],[5,6],[3,6],[2,5]], captures:[[6,3]],
+          text:'At "L" şeklinde gider: 2+1 kare. Rakip taşın üzerinden bile atlayabilir! Kırmızı çerçeveli kareye dokunup taşı ALARAK gidelim.' },
+        { piece:{r:6,c:3}, blockers:[], targets:[[4,2],[4,4],[5,1],[7,1]],
+          text:'Yeni konumundan tekrar "L" şeklinde herhangi bir yöne gidebilir. Yeşil karelerden birine dokun.' }
+    ],
+    B: [
+        { piece:{r:4,c:4}, blockers:[{r:2,c:2,c2:'b'}], targets:(()=>clipRay(4,4,[[-1,-1],[-1,1],[1,-1],[1,1]],[{r:2,c:2}]))(), captures:[[2,2]],
+          text:'Fil sadece çapraz gider, istediği kadar kare ilerler. Yolundaki rakip taşı ALMAK için kırmızı çerçeveli kareye dokun.' },
+        { piece:{r:2,c:2}, blockers:[], targets:(()=>clipRay(2,2,[[-1,-1],[-1,1],[1,-1],[1,1]],[]))(),
+          text:'Fil hep AYNI RENK karede kalır — hiç beyaz kareye giremez. Başka bir çapraz kareye dokun.' }
+    ],
+    R: [
+        { piece:{r:4,c:4}, blockers:[{r:4,c:1,c2:'b'}], targets:(()=>clipRay(4,4,[[-1,0],[1,0],[0,-1],[0,1]],[{r:4,c:1}]))(), captures:[[4,1]],
+          text:'Kale düz yatay/dikey gider, önü kesilene kadar durmaz. Yoldaki taşı ALMAK için kırmızı çerçeveye dokun.' },
+        { piece:{r:4,c:1}, blockers:[], targets:(()=>clipRay(4,1,[[-1,0],[1,0],[0,-1],[0,1]],[]))(),
+          text:'Şimdi önü açık — istediğin uzaklıktaki yeşil kareye dokun.' }
+    ],
+    Q: [
+        { piece:{r:4,c:4}, blockers:[{r:1,c:4,c2:'b'}], targets:(()=>clipRay(4,4,[[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]],[{r:1,c:4}]))(), captures:[[1,4]],
+          text:'Vezir kale + fil gibidir: düz VE çapraz. Yukarıdaki rakip taşı ALMAK için kırmızı çerçeveye dokun.' },
+        { piece:{r:1,c:4}, blockers:[{r:1,c:1,c2:'b'}], targets:(()=>clipRay(1,4,[[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]],[{r:1,c:1}]))(), captures:[[1,1]],
+          text:'En güçlü taş budur — her yönde tehdit oluşturabilir. Şimdi de yandaki taşı al.' }
+    ],
+    K: [
+        { piece:{r:4,c:4}, blockers:[{r:3,c:5,c2:'b'}], targets:[[3,3],[3,4],[3,5],[4,3],[4,5],[5,3],[5,4],[5,5]], captures:[[3,5]],
+          text:'Şah her yöne sadece 1 kare gider. Yanındaki rakip taşı ALMAK için kırmızı çerçeveye dokun (tabii güvenliyse!).' },
+        { piece:{r:3,c:5}, blockers:[], targets:[[2,4],[2,5],[2,6],[3,4],[3,6],[4,4],[4,5],[4,6]],
+          text:'Şah asla 2 kare gidemez ve tehdit altındaki kareye giremez. Yeşil karelerden birine dokun.' }
+    ]
+};
+
+let tutCurrentKey = null;
+let tutStepIndex = 0;
+let tutStepDone = false;
+
+function openTutorial() {
+    buildTutPieceGrid();
+    tutBackToPicker();
+    toggleMenu('tutorial', true);
+}
+
+function buildTutPieceGrid() {
+    const grid = document.getElementById('tut-piece-grid');
+    grid.innerHTML = '';
+    TUT_PIECES.forEach(tp => {
+        const btn = document.createElement('button');
+        btn.className = 'promote-btn';
+        btn.style.padding = '10px 4px';
+        btn.innerHTML = `<div style="font-size:1.8rem;line-height:1;">${tp.icon}</div><div style="font-size:0.62rem;margin-top:4px;font-family:'Cinzel',serif;letter-spacing:0.5px;color:var(--text-sub);">${tp.name}</div>`;
+        btn.onclick = () => showTutPiece(tp.key);
+        grid.appendChild(btn);
+    });
+}
+
+function tutBackToPicker() {
+    document.getElementById('tut-detail').style.display = 'none';
+    document.getElementById('tut-picker').style.display = 'block';
+}
+
+function showTutPiece(key) {
+    tutCurrentKey = key;
+    tutStepIndex = 0;
+    const tp = TUT_PIECES.find(p=>p.key===key);
+    document.getElementById('tut-picker').style.display = 'none';
+    document.getElementById('tut-detail').style.display = 'block';
+    document.getElementById('tut-detail-icon').innerText = tp.icon;
+    document.getElementById('tut-detail-name').innerText = tp.name;
+    document.getElementById('tut-detail-desc').innerText = tp.desc;
+    tutRenderStepDots();
+    tutLoadStep();
+}
+
+function tutRenderStepDots() {
+    const steps = TUT_STEPS[tutCurrentKey];
+    const wrap = document.getElementById('tut-step-dots');
+    wrap.innerHTML = '';
+    if(steps.length <= 1) return;
+    steps.forEach((_, i) => {
+        const dot = document.createElement('div');
+        dot.style.cssText = 'width:8px;height:8px;border-radius:50%;transition:0.2s;background:' +
+            (i < tutStepIndex ? 'var(--accent)' : (i === tutStepIndex ? '#fff' : 'rgba(255,255,255,0.15)'));
+        wrap.appendChild(dot);
+    });
+}
+
+function tutRestartPiece() {
+    tutStepIndex = 0;
+    tutRenderStepDots();
+    tutLoadStep();
+}
+
+function tutLoadStep() {
+    const steps = TUT_STEPS[tutCurrentKey];
+    const step = steps[tutStepIndex];
+    tutStepDone = false;
+    document.getElementById('tut-instruction').innerText = '👆 ' + step.text;
+    document.getElementById('tut-next-btn').disabled = true;
+    document.getElementById('tut-next-btn').innerText = (tutStepIndex === steps.length-1) ? '✓ BİTTİ' : 'DEVAM ▸';
+    buildTutBoard(tutCurrentKey, step);
+}
+
+function tutNextStep() {
+    const steps = TUT_STEPS[tutCurrentKey];
+    if(!tutStepDone) return;
+    if(tutStepIndex < steps.length - 1) {
+        tutStepIndex++;
+        tutRenderStepDots();
+        tutLoadStep();
+    } else {
+        toast('👍 ' + TUT_PIECES.find(p=>p.key===tutCurrentKey).name + ' hareketini öğrendin!');
+        tutBackToPicker();
+    }
+}
+
+function buildTutBoard(key, step) {
+    const container = document.getElementById('tut-board');
+    container.innerHTML = '';
+    const captures = step.captures || [];
+    const targetSet = new Set(step.targets.map(t=>t[0]+','+t[1]));
+    const captureSet = new Set(captures.map(t=>t[0]+','+t[1]));
+    const blockerMap = {};
+    step.blockers.forEach(b => blockerMap[b.r+','+b.c] = b.c2);
+
+    for(let r=0;r<8;r++) for(let c=0;c<8;c++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell ' + ((r+c)%2===0 ? 'light' : 'dark');
+        cell.style.position = 'relative';
+
+        const isMainPiece = (r===step.piece.r && c===step.piece.c);
+        const isBlocker = blockerMap[r+','+c];
+        const isTarget = targetSet.has(r+','+c);
+        const isCapture = captureSet.has(r+','+c);
+
+        if(isMainPiece) {
+            const div = document.createElement('div');
+            div.className = 'piece white-piece';
+            div.id = 'tut-main-piece';
+            div.style.fontSize = 'clamp(16px, 6vmin, 26px)';
+            div.style.transition = 'transform 0.25s ease';
+            div.innerText = PIECES['w'+key];
+            cell.appendChild(div);
+        } else if(isBlocker) {
+            const div = document.createElement('div');
+            div.className = 'piece black-piece';
+            div.style.fontSize = 'clamp(16px, 6vmin, 26px)';
+            div.innerText = PIECES['bP'];
+            cell.appendChild(div);
+        }
+
+        if(isTarget && !isCapture) {
+            const dot = document.createElement('div');
+            dot.className = 'valid-move';
+            cell.appendChild(dot);
+        }
+        if(isCapture) {
+            const dot = document.createElement('div');
+            dot.className = 'valid-move capture';
+            cell.appendChild(dot);
+        }
+
+        if(isTarget) {
+            cell.style.cursor = 'pointer';
+            cell.onclick = () => tutPlayStep(r, c, isCapture);
+        }
+
+        container.appendChild(cell);
+    }
+}
+
+function tutPlayStep(r, c, wasCapture) {
+    if(tutStepDone) return;
+    const container = document.getElementById('tut-board');
+    const cells = container.children;
+    const step = TUT_STEPS[tutCurrentKey][tutStepIndex];
+    const fromIdx = step.piece.r*8 + step.piece.c;
+    const toIdx = r*8 + c;
+    const pieceDiv = document.getElementById('tut-main-piece');
+
+    // Gerçek hareket hissi: taşı hedef hücreye taşı (klonlayıp eskisini sil)
+    if(pieceDiv) {
+        const fromCell = cells[fromIdx];
+        const toCell = cells[toIdx];
+        toCell.innerHTML = '';
+        pieceDiv.style.transform = 'scale(1.2)';
+        toCell.appendChild(pieceDiv);
+        setTimeout(()=>{ pieceDiv.style.transform = 'scale(1)'; }, 150);
+        fromCell.style.cursor = 'default';
+    }
+
+    // Tüm nokta/çerçeve işaretlerini ve tıklamaları kapat
+    Array.from(cells).forEach(cell => {
+        cell.onclick = null;
+        cell.style.cursor = 'default';
+        cell.querySelectorAll('.valid-move').forEach(d => d.remove());
+    });
+
+    if(wasCapture) toast('✔ Taş alındı!');
+    playSound(wasCapture ? 'capture' : 'move');
+
+    tutStepDone = true;
+    document.getElementById('tut-next-btn').disabled = false;
+    document.getElementById('tut-instruction').innerText = '✅ Doğru! Şimdi devam et.';
+}
 </script>
 </body>
 </html>
