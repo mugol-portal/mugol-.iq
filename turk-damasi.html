@@ -332,6 +332,32 @@
             <p style="color:var(--text-sub); font-size:0.85rem; margin:10px 0 18px; line-height:1.5;">
                 Usta seviyesinde derin arama yapan yapay zekaya karşı oyna. Bir taraf siyah, bir taraf beyaz.
             </p>
+
+            <div class="setting-row">
+                <label>🎮 Oyun Modu:</label>
+                <select id="start-mode-select" onchange="updateStartModeLabel()">
+                    <option value="ai">Yapay Zeka (AI)</option>
+                    <option value="pvp">2 Kişilik (Aynı Cihaz)</option>
+                </select>
+            </div>
+
+            <div class="setting-row" id="start-diff-row">
+                <label>🧠 AI Seviyesi:</label>
+                <select id="start-diff-select">
+                    <option value="easy">Çırak (kolay)</option>
+                    <option value="medium">Kalfa (orta)</option>
+                    <option value="hard" selected>Usta (derin arama)</option>
+                </select>
+            </div>
+
+            <div class="setting-row" id="start-color-row">
+                <label>⬤ Taşınız:</label>
+                <select id="start-color-select">
+                    <option value="white" selected>Beyaz (ilk hamle sende)</option>
+                    <option value="black">Siyah (ilk hamle AI'da)</option>
+                </select>
+            </div>
+
             <button class="full btn-primary" onclick="enterGame()">♟ OYUNA BAŞLA</button>
             <button class="full btn-secondary" onclick="exitGame()">OYUNDAN ÇIK</button>
         </div>
@@ -1313,7 +1339,27 @@
             requestAnimationFrame(cLoop);
         }
 
+        function updateStartModeLabel() {
+            const m = document.getElementById('start-mode-select').value;
+            document.getElementById('start-diff-row').style.display = (m === 'ai') ? 'block' : 'none';
+            document.getElementById('start-color-row').style.display = (m === 'ai') ? 'block' : 'none';
+        }
+
         function enterGame() {
+            // Ana sayfada yapılan Oyun Modu / Seviye / Taş seçimlerini gerçek ayarlara aktar
+            const startMode = document.getElementById('start-mode-select').value;
+            const startDiff = document.getElementById('start-diff-select').value;
+            const startColor = document.getElementById('start-color-select').value;
+
+            document.getElementById('mode-select').value = startMode;
+            document.getElementById('diff-select').value = startDiff;
+            document.getElementById('color-select').value = startColor;
+            gameMode = startMode;
+            localStorage.setItem('dama_mode', gameMode);
+
+            // Ana sayfadan yeni ayarlarla girildiğinde eski kayıtlı oyun geçerliliğini yitirir
+            localStorage.removeItem('dama_save_v10');
+
             document.getElementById('start-modal').classList.remove('active');
             document.getElementById('main-container').style.visibility = 'visible';
             init();
@@ -1329,6 +1375,13 @@
             if(timerInterval) clearInterval(timerInterval);
             stopConfetti();
             localStorage.removeItem('dama_save_v10');
+
+            // Ana sayfa seçimlerini mevcut ayarlarla senkronize et
+            document.getElementById('start-mode-select').value = gameMode;
+            document.getElementById('start-diff-select').value = document.getElementById('diff-select').value;
+            document.getElementById('start-color-select').value = humanColor === BLACK ? 'black' : 'white';
+            updateStartModeLabel();
+
             document.getElementById('main-container').style.visibility = 'hidden';
             document.getElementById('start-modal').classList.add('active');
         }
