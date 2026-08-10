@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#0b0f1a" />
+<link rel="manifest" href="manifest.json" />
 <meta name="description" content="MuGöl IQ — Zihin açan bulmaca ve oyun koleksiyonu" />
 <title>MuGöl IQ · Zihin Oyunları</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
@@ -748,6 +749,14 @@ function dismissInstallBanner(){
 window.addEventListener('appinstalled', ()=>{
   document.getElementById('installBanner').classList.remove('show');
 });
+
+/* Service Worker kaydı — PWA kurulum koşulu için gerekli */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js')
+      .catch(err => console.error('SW kayıt hatası:', err));
+  });
+}
 
 </script>
 </body>
