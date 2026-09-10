@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- ===== GOOGLE ADMOB ===== -->
+    <meta name="admob-app-id" content="ca-app-pub-1880946354382681~7565307045">
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1880946354382681"
+         crossorigin="anonymous"></script>
     <title>Zeka Oyunu: 2048 Premium</title>
     <style>
         /* TEMA DEĞİŞKENLERİ */
@@ -102,6 +107,28 @@
         }
         .btn-exit:hover {
             background-color: #c0392b !important;
+        }
+
+        /* REKLAM ALANI */
+        .mg-admob-wrap {
+            width: 100%;
+            max-width: 250px;
+            margin-top: 15px;
+            padding: 8px;
+            border: 1px dashed var(--board-bg);
+            border-radius: 8px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        .mg-admob-label {
+            display: block;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--main-text);
+            opacity: 0.6;
+            margin-bottom: 4px;
         }
 
         /* BAŞLIK & TEMA SEÇİCİ */
@@ -208,8 +235,20 @@
         <div style="width: 100%; max-width: 250px;">
             <button class="btn-text-white" onclick="goToPage('game-page')" style="padding: 15px; font-size: 20px;">▶ Oyuna Başla</button>
             
-            <!-- TARAYICIDA ÖNCEKİ SAYFAYA DÖNME BUTONU -->
-            <button class="btn-exit" onclick="window.history.back()">⬅ Önceki Sayfaya Dön</button>
+            <!-- MUGÖL IQ SAYFASINA DÖNME BUTONU -->
+            <button class="btn-exit" onclick="window.location.href='https://mugol-portal.github.io/mugol-.iq/'">⬅ MuGöl IQ'ya Dön</button>
+
+            <!-- ── AdSense Banner Reklam ── -->
+            <div class="mg-admob-wrap" aria-label="Reklam">
+                <span class="mg-admob-label">Reklam</span>
+                <ins class="adsbygoogle"
+                     style="display:block;width:100%;min-height:50px;"
+                     data-ad-client="ca-pub-1880946354382681"
+                     data-ad-slot="1435965312"
+                     data-ad-format="banner"
+                     data-full-width-responsive="true"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+            </div>
         </div>
     </div>
 
@@ -459,5 +498,68 @@
             }
         }
     </script>
+
+    <!-- ═══ GOOGLE ADMOB BANNER ═══ -->
+    <div id="admob-banner-container" role="complementary" aria-label="Reklam">
+        <!-- Banner reklam buraya yüklenir -->
+    </div>
+    <!-- ════════════════════════════ -->
+
+    <!-- ═══ GOOGLE ADMOB BAŞLATMA ═══ -->
+    <script>
+    (function () {
+        'use strict';
+
+        /* ── AdMob Yapılandırması ── */
+        var ADMOB_CONFIG = {
+            appId:     'ca-app-pub-1880946354382681~7565307045',
+            bannerId:  'ca-app-pub-1880946354382681/5865212560',
+            isTesting: false   /* Canlı yayında false, test için true yapın */
+        };
+
+        /* ── Capacitor AdMob (WebView / Android uygulaması) ── */
+        function initCapacitorAdMob() {
+            if (typeof Capacitor === 'undefined') return false;
+            if (!Capacitor.Plugins || !Capacitor.Plugins.AdMob) return false;
+            var AdMob = Capacitor.Plugins.AdMob;
+            AdMob.initialize({ requestTrackingAuthorization: true })
+                .then(function () {
+                    return AdMob.showBanner({
+                        adId:      ADMOB_CONFIG.bannerId,
+                        adSize:    'BANNER',
+                        position:  'BOTTOM_CENTER',
+                        margin:    0,
+                        isTesting: ADMOB_CONFIG.isTesting
+                    });
+                })
+                .then(function () {
+                    /* Capacitor banner gösterildi — HTML banner gizle */
+                    var el = document.getElementById('admob-banner-container');
+                    if (el) el.style.display = 'none';
+                })
+                .catch(function (err) {
+                    console.warn('[AdMob] Capacitor banner hatası:', err);
+                });
+            return true;
+        }
+
+        /* ── Sayfa hazır olduğunda başlat ── */
+        function startAdMob() {
+            /* 1) Capacitor ortamı — native banner */
+            if (initCapacitorAdMob()) return;
+
+            /* 2) Normal web tarayıcı — AdMob çalışmaz */
+            var container = document.getElementById('admob-banner-container');
+            if (container) container.style.display = 'none';
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', startAdMob);
+        } else {
+            startAdMob();
+        }
+    })();
+    </script>
+    <!-- ══════════════════════════════════ -->
 </body>
 </html>
