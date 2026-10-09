@@ -60,14 +60,15 @@ function nbrs(r,c){return[[r,c-1],[r,c+1],isUp(r,c)?[r+1,c]:[r-1,c]]}
 function boardCells(){const a=[];for(let r=0;r<2*N;r++){const n=2*N+1+2*Math.min(r,2*N-1-r),st=r<N?N-r:r-N+1;for(let i=0;i<n;i++)a.push([r,st+i])}return a}
 function partition(){
  const cf=CFG[diff],set=new Set(cells.map(c=>key(...c)));
- for(;;){
+ for(let tries=0;;tries++){
+  const mn=tries>300?1:cf.min,mx=tries>300?24:cf.max;
   const own=new Map(),rg=[];
   [...cells].sort(()=>rnd()-.5).slice(0,cf.k).forEach((c,i)=>{own.set(key(...c),i);rg.push([c])});
   while(own.size<cells.length){
    const o=[];rg.forEach((g,i)=>g.forEach(c=>nbrs(...c).forEach(n=>{const k=key(...n);if(set.has(k)&&!own.has(k))o.push([i,n])})));
    const[i,n]=o[Math.floor(rnd()*o.length)];own.set(key(...n),i);rg[i].push(n);
   }
-  if(rg.every(r=>r.length>=cf.min&&r.length<=cf.max))return rg;
+  if(rg.every(r=>r.length>=mn&&r.length<=mx))return rg;
  }
 }
 function rot(p){
@@ -132,14 +133,15 @@ function down(e,p){
  e.preventDefault();if(won)return;
  select(p);
  const s=pos(e);let o0=[p.ox,p.oy],ghost=null;let moved=false;
- p.g.setPointerCapture(e.pointerId);
- const mv=ev=>{const q=pos(ev);if(!moved&&Math.hypot(q.x-s.x,q.y-s.y)>8){moved=true;if(startT===null)startT=Date.now();if(p.placed)free(p);if(p.sc<1){const lx=(s.x-o0[0])/p.sc,ly=(s.y-o0[1])/p.sc;p.sc=1;o0=[s.x-lx,s.y-ly-30]}ghost=mk('g',{'pointer-events':'none'},svg);svg.appendChild(p.g)}
+ svg.appendChild(p.g);
+ try{p.g.setPointerCapture(e.pointerId)}catch(x){}
+ const mv=ev=>{if(ev.pointerId!==e.pointerId)return;const q=pos(ev);if(!moved&&Math.hypot(q.x-s.x,q.y-s.y)>8){moved=true;if(startT===null)startT=Date.now();if(p.placed)free(p);if(p.sc<1){const lx=(s.x-o0[0])/p.sc,ly=(s.y-o0[1])/p.sc;p.sc=1;o0=[s.x-lx,s.y-ly-30]}ghost=mk('g',{'pointer-events':'none'});svg.insertBefore(ghost,p.g)}
   if(moved){p.ox=o0[0]+q.x-s.x;p.oy=o0[1]+q.y-s.y;upd(p);
    const b=find(p);ghost.innerHTML='';if(b)p.cells.forEach(([r,c])=>mk('polygon',{points:pts(r+b[0],c+b[1]),fill:p.color,'fill-opacity':.35,stroke:p.color,'stroke-width':2,'stroke-dasharray':'5 4'},ghost))}};
- const up=()=>{p.g.removeEventListener('pointermove',mv);p.g.removeEventListener('pointerup',up);p.g.removeEventListener('pointercancel',up);
+ let done=false;const up=ev=>{if(done||(ev&&ev.pointerId!==e.pointerId))return;done=true;window.removeEventListener('pointermove',mv);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);
   ghost&&ghost.remove();if(!moved){rotateP(p);return}
   moves++;if(!snap(p))toTray(p);stats()};
- p.g.addEventListener('pointermove',mv);p.g.addEventListener('pointerup',up);p.g.addEventListener('pointercancel',up);
+ window.addEventListener('pointermove',mv);window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);
 }
 function rotateP(p){
  if(won)return;
