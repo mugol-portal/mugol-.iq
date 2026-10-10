@@ -29,7 +29,7 @@ svg{width:100%;max-width:440px;flex:1;min-height:0;touch-action:none;user-select
 #ov .st{font-size:34px;letter-spacing:4px}#ov p{margin:6px 0;color:var(--mut);font-size:14px}#ov b{color:var(--fg)}
 #ad{display:none;position:fixed;inset:0;background:rgba(247,244,251,.97);z-index:20;flex-direction:column;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}
 #ad small{color:var(--mut);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px}
-#adbox{width:100%;max-width:340px;min-height:250px;background:#fff;border-radius:16px;box-shadow:var(--shadow);overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:13px}
+#adbox{width:100%;max-width:340px;min-height:250px;background:#fff;border-radius:16px;box-shadow:var(--shadow);overflow:hidden;display:block}
 #adc{margin-top:60px;flex:0;min-width:160px;max-width:220px;opacity:.5}
 #adc.on{opacity:1;background:#f5a3b0;color:#5a1f2c}
 #ov .bt{display:flex;gap:8px;margin-top:14px}
@@ -48,7 +48,7 @@ const S=74,H=S*Math.sqrt(3)/2,BX=200-2.5*S,BY=16,N=2,NS="http://www.w3.org/2000/
 const COLORS=["#ff3b4e","#2d7bff","#ffc400","#19c24d","#a43bff","#ff7a00","#00bfae","#ff3fa4"];
 const CFG={kolay:{k:4,min:3,max:8,scr:false,goal:60},orta:{k:6,min:3,max:7,scr:true,goal:120},zor:{k:8,min:2,max:6,scr:true,goal:180}};
 const svg=document.getElementById('s'),msg=document.getElementById('msg'),$=id=>document.getElementById(id);
-let diff='orta',daily=false,rnd=Math.random,cells,pieces,occ,regs,startT,penalty,moves,hints,won,hintG,stack=[],snd=true,ac,sel=null,trayY=0,trayH=0;
+let dragging=false,diff='orta',daily=false,rnd=Math.random,cells,pieces,occ,regs,startT,penalty,moves,hints,won,hintG,stack=[],snd=true,ac,sel=null,trayY=0,trayH=0;
 const key=(r,c)=>r+','+c,isUp=(r,c)=>(r+c)%2===0,fmt=t=>{t=Math.floor(t);return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')};
 const bkey=()=>'best_'+(daily?'gunluk':diff);
 const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
@@ -87,7 +87,7 @@ function bedges(list){const set=new Set(list.map(c=>key(...c)));const out=[];
 function bbox(p){let a=1e9,b=1e9,c=-1e9,d=-1e9;p.cells.forEach(([r,cc])=>pts(r,cc).split(' ').forEach(s=>{const[x,y]=s.split(',').map(Number);a=Math.min(a,x);c=Math.max(c,x);b=Math.min(b,y);d=Math.max(d,y)}));return{x0:a,y0:b,w:c-a,h:d-b}}
 const TS=.64;
 function placeInSlot(p){const bb=bbox(p);p.sc=TS;p.ox=p.hx=p.sx-TS*(bb.x0+bb.w/2);p.oy=p.hy=p.sy-TS*(bb.y0+bb.h/2)}
-function toTray(p){placeInSlot(p);draw(p);upd(p)}
+function toTray(p){if(p.placed)free(p);placeInSlot(p);draw(p);upd(p)}
 function layout(){
  const W=400,gap=6,maxW=W-16,rows=[];let cur={it:[],w:0,h:0};
  pieces.forEach(p=>{const bb=bbox(p),d=1.02*Math.max(bb.w,bb.h)*TS;p.sd=d;
@@ -101,7 +101,7 @@ function layout(){
 }
 function setup(same){
  if(daily){const d=new Date();rnd=mb(d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate())}else rnd=Math.random;
- $('ov').style.display='none';cells=boardCells();occ=new Map();won=false;startT=null;penalty=0;moves=0;hints=0;stack=[];
+ dragging=false;$('ov').style.display='none';cells=boardCells();occ=new Map();won=false;startT=null;penalty=0;moves=0;hints=0;stack=[];
  if(!same)regs=partition();
  const cf=CFG[diff];sel=null;
  pieces=regs.map((_,i)=>i).sort(()=>rnd()-.5).map((ri,i)=>{
@@ -130,15 +130,15 @@ function upd(p){p.g.setAttribute('transform',`translate(${p.ox},${p.oy}) scale($
 function pos(e){const q=svg.createSVGPoint();q.x=e.clientX;q.y=e.clientY;return q.matrixTransform(svg.getScreenCTM().inverse())}
 function free(p){p.cells.forEach(([r,c])=>occ.delete(key(r+p.dr,c+p.dc)));p.placed=false;stack=stack.filter(x=>x!==p)}
 function down(e,p){
- e.preventDefault();if(won)return;
- select(p);
+ e.preventDefault();if(won||dragging)return;
+ dragging=true;select(p);
  const s=pos(e);let o0=[p.ox,p.oy],ghost=null;let moved=false;
  svg.appendChild(p.g);
  try{p.g.setPointerCapture(e.pointerId)}catch(x){}
  const mv=ev=>{if(ev.pointerId!==e.pointerId)return;const q=pos(ev);if(!moved&&Math.hypot(q.x-s.x,q.y-s.y)>8){moved=true;if(startT===null)startT=Date.now();if(p.placed)free(p);if(p.sc<1){const lx=(s.x-o0[0])/p.sc,ly=(s.y-o0[1])/p.sc;p.sc=1;o0=[s.x-lx,s.y-ly-30]}ghost=mk('g',{'pointer-events':'none'});svg.insertBefore(ghost,p.g)}
   if(moved){p.ox=o0[0]+q.x-s.x;p.oy=o0[1]+q.y-s.y;upd(p);
    const b=find(p);ghost.innerHTML='';if(b)p.cells.forEach(([r,c])=>mk('polygon',{points:pts(r+b[0],c+b[1]),fill:p.color,'fill-opacity':.35,stroke:p.color,'stroke-width':2,'stroke-dasharray':'5 4'},ghost))}};
- let done=false;const up=ev=>{if(done||(ev&&ev.pointerId!==e.pointerId))return;done=true;window.removeEventListener('pointermove',mv);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);
+ let done=false;const up=ev=>{if(done||(ev&&ev.pointerId!==e.pointerId))return;done=true;dragging=false;window.removeEventListener('pointermove',mv);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);
   ghost&&ghost.remove();if(!moved){rotateP(p);return}
   moves++;if(!snap(p))toTray(p);stats()};
  window.addEventListener('pointermove',mv);window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);
@@ -160,11 +160,11 @@ function find(p){
   if(p.cells.every(([r,c])=>{const k=key(r+dr,c+dc);return inB.has(k)&&!occ.has(k)})){best=[dr,dc];bd=d}
  }
  return best}
-function snap(p){const best=find(p);if(!best)return false;
+function snap(p){if(p.placed)free(p);const best=find(p);if(!best)return false;
  p.dr=best[0];p.dc=best[1];p.ox=p.dc*S/2;p.oy=p.dr*H;p.placed=true;stack.push(p);
  p.cells.forEach(([r,c])=>occ.set(key(r+p.dr,c+p.dc),1));upd(p);
  tone(560,.09);navigator.vibrate&&navigator.vibrate(15);
- if(occ.size===cells.length){select(null);win()}
+ if(occ.size===cells.length&&pieces.every(q=>q.placed)){select(null);win()}
  return true}
 function el(){return startT===null?0:(Date.now()-startT)/1000+penalty}
 function stats(){$('pg').style.width=(cells?occ.size/cells.length*100:0)+'%';$('t').textContent=fmt(el());$('m').textContent=moves}
@@ -203,12 +203,12 @@ let adT=null;
 function showAd(cb){
  if(startT===null&&!won){cb();return}
  const box=$('adbox'),btn=$('adc');box.innerHTML='';
- const ins=document.createElement('ins');ins.className='adsbygoogle';ins.style.cssText='display:block;width:100%;min-height:250px';
- ins.setAttribute('data-ad-client','ca-pub-1880946354382681');ins.setAttribute('data-ad-slot','1435965312');ins.setAttribute('data-ad-format','auto');ins.setAttribute('data-full-width-responsive','true');
+ const ins=document.createElement('ins');ins.className='adsbygoogle';ins.style.display='block';
+ ins.setAttribute('data-ad-client','ca-pub-1880946354382681');ins.setAttribute('data-ad-slot','1689789138');ins.setAttribute('data-ad-format','auto');ins.setAttribute('data-full-width-responsive','true');
  box.appendChild(ins);
  $('ad').style.display='flex';$('ov').style.display='none';
- setTimeout(()=>{try{(window.adsbygoogle=window.adsbygoogle||[]).push({})}catch(e){}},120);
- setTimeout(()=>{if(!ins.getAttribute('data-ad-status')||ins.getAttribute('data-ad-status')==='unfilled'){if(!box.querySelector('.noad')){const d=document.createElement('div');d.className='noad';d.style.cssText='position:absolute';d.textContent='';box.appendChild(d);box.firstChild.style.display='none';box.insertAdjacentHTML('beforeend','<span style="padding:20px;text-align:center">Şu an gösterilecek reklam yok.<br>Kapat düğmesiyle devam edebilirsiniz.</span>')}}},4500);
+ requestAnimationFrame(()=>setTimeout(()=>{try{(window.adsbygoogle=window.adsbygoogle||[]).push({})}catch(e){}},50));
+ setTimeout(()=>{if(ins.getAttribute('data-adsbygoogle-status')!=='done'||ins.offsetHeight<=0){ins.style.display='none';const m=document.createElement('div');m.style.cssText='padding:40px 20px;text-align:center;color:#8a89a6;font-size:13px';m.innerHTML='Şu an gösterilecek reklam yok.<br>Kapat düğmesiyle devam edebilirsiniz.';box.appendChild(m)}},4500);
  let n=5;btn.disabled=true;btn.classList.remove('on');btn.textContent='Kapat ('+n+')';clearInterval(adT);
  adT=setInterval(()=>{n--;if(n>0)btn.textContent='Kapat ('+n+')';else{clearInterval(adT);btn.disabled=false;btn.classList.add('on');btn.textContent='Kapat ✕'}},1000);
  btn.onclick=()=>{if(btn.disabled)return;$('ad').style.display='none';cb()};
