@@ -205,8 +205,10 @@ function showAd(cb){
  const box=$('adbox'),btn=$('adc');box.innerHTML='';
  const ins=document.createElement('ins');ins.className='adsbygoogle';ins.style.cssText='display:block;width:100%;min-height:250px';
  ins.setAttribute('data-ad-client','ca-pub-1880946354382681');ins.setAttribute('data-ad-slot','1435965312');ins.setAttribute('data-ad-format','auto');ins.setAttribute('data-full-width-responsive','true');
- box.appendChild(ins);try{(window.adsbygoogle=window.adsbygoogle||[]).push({})}catch(e){}
+ box.appendChild(ins);
  $('ad').style.display='flex';$('ov').style.display='none';
+ setTimeout(()=>{try{(window.adsbygoogle=window.adsbygoogle||[]).push({})}catch(e){}},120);
+ setTimeout(()=>{if(!ins.getAttribute('data-ad-status')||ins.getAttribute('data-ad-status')==='unfilled'){if(!box.querySelector('.noad')){const d=document.createElement('div');d.className='noad';d.style.cssText='position:absolute';d.textContent='';box.appendChild(d);box.firstChild.style.display='none';box.insertAdjacentHTML('beforeend','<span style="padding:20px;text-align:center">Şu an gösterilecek reklam yok.<br>Kapat düğmesiyle devam edebilirsiniz.</span>')}}},4500);
  let n=5;btn.disabled=true;btn.classList.remove('on');btn.textContent='Kapat ('+n+')';clearInterval(adT);
  adT=setInterval(()=>{n--;if(n>0)btn.textContent='Kapat ('+n+')';else{clearInterval(adT);btn.disabled=false;btn.classList.add('on');btn.textContent='Kapat ✕'}},1000);
  btn.onclick=()=>{if(btn.disabled)return;$('ad').style.display='none';cb()};
