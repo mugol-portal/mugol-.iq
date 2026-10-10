@@ -2,15 +2,19 @@
   "name": "MuGöl IQ - Zihin Açan Oyunlar",
   "short_name": "MuGöl IQ",
   "description": "Kelime, mantık ve genel kültür oyunlarıyla zihnini taze tut.",
-  "start_url": "https://mugol-portal.github.io/mugol-.iq/index.html",
-  "scope": "https://mugol-portal.github.io/mugol-.iq/",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0a0e1a",
   "theme_color": "#0a0e1a",
   "lang": "tr",
   "dir": "ltr",
-  "categories": ["games", "puzzle", "education"],
+  "categories": [
+    "games",
+    "puzzle",
+    "education"
+  ],
   "icons": [
     {
       "src": "icon-192.png",
