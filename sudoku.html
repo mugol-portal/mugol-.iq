@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sudoku</title>
+<style>
+:root{--bg:#dfe8e4;--paper:#fcfdfc;--ink:#14302c;--given:#14302c;--user:#0e7c70;--line:#c3d1cc;--thick:#14302c;--sel:#ffd98a;--rel:#e8f0ed;--same:#cfe9e2;--bad:#c2372b;--badbg:#fbdad5;--btn:#fcfdfc;--muted:#5b726c;--accent:#14302c;--onaccent:#fcfdfc;--shadow:0 6px 24px rgba(20,48,44,.14);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1b19;--paper:#152926;--ink:#e3f0ec;--given:#e3f0ec;--user:#5fd4c4;--line:#2b4540;--thick:#7fa59d;--sel:#7a5c14;--rel:#1b332f;--same:#1f4a43;--bad:#ff8f82;--badbg:#4d2622;--btn:#17302c;--muted:#8fb0a8;--accent:#5fd4c4;--onaccent:#0d1b19;--shadow:0 6px 24px rgba(0,0,0,.4)}}
+:root[data-theme="dark"]{--bg:#0d1b19;--paper:#152926;--ink:#e3f0ec;--given:#e3f0ec;--user:#5fd4c4;--line:#2b4540;--thick:#7fa59d;--sel:#7a5c14;--rel:#1b332f;--same:#1f4a43;--bad:#ff8f82;--badbg:#4d2622;--btn:#17302c;--muted:#8fb0a8;--accent:#5fd4c4;--onaccent:#0d1b19;--shadow:0 6px 24px rgba(0,0,0,.4)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Avenir Next","Nunito","Segoe UI",system-ui,sans-serif}
+main{max-width:460px;margin:0 auto;padding:16px 14px 28px}
+header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+h1{font-size:32px;margin:0;font-weight:800;letter-spacing:-.5px}
+.seg{display:flex;background:var(--btn);border-radius:999px;padding:3px;box-shadow:var(--shadow)}
+.seg button{border:0;background:none;padding:7px 13px;border-radius:999px;font-size:14px;font-weight:600;color:var(--muted)}
+.seg button.on{background:var(--accent);color:var(--onaccent)}
+button{font:inherit;color:var(--ink);cursor:pointer}
+.stats{display:flex;gap:8px;margin-bottom:10px}
+.stats span{background:var(--btn);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+#grid{display:grid;grid-template-columns:repeat(9,1fr);width:100%;aspect-ratio:1;background:var(--paper);border:3px solid var(--thick);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+.c{position:relative;display:flex;align-items:center;justify-content:center;border:0;background:var(--paper);padding:0;font-size:clamp(20px,6.4vw,30px);border-right:1px solid var(--line);border-bottom:1px solid var(--line);min-width:0;transition:background .12s}
+.c:nth-child(9n){border-right:0}
+.c:nth-child(n+73){border-bottom:0}
+.c:nth-child(9n+3),.c:nth-child(9n+6){border-right:2px solid var(--thick)}
+.c:nth-child(n+19):nth-child(-n+27),.c:nth-child(n+46):nth-child(-n+54){border-bottom:2px solid var(--thick)}
+.c.r{background:var(--rel)}
+.c.s2{background:var(--same)}
+.c.sel{background:var(--sel);box-shadow:inset 0 0 0 2px var(--thick)}
+.c.g{color:var(--given);font-weight:800}
+.c.u{color:var(--user);font-weight:600}
+.c.x{color:var(--bad);background:var(--badbg)}
+.c.pop{animation:pop .18s ease-out}
+@keyframes pop{from{transform:scale(.7)}to{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.c.pop{animation:none}}
+.n{display:grid;grid-template-columns:repeat(3,1fr);width:100%;height:100%;padding:2px;font-size:clamp(8px,2.3vw,11px);color:var(--muted);line-height:1;font-weight:600}
+.n i{font-style:normal;display:flex;align-items:center;justify-content:center}
+.c:focus-visible,button:focus-visible{outline:3px solid var(--user);outline-offset:-3px}
+.tools{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.tools button{background:var(--btn);border:0;border-radius:14px;padding:10px 2px 8px;font-size:12px;font-weight:600;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:var(--shadow)}
+.tools svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tools button.on{background:var(--accent);color:var(--onaccent)}
+#pad{display:grid;grid-template-columns:repeat(9,1fr);gap:5px;margin-top:12px}
+#pad button{background:var(--btn);border:0;border-radius:10px;padding:9px 0 5px;font-size:24px;font-weight:700;display:flex;flex-direction:column;align-items:center;line-height:1.1;box-shadow:var(--shadow);color:var(--user)}
+#pad button small{font-size:10px;color:var(--muted);height:12px;font-weight:600}
+#pad button:disabled{opacity:.25;box-shadow:none}
+#new{width:100%;margin-top:16px;padding:14px;border:0;border-radius:14px;background:var(--accent);color:var(--onaccent);font-size:16px;font-weight:700}
+details{margin-top:14px;background:var(--btn);border-radius:14px;padding:2px 16px;font-size:15px;line-height:1.55;box-shadow:var(--shadow)}
+summary{padding:13px 0;font-weight:700}
+details ul{margin:0 0 12px;padding-left:20px}
+details li{margin-bottom:7px}
+#msg{min-height:22px;text-align:center;margin-top:10px;font-size:14px;color:var(--muted)}
+#win{display:none;position:fixed;inset:0;background:rgba(10,25,22,.55);align-items:center;justify-content:center;padding:20px;z-index:20}
+#win .card{background:var(--paper);border-radius:20px;padding:28px 24px;text-align:center;max-width:320px;width:100%;box-shadow:var(--shadow)}
+#win h2{margin:0 0 8px;font-size:28px}
+#win p{margin:0 0 18px;color:var(--muted);line-height:1.5}
+#win button{border:0;border-radius:12px;padding:12px 22px;background:var(--accent);color:var(--onaccent);font-size:16px;font-weight:700}
+
+[hidden]{display:none!important}
+header.g{justify-content:flex-start;align-items:center;gap:10px}
+header.g h1{font-size:26px}
+.icon{border:0;background:var(--btn);width:40px;height:40px;border-radius:12px;font-size:20px;box-shadow:var(--shadow)}
+.tier{margin-left:auto;background:var(--accent);color:var(--onaccent);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700}
+#levels h2{font-size:16px;margin:18px 0 8px;font-weight:700}
+#levels h2 small{font-weight:500;color:var(--muted);font-size:13px;margin-left:6px}
+.lv-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.lv{aspect-ratio:1;border:0;border-radius:14px;background:var(--btn);box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0}
+.lv b{font-size:22px;font-weight:800}
+.lv span{font-size:11px;color:var(--muted);letter-spacing:1px;height:13px}
+.lv.done span{color:#d99a00}
+.lv.cur{background:var(--accent);color:var(--onaccent)}
+.lv.cur span{color:var(--onaccent)}
+.lv:disabled{opacity:.35;box-shadow:none}
+#win .stars{font-size:34px;color:#d99a00;margin-bottom:6px;letter-spacing:4px}
+#win .row{display:flex;flex-direction:column;gap:8px}
+#win .row button.alt{background:var(--rel);color:var(--ink)}
+
+#s-home{min-height:82vh;display:flex;flex-direction:column;justify-content:center;gap:14px;text-align:center}
+.hero{display:grid;grid-template-columns:repeat(3,1fr);width:168px;margin:0 auto 6px;border:3px solid var(--thick);border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:var(--shadow)}
+.hero span{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.hero span:nth-child(3n){border-right:0}.hero span:nth-child(n+7){border-bottom:0}.hero .u{color:var(--user);font-weight:600}
+#s-home h1{font-size:38px}
+#s-home p{margin:0;color:var(--muted);line-height:1.5}
+.pri{width:100%;padding:16px;border:0;border-radius:16px;background:var(--accent);color:var(--onaccent);font-size:20px;font-weight:800;box-shadow:var(--shadow)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sec{padding:13px;border:0;border-radius:14px;background:var(--btn);font-size:15px;font-weight:700;box-shadow:var(--shadow)}
+.pill{margin-left:auto;border:0;background:var(--btn);border-radius:999px;padding:9px 14px;font-size:14px;font-weight:600;box-shadow:var(--shadow)}
+.row2{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--btn);border-radius:14px;padding:14px 16px;margin-bottom:8px;box-shadow:var(--shadow);font-weight:600}
+.row2 .seg{box-shadow:none;background:var(--rel)}
+.sw{width:48px;height:28px;border-radius:999px;border:0;background:var(--line);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .15s}
+.sw[aria-checked=true]{background:var(--user)}.sw[aria-checked=true]::after{transform:translateX(20px)}
+h2.sh{font-size:16px;margin:20px 0 8px}
+.hint{font-size:13px;color:var(--muted);line-height:1.5;margin:4px 2px 10px}
+.bd{display:flex;gap:12px;align-items:center;background:var(--btn);border-radius:14px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow)}
+.bd .ic{flex:none;width:46px;height:46px;border-radius:50%;background:var(--accent);color:var(--onaccent);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800}
+.bd b{display:block;font-size:16px}.bd small{color:var(--muted);font-size:13px;line-height:1.4}
+.bd.lock{opacity:.45}.bd.lock .ic{background:var(--line);color:var(--muted)}
+#win .new{color:var(--user);font-weight:700;margin:-8px 0 16px}
+</style>
+</head>
+<body>
+<main>
+<section id="s-home">
+<div class="hero" aria-hidden="true"><span>5</span><span class="u">3</span><span></span><span class="u">8</span><span>1</span><span>9</span><span></span><span>4</span><span class="u">6</span></div>
+<h1>Hoş geldiniz</h1>
+<p>Rakamları yerleştir, seviyeleri aç, ödülleri topla.</p>
+<p id="hprog"></p>
+<button class="pri" id="go">Başla</button>
+<div class="two"><button class="sec" id="h-rw">Ödüller</button><button class="sec" id="h-st">Ayarlar</button></div>
+</section>
+<section id="s-levels" hidden>
+<header class="g"><button class="icon" id="l-back" aria-label="Ana ekran">&larr;</button><h1>Seviyeler</h1><button class="pill" id="l-st">Ayarlar</button></header>
+<div class="stats"><span id="prog"></span></div>
+<div id="levels"></div>
+<details>
+<summary>Nasıl oynanır?</summary>
+<ul>
+<li><b>Amaç:</b> 9x9 tahtadaki tüm boş kareleri 1-9 arası rakamlarla doldurmak.</li>
+<li><b>Kural:</b> Her satırda, her sütunda ve her kalın çizgili 3x3 kutuda 1-9 rakamlarının her biri bir kez bulunmalı.</li>
+<li><b>Başlamak için:</b> Boş bir kareye dokun, sonra alttaki rakam tuşlarından birine bas. Aynı rakama tekrar basarsan silinir.</li>
+<li><b>Koyu rakamlar</b> bulmacanın verdiği sayılardır, değiştirilemez. Mavi rakamlar senin yazdıklarındır.</li>
+<li><b>Not:</b> Emin olmadığında Not düğmesini aç ve karelere küçük aday rakamlar yaz. Kesin bir rakam girince aynı satır, sütun ve kutudaki notlar otomatik silinir.</li>
+<li><b>Seviyeler:</b> 40 seviye var ve ilerledikçe verilen rakamlar azalır. Bir seviyeyi bitirince sıradaki açılır. Hata ve ipucu az olursa 3 yıldıza kadar kazanırsın.</li>
+<li><b>Hata:</b> Yanlış rakam kırmızı görünür ve hata sayacına eklenir.</li>
+<li><b>İpucu:</b> Seçili kareyi ya da bir yanlış kareyi doğru rakamla doldurur.</li>
+<li><b>Rakam tuşlarının altındaki sayı</b> o rakamdan tahtaya kaç tane daha yerleştirmen gerektiğini gösterir.</li>
+<li><b>Klavye:</b> 1-9 rakam girer, ok tuşları gezdirir, N notu açıp kapatır, Backspace siler.</li>
+</ul>
+</details>
+</section>
+<section id="s-game" hidden>
+<header class="g"><button id="back" class="icon" aria-label="Seviye listesi">&larr;</button><h1 id="ttl"></h1><span class="tier" id="tier"></span></header>
+<div class="stats"><span id="time">00:00</span><span id="err">Hata: 0</span><span id="left"></span></div>
+<div id="grid" role="grid" aria-label="Sudoku tahtası"></div>
+<div id="pad"></div>
+<div class="tools">
+<button id="note"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Not</button>
+<button id="del"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>Sil</button>
+<button id="undo"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg>Geri al</button>
+<button id="hint"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0012 3z"/></svg>İpucu</button>
+</div>
+<button id="new">Baştan başla</button>
+<div id="msg"></div>
+</section>
+<section id="s-settings" hidden>
+<header class="g"><button class="icon" id="s-back" aria-label="Geri">&larr;</button><h1>Ayarlar</h1></header>
+<h2 class="sh">Görünüm</h2>
+<div class="row2">Tema<div class="seg" id="themeSeg"><button data-v="auto">Otomatik</button><button data-v="light">Açık</button><button data-v="dark">Koyu</button></div></div>
+<h2 class="sh">Oyun</h2>
+<div class="row2">Satır, sütun ve kutuyu vurgula<button class="sw" role="switch" data-k="hl" aria-label="Vurgula"></button></div>
+<div class="row2">Yanlış rakamı kırmızı göster<button class="sw" role="switch" data-k="err" aria-label="Hataları göster"></button></div>
+<div class="row2">Süreyi göster<button class="sw" role="switch" data-k="timer" aria-label="Süre"></button></div>
+<h2 class="sh">Yedek</h2>
+<p class="hint">Seviyelerin, yıldızların, sürelerin, ödüllerin ve ayarların sudoku-oyunu-yedeği.js dosyasına kaydedilir. Yüklediğinde mevcut ilerlemenle birleştirilir ve her seviyede en iyi sonuç korunur.</p>
+<div class="two"><button class="sec" id="exp">Yedeği indir</button><button class="sec" id="imp">Yedeği yükle</button></div>
+<input type="file" id="file" accept=".js,.json,text/javascript,application/json" hidden>
+<div id="smsg" class="hint" role="status"></div>
+<h2 class="sh">İlerleme</h2>
+<button class="sec" id="reset" style="width:100%">İlerlemeyi sıfırla</button>
+</section>
+<section id="s-rewards" hidden>
+<header class="g"><button class="icon" id="r-back" aria-label="Ana ekran">&larr;</button><h1>Ödüller</h1></header>
+<div class="stats"><span id="rcount"></span></div>
+<div id="badges"></div>
+</section>
+<div id="win"></div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const N=40,TIERS=[["Kolay",1,10],["Orta",11,25],["Zor",26,40]],DEF={theme:"auto",hl:true,err:true,timer:true};
+const BADGES=[
+{id:"b1",ic:"1",n:"İlk adım",d:"İlk seviyeni bitir.",f:s=>s.done>=1},
+{id:"b2",ic:"10",n:"Isınma turu",d:"10 seviye bitir.",f:s=>s.done>=10},
+{id:"b3",ic:"K",n:"Kolay usta",d:"Kolay seviyelerin hepsini bitir.",f:s=>s.tier[0]},
+{id:"b4",ic:"O",n:"Orta usta",d:"Orta seviyelerin hepsini bitir.",f:s=>s.tier[1]},
+{id:"b5",ic:"Z",n:"Zor usta",d:"Zor seviyelerin hepsini bitir.",f:s=>s.tier[2]},
+{id:"b6",ic:"25★",n:"Yıldız avcısı",d:"Toplam 25 yıldız topla.",f:s=>s.stars>=25},
+{id:"b7",ic:"75★",n:"Yıldız kralı",d:"Toplam 75 yıldız topla.",f:s=>s.stars>=75},
+{id:"b8",ic:"3★",n:"Kusursuz",d:"5 seviyeyi 3 yıldızla bitir.",f:s=>s.three>=5},
+{id:"b9",ic:"⚡",n:"Yıldırım",d:"Bir seviyeyi 3 dakikadan kısa sürede bitir.",f:s=>s.fast},
+{id:"b10",ic:"40",n:"Sudoku efsanesi",d:"40 seviyenin hepsini bitir.",f:s=>s.done>=N}];
+function clean(r){const o={prog:{},times:{},settings:{...DEF}};if(!r||typeof r!=="object")return o;
+for(let L=1;L<=N;L++){const s=r.prog&&r.prog[L];if(Number.isInteger(s)&&s>=1&&s<=3)o.prog[L]=s;const t=r.times&&r.times[L];if(typeof t==="number"&&t>0&&t<86400)o.times[L]=Math.round(t)}
+const q=r.settings||{};if(["auto","light","dark"].includes(q.theme))o.settings.theme=q.theme;for(const k of["hl","err","timer"])if(typeof q[k]==="boolean")o.settings[k]=q[k];return o}
+let D=clean(null);
+try{let r=JSON.parse(localStorage.getItem("sudoku-data")||"null");if(!r){const p=JSON.parse(localStorage.getItem("sudoku-prog")||"null");if(p)r={prog:p}}D=clean(r)}catch(e){}
+const save=()=>{try{localStorage.setItem("sudoku-data",JSON.stringify(D))}catch(e){}};
+function applyTheme(){const t=D.settings.theme;if(t==="auto")document.documentElement.removeAttribute("data-theme");else document.documentElement.setAttribute("data-theme",t)}
+function stats(){const ks=Object.keys(D.prog).map(Number);return{done:ks.length,stars:ks.reduce((a,k)=>a+D.prog[k],0),three:ks.filter(k=>D.prog[k]===3).length,fast:Object.values(D.times).some(t=>t<180),tier:TIERS.map(([,a,b])=>{for(let L=a;L<=b;L++)if(!D.prog[L])return false;return true})}}
+const earned=()=>{const s=stats();return BADGES.filter(b=>b.f(s)).map(b=>b.id)};
+const keepFor=L=>Math.max(24,46-Math.floor((L-1)*0.56));
+const tierOf=L=>TIERS.find(t=>L>=t[1]&&L<=t[2])[0];
+const unlocked=L=>L===1||!!D.prog[L-1];
+function seeded(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+let rng=Math.random,level=1,sol,giv,val,nt,sel=-1,noteMode=false,hist=[],errs=0,hints=0,sec=0,timer,done=false,popI=-1,cur="home",prevScr="home";
+const SCR=["home","levels","game","settings","rewards"];
+function go(n){cur=n;SCR.forEach(x=>$("s-"+x).hidden=x!==n);if(n!=="game")clearInterval(timer);$("win").style.display="none";window.scrollTo(0,0);
+if(n==="home")drawHome();if(n==="levels")drawLevels();if(n==="settings")drawSettings();if(n==="rewards")drawRewards()}
+function openSettings(){prevScr=cur;go("settings")}
+function drawHome(){const s=stats();$("hprog").textContent=s.done?s.done+"/"+N+" seviye bitti, "+s.stars+" yıldız":"Henüz bir seviye bitirmedin."}
+function drawRewards(){const e=earned(),s=stats();$("rcount").textContent=e.length+"/"+BADGES.length+" ödül, "+s.stars+" yıldız";
+$("badges").innerHTML=BADGES.map(b=>'<div class="bd'+(e.includes(b.id)?"":" lock")+'"><div class="ic">'+b.ic+'</div><div><b>'+b.n+'</b><small>'+b.d+'</small></div></div>').join("")}
+function drawSettings(){const q=D.settings;document.querySelectorAll("#themeSeg button").forEach(b=>b.classList.toggle("on",b.dataset.v===q.theme));
+document.querySelectorAll(".sw").forEach(b=>b.setAttribute("aria-checked",q[b.dataset.k]))}
+function drawLevels(){const box=$("levels");box.innerHTML="";const s=stats();$("prog").textContent=s.done+"/"+N+" seviye, "+s.stars+" yıldız";
+for(const[name,a,b]of TIERS){const h=document.createElement("h2");h.innerHTML=name+"<small>Seviye "+a+"-"+b+"</small>";box.appendChild(h);
+const g=document.createElement("div");g.className="lv-grid";
+for(let L=a;L<=b;L++){const t=document.createElement("button");t.className="lv";const ok=unlocked(L),st=D.prog[L]||0;
+if(st)t.classList.add("done");else if(ok)t.classList.add("cur");
+t.disabled=!ok;t.innerHTML="<b>"+L+"</b><span>"+(st?"★".repeat(st)+"☆".repeat(3-st):ok?"Oyna":"Kilitli")+"</span>";t.onclick=()=>start(L);g.appendChild(t)}
+box.appendChild(g)}}
+const peers=i=>{const r=Math.floor(i/9),c=i%9,b=Math.floor(r/3)*3+Math.floor(c/3);return j=>{const r2=Math.floor(j/9),c2=j%9;return r2===r||c2===c||Math.floor(r2/3)*3+Math.floor(c2/3)===b}};
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function cands(g,i){const p=peers(i);let m=0;for(let j=0;j<81;j++)if(g[j]&&p(j))m|=1<<g[j];const r=[];for(let v=1;v<=9;v++)if(!(m&(1<<v)))r.push(v);return r}
+function count(g,limit){let best=-1,bc=null;for(let i=0;i<81;i++)if(!g[i]){const c=cands(g,i);if(!c.length)return 0;if(!bc||c.length<bc.length){best=i;bc=c;if(c.length===1)break}}
+if(best<0)return 1;let n=0;for(const v of bc){g[best]=v;n+=count(g,limit-n);if(n>=limit){g[best]=0;return n}}g[best]=0;return n}
+function fill(g){let best=-1,bc=null;for(let i=0;i<81;i++)if(!g[i]){const c=cands(g,i);if(!c.length)return false;if(!bc||c.length<bc.length){best=i;bc=c}}
+if(best<0)return true;shuffle(bc);for(const v of bc){g[best]=v;if(fill(g))return true}g[best]=0;return false}
+function start(L){go("game");level=L;rng=seeded(L*7919+13);const full=Array(81).fill(0);fill(full);sol=full;giv=full.slice();
+const keep=keepFor(L),order=shuffle([...Array(81).keys()]);let filled=81;
+for(const i of order){if(filled<=keep)break;const o=giv[i];giv[i]=0;if(count(giv.slice(),2)!==1)giv[i]=o;else filled--}
+val=giv.slice();nt=Array(81).fill(0);sel=-1;hist=[];errs=0;hints=0;sec=0;done=false;noteMode=false;
+$("msg").textContent="";$("ttl").textContent="Seviye "+L;$("tier").textContent=tierOf(L);$("time").hidden=!D.settings.timer;
+clearInterval(timer);timer=setInterval(()=>{if(!done){sec++;tick()}},1000);tick();render()}
+function tick(){$("time").textContent=String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0")}
+function render(){const g=$("grid");g.innerHTML="";const q=D.settings,p=sel>=0&&q.hl?peers(sel):null,sv=sel>=0&&q.hl?val[sel]:0;
+for(let i=0;i<81;i++){const b=document.createElement("button");b.className="c";b.setAttribute("role","gridcell");
+if(giv[i])b.classList.add("g");else if(val[i])b.classList.add("u");
+if(p&&p(i))b.classList.add("r");if(sv&&val[i]===sv)b.classList.add("s2");
+if(q.err&&val[i]&&!giv[i]&&val[i]!==sol[i])b.classList.add("x");
+if(i===sel)b.classList.add("sel");if(i===popI)b.classList.add("pop");
+if(val[i])b.textContent=val[i];else if(nt[i]){const d=document.createElement("div");d.className="n";for(let v=1;v<=9;v++){const e=document.createElement("i");e.textContent=nt[i]&(1<<v)?v:"";d.appendChild(e)}b.appendChild(d)}
+b.onclick=()=>{sel=i;popI=-1;render()};g.appendChild(b)}
+const cnt=Array(10).fill(0);val.forEach((v,i)=>{if(v&&v===sol[i])cnt[v]++});
+const pad=$("pad");pad.innerHTML="";let rem=0;
+for(let v=1;v<=9;v++){const b=document.createElement("button");b.innerHTML=v+"<small>"+(9-cnt[v])+"</small>";b.disabled=cnt[v]>=9;rem+=9-cnt[v];b.onclick=()=>enter(v);pad.appendChild(b)}
+$("left").textContent="Kalan: "+rem;$("err").textContent="Hata: "+errs;$("note").classList.toggle("on",noteMode)}
+function snap(){hist.push([val.slice(),nt.slice()]);if(hist.length>200)hist.shift()}
+function enter(v){if(done||sel<0||giv[sel])return;snap();popI=sel;
+if(noteMode){if(val[sel])val[sel]=0;nt[sel]^=1<<v}
+else{if(val[sel]===v){val[sel]=0}else{val[sel]=v;nt[sel]=0;if(v!==sol[sel])errs++;
+const p=peers(sel);for(let j=0;j<81;j++)if(p(j))nt[j]&=~(1<<v)}}
+render();check()}
+function check(){if(!val.every((v,i)=>v===sol[i]))return;done=true;clearInterval(timer);
+const before=earned(),pen=errs+hints*2,st=pen===0?3:pen<=3?2:1;D.prog[level]=Math.max(D.prog[level]||0,st);D.times[level]=Math.min(D.times[level]||1e9,Math.max(1,sec));save();
+const nb=BADGES.filter(b=>earned().includes(b.id)&&!before.includes(b.id)),w=$("win"),last=level>=N;w.style.display="flex";
+w.innerHTML='<div class="card"><div class="stars">'+"★".repeat(st)+"☆".repeat(3-st)+'</div><h2>'+(last?"Hepsini bitirdin!":"Seviye "+level+" tamam")+'</h2><p>'+$("time").textContent+" sürede, "+errs+" hata ve "+hints+' ipucuyla.</p>'+(nb.length?'<p class="new">Yeni ödül: '+nb.map(b=>b.n).join(", ")+'</p>':"")+'<div class="row">'+(last?"":'<button onclick="start('+(level+1)+')">Sonraki seviye</button>')+'<button class="alt" onclick="go(\'levels\')">Seviye listesi</button></div></div>'}
+function snote(t){$("smsg").textContent=t}
+function exportBackup(){const txt="// Sudoku oyun yedeği. Dosyayı düzenleme; oyunda Ayarlar > Yedeği yükle ile geri yükle.\n// Tarih: "+new Date().toLocaleString("tr-TR")+"\nwindow.SUDOKU_YEDEK = "+JSON.stringify({v:1,prog:D.prog,times:D.times,settings:D.settings,oduller:earned()},null,2)+";\n";
+const a=document.createElement("a"),u=URL.createObjectURL(new Blob([txt],{type:"text/javascript"}));a.href=u;a.download="sudoku-oyunu-yedeği.js";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);snote("Yedek indirildi: sudoku-oyunu-yedeği.js")}
+async function importBackup(f){try{const t=await f.text(),m=t.indexOf("SUDOKU_YEDEK"),raw=JSON.parse(t.slice(t.indexOf("{",m<0?0:m),t.lastIndexOf("}")+1));if(!raw||raw.v!==1)throw 0;const c=clean(raw);
+for(let L=1;L<=N;L++){if(c.prog[L])D.prog[L]=Math.max(D.prog[L]||0,c.prog[L]);if(c.times[L])D.times[L]=Math.min(D.times[L]||1e9,c.times[L])}
+D.settings=c.settings;save();applyTheme();drawSettings();snote("Yedek yüklendi. Şu an "+Object.keys(D.prog).length+" seviye ve "+earned().length+" ödül var.")}catch(e){snote("Bu dosya geçerli bir yedek değil.")}}
+$("go").onclick=()=>go("levels");$("h-rw").onclick=()=>go("rewards");$("h-st").onclick=openSettings;$("l-st").onclick=openSettings;
+$("l-back").onclick=()=>go("home");$("r-back").onclick=()=>go("home");$("s-back").onclick=()=>go(prevScr);$("back").onclick=()=>go("levels");
+document.querySelectorAll("#themeSeg button").forEach(b=>b.onclick=()=>{D.settings.theme=b.dataset.v;save();applyTheme();drawSettings()});
+document.querySelectorAll(".sw").forEach(b=>b.onclick=()=>{const k=b.dataset.k;D.settings[k]=!D.settings[k];save();drawSettings()});
+$("exp").onclick=exportBackup;$("imp").onclick=()=>$("file").click();$("file").onchange=e=>{const f=e.target.files[0];e.target.value="";if(f)importBackup(f)};
+let rt=0;$("reset").onclick=()=>{const r=$("reset");if(!rt){r.textContent="Emin misin? Tekrar dokun";rt=setTimeout(()=>{rt=0;r.textContent="İlerlemeyi sıfırla"},3500);return}clearTimeout(rt);rt=0;D.prog={};D.times={};save();r.textContent="İlerlemeyi sıfırla";snote("İlerleme sıfırlandı. Ayarların korundu.")};
+$("note").onclick=()=>{noteMode=!noteMode;render()};
+$("del").onclick=()=>{if(done||sel<0||giv[sel])return;snap();val[sel]=0;nt[sel]=0;render()};
+$("undo").onclick=()=>{if(done||!hist.length)return;[val,nt]=hist.pop();render()};
+$("hint").onclick=()=>{if(done)return;let i=sel>=0&&!giv[sel]&&val[sel]!==sol[sel]?sel:val.findIndex((v,k)=>v!==sol[k]);if(i<0)return;snap();hints++;sel=i;val[i]=sol[i];nt[i]=0;$("msg").textContent="İpucu kullanıldı, yıldız puanını düşürür.";render();check()};
+$("new").onclick=()=>start(level);
+document.addEventListener("keydown",e=>{if(cur!=="game")return;if(e.key>="1"&&e.key<="9")enter(+e.key);else if(e.key==="Backspace"||e.key==="Delete")$("del").click();
+else if(e.key==="n"||e.key==="N"){noteMode=!noteMode;render()}
+else if(sel>=0){const m={ArrowUp:-9,ArrowDown:9,ArrowLeft:-1,ArrowRight:1}[e.key];if(m){const n=sel+m;if(n>=0&&n<81&&!(m===1&&sel%9===8)&&!(m===-1&&sel%9===0)){sel=n;render();$("grid").children[n].focus();e.preventDefault()}}}});
+applyTheme();go("home");
+</script>
+</body>
+</html>
